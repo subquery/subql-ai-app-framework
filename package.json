@@ -1,0 +1,20 @@
+{
+  "name": "ollama-functions",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "run": "npx ts-node llama-tool-example.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.2.23",
+    "@langchain/ollama": "^0.0.4",
+    "ethers": "^6.13.2",
+    "langchain": "^0.2.16",
+    "ollama": "^0.5.8"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}
