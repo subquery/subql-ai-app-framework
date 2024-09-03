@@ -1,6 +1,6 @@
 import ollama, { Tool } from 'ollama';
 import readline from 'readline/promises'
-import { ENDPOINT, IntrospectionTool } from './llama-tool-example';
+import { ENDPOINT } from './llama-tool-example';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -40,8 +40,8 @@ export abstract class FunctionTool implements IFunctionTool {
 
 const MAX_ITERATIONS = 10;
 const DEBUG = true;
+// export const MODEL = 'gorilla-openfunctions-v2-q6_K'; // 'mistral-nemo'; //'llama3.1'
 export const MODEL = 'mistral-nemo'; //'llama3.1'
-// export const MODEL = 'llama3.1'; //'llama3.1'
 
 export function debug(...args: Parameters<typeof console.log>) {
   if (DEBUG) {
@@ -94,7 +94,7 @@ export async function RunWithTools(prompt: string, tools: IFunctionTool[]): Prom
   let numIterations = 0;
 
   const messages = [
-    { role: 'system', content: GRAPHQL_PROMPT3(await new IntrospectionTool(ENDPOINT).call())},
+    // { role: 'system', content: GRAPHQL_PROMPT3(await new IntrospectionTool(ENDPOINT).call())},
     { role: 'user', content: prompt },
   ];
 
