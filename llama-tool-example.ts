@@ -176,7 +176,7 @@ class QueryTool extends FunctionTool {
   name = "query-gql";
 
   description = `Executes a graphql query on the API and returns a JSON string of the results.
-  If the query returns an error, rewrite it and try again.`
+  If running the query results in an error, rewrite the query taking into consideration the details of the error and run it again, keep doing this until the query works.`
 
   parameters = {
     type: 'object',
@@ -306,8 +306,8 @@ class HexNumberTool extends FunctionTool {
   }
 }
 
-// const ENDPOINT = 'https://api.subquery.network/sq/subquery/subquery-mainnet';
-export const ENDPOINT = 'http://localhots:3001';
+export const ENDPOINT = 'https://api.subquery.network/sq/subquery/subquery-mainnet';
+// export const ENDPOINT = 'http://localhost:3001';
 
 const tools = [
   // new IntrospectionTool(ENDPOINT),
@@ -330,6 +330,7 @@ async function run(prompt: string): Promise<void> {
 //   .catch(e => console.error(`Failed to run`, e));
 
 // run('Can you tell me how many projects there are?'); // Working
-// run('Can you tell me about all the totalDelegations of a delegator with the id 0x108A496cDC32DA84e4D5905bb02ED695BC1024cd'); // Not working
-run('Can you please get me 5 indexers ordered by their total stake?')
+// run('Can you tell me about the totalDelegations of a delegator with the id 0x108A496cDC32DA84e4D5905bb02ED695BC1024cd'); // Not working
+// run('Can you please get me then id and totalStake of 5 indexers ordered by their total stake?')
+run('Can you please get me the balances and ids of 5 tokenHolders ordered by the largest balance?')
 // run('Can you find me the delegator with the largest total delegations?'); // Not working

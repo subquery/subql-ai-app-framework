@@ -31,10 +31,67 @@ Tools should return as specific information as possible, eg. dont return a whole
 
 These models have been tested to work but the output and functionality may vary
 
-- Ollama3.1
-- Mistral-nemo
+- Ollama3.1 - Seems to be better at folling instructions to retry
+- Mistral-nemo - Better at building valid graphql queries
 - Mistral
 
 #### Unsupported Models
 
 - Gemma2
+
+
+### Further improvements
+
+It would be good to group tools together, e.g graphql introspection followed by constructing and running a query or
+
+
+## Code Sandboxing
+
+Autogen has either local or docker running - [code executors](https://microsoft.github.io/autogen/docs/tutorial/code-executors)
+
+### Python
+
+Any sort of sandboxing is no longer maintained, recommendations seem to be using docker.
+[Restricted Python](https://restrictedpython.readthedocs.io/en/latest/) allows custom builds with restrictions added in
+
+### Nodejs
+
+All fully featrured VMs/Sandboxes that allow any nodejs code are not secure
+[isolated-vm](https://github.com/laverdet/isolated-vm) provides a JS sandbox but it is raw V8 so has no nodejs apis
+
+
+### Deno
+
+Deno has a well built [permissions](https://docs.deno.com/runtime/manual/basics/permissions/) feature that by default is restrictive.
+It's not possible to use a subprocess as a sanbox but a child process could be used.
+
+### Docker
+
+Docker could be used to run code, but has to be done appropriately to avoid [container escape](https://www.cybereason.com/blog/container-escape-all-you-need-is-cap-capabilities)
+
+[sysbox](https://github.com/nestybox/sysbox) can build on this.
+
+### WASM
+
+WASM can be used with many host languages but requires having bindings for any I/O like networking.
+
+## Schema Manifest
+
+```yaml
+
+name: "demo project"
+
+model:
+  name: llama3.1
+  # Port to LLM RPC
+  url: http://localhost:1234
+
+tools:
+  - name: 'get-balance'
+    type: "code"
+    file: "./get-balance.js"
+    arguments:
+      # Key value pairs to specify options for the runner, this could be endpoints, timeouts etc.
+      - key: value
+
+```

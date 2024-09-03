@@ -1,47 +1,19 @@
 import ollama, { Tool } from 'ollama';
 import readline from 'readline/promises'
 import { ENDPOINT, IntrospectionTool } from './llama-tool-example';
+import { IFunctionTool } from './src/tool';
+import { LanceStorage } from './src/storage';
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
 
-// TODO map paramaters type to call args
-interface IFunctionTool {
-  name: string;
-
-  description: string;
-
-  parameters: Tool['function']['parameters'];
-
-  call: (args: any/* Record<string, any>*/) => Promise<any>;
-
-  toTool: () => Tool;
-}
-
-export abstract class FunctionTool implements IFunctionTool {
-  abstract name: string;
-  abstract description: string;
-  abstract parameters: Tool['function']['parameters'];
-  abstract call(args: any/*Record<string, any>*/): Promise<any>;
-
-  toTool(): Tool {
-    return {
-      type: 'function',
-      function: {
-        name: this.name,
-        description: this.description,
-        parameters: this.parameters,
-      }
-    }
-  }
-}
 
 const MAX_ITERATIONS = 10;
 const DEBUG = true;
-export const MODEL = 'mistral-nemo'; //'llama3.1'
-// export const MODEL = 'llama3.1'; //'llama3.1'
+// export const MODEL = 'mistral-nemo'; //'llama3.1'
+export const MODEL = 'llama3.1'; //'llama3.1'
 
 export function debug(...args: Parameters<typeof console.log>) {
   if (DEBUG) {
@@ -87,14 +59,24 @@ If the query returns an error, modify the query and try again.
 If the question seems to be unrelated to the API, just return "I don't know" as the answer.
 `
 
-export async function RunWithTools(prompt: string, tools: IFunctionTool[]): Promise<string> {
+const GRAPHQL_PROMPT4 = () => `You are an agent designed to interact with a Graphql API to answer questions.
+
+Use the available tools to better understand the capabilities of the API to construct a syntactically correct Graphql Query that answers the users question and then run the query using one of the available tools.
+Your answer must be a result of running the graphql query.
+
+Don't provide example queries or code, instead run the query.
+
+If the question seems to be unrelated to the API, just return "I don't know" as the answer.
+`
+
+export async function RunWithTools(prompt: string, tools: IFunctionTool[], storage?: LanceStorage, systemPrompt = GRAPHQL_PROMPT4()): Promise<string> {
 
   console.log('Prompt:', prompt)
 
   let numIterations = 0;
 
   const messages = [
-    { role: 'system', content: GRAPHQL_PROMPT3(await new IntrospectionTool(ENDPOINT).call())},
+    { role: 'system', content: systemPrompt},
     { role: 'user', content: prompt },
   ];
 
@@ -113,22 +95,30 @@ export async function RunWithTools(prompt: string, tools: IFunctionTool[]): Prom
       console.log(res.message.content);
 
       const response = await rl.question("Enter a message: ");
+
+      if (storage) {
+        const supporting = await storage.search(response);
+        debug(`Supporting data\n\t${supporting.join('\n\t')}`)
+        messages.push({ role: 'system', content: `Supporting context you can use if deemed relevant: ${supporting.join(',')}`})
+      }
+
       messages.push({ role: 'user', content: response });
+    } else {
+      const toolResponses = await Promise.all((res.message.tool_calls ?? []).map(async (toolCall) => {
+        // debug('Tool call', toolCall);
+        const tool = tools.find(t => t.name === toolCall.function.name);
+        if (!tool) {
+          return `Unable to find a tool called "${toolCall.function.name}". Please use another tool or return "I don't know".`;
+        }
+        debug(`Calling(${toolCall.function.name})`, toolCall.function.arguments);
+        const res = await  tool.call(toolCall.function.arguments);
+        debug(`Result(${toolCall.function.name})`, toolCall.function.name, (res as string)?.substring(0, 500));
+        return res;
+      }));
+
+      messages.push(...toolResponses.map(m => ({ role: 'tool', content: m })));
     }
 
-    const toolResponses = await Promise.all((res.message.tool_calls ?? []).map(async (toolCall) => {
-      // debug('Tool call', toolCall);
-      const tool = tools.find(t => t.name === toolCall.function.name);
-      if (!tool) {
-        throw new Error(`Unable to find tool called "${toolCall.function.name}"`);
-      }
-      debug(`Calling(${toolCall.function.name})`, toolCall.function.arguments);
-      const res = await  tool.call(toolCall.function.arguments);
-      debug(`Result(${toolCall.function.name})`, toolCall.function.name, (res as string).substring(0, 500));
-      return res;
-    }));
-
-    messages.push(...toolResponses.map(m => ({ role: 'tool', content: m })));
     numIterations++;
   }
 
