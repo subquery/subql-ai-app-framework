@@ -32,8 +32,8 @@ export class NodeOperatorProjectRewardTool extends FunctionTool {
             }
             const currentEra = await this.contractSvc.currentEra();
             const lastEra = currentEra.toNumber() - 1;
-
-
+            // TODO: implement this
+            // returns: {deploymentId: string, averageAllocation: number, apy: number}[]
 
             return `${JSON.stringify({
             })

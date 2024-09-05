@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "run": "npx ts-node llama-tool-example.ts"
+    "start": "ts-node src/main.ts --rpc-endpoint='https://base.rpc.subquery.network/public'",
+    "debug": "node --inspect-brk  -r ts-node/register src/main.ts --rpc-endpoint='https://base.rpc.subquery.network/public'"
   },
   "dependencies": {
     "@apollo/client": "^3.9.7",
