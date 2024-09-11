@@ -1,8 +1,10 @@
-import ollama, { Tool } from 'ollama';
 import readline from 'readline/promises'
-import { ENDPOINT, IntrospectionTool } from './llama-tool-example';
 import { IFunctionTool } from './src/tool';
 import { LanceStorage } from './src/storage';
+import { Runner } from './src/runner';
+import { MockSandbox } from './src/sandbox';
+import { RunnerHost } from './src/runnerHost';
+import { MemoryChatStorage } from './src/chatStorage';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -69,59 +71,58 @@ Don't provide example queries or code, instead run the query.
 If the question seems to be unrelated to the API, just return "I don't know" as the answer.
 `
 
+// const HOST = 'http://localhost:11434';
+const HOST = 'http://192.168.50.169:11434';
+// const HOST = 'https://olla.wk.zohu.vip:8008/';
+
 export async function RunWithTools(prompt: string, tools: IFunctionTool[], storage?: LanceStorage, systemPrompt = GRAPHQL_PROMPT4()): Promise<string> {
 
-  console.log('Prompt:', prompt)
+  const host = new RunnerHost(async () => {
+    const chatStorage = new MemoryChatStorage();
 
-  let numIterations = 0;
+    chatStorage.append([{ role: 'system', content: systemPrompt}]);
 
-  const messages = [
-    { role: 'system', content: systemPrompt},
-    { role: 'user', content: prompt },
-  ];
+    return new Runner(
+      MODEL,
+      new MockSandbox(tools),
+      chatStorage,
+      HOST,
+    );
+  });
+
+  const runner = await host.getRunner('default')
+
+  console.log('Initial prompt: ', prompt)
+  const initialResponse = await runner.prompt(prompt);
+  console.log(initialResponse);
 
   while(true) {
-    const res = await ollama.chat({
-      model: MODEL,
-      stream: false,
-      tools: tools.map(t => t.toTool()),
-      messages,
-    });
+    const response = await rl.question("Enter a message: ");
 
-    // Add the chat history
-    messages.push(res.message);
-
-    if (!res.message.tool_calls?.length) {
-      console.log(res.message.content);
-
-      const response = await rl.question("Enter a message: ");
-
-      if (storage) {
-        const supporting = await storage.search(response);
-        debug(`Supporting data\n\t${supporting.join('\n\t')}`)
-        messages.push({ role: 'system', content: `Supporting context you can use if deemed relevant: ${supporting.join(',')}`})
-      }
-
-      messages.push({ role: 'user', content: response });
-    } else {
-      const toolResponses = await Promise.all((res.message.tool_calls ?? []).map(async (toolCall) => {
-        // debug('Tool call', toolCall);
-        const tool = tools.find(t => t.name === toolCall.function.name);
-        if (!tool) {
-          return `Unable to find a tool called "${toolCall.function.name}". Please use another tool or return "I don't know".`;
-        }
-        debug(`Calling(${toolCall.function.name})`, toolCall.function.arguments);
-        const res = await  tool.call(toolCall.function.arguments);
-        debug(`Result(${toolCall.function.name})`, toolCall.function.name, (res as string)?.substring(0, 500));
-        return res;
-      }));
-
-      messages.push(...toolResponses.map(m => ({ role: 'tool', content: m })));
-    }
-
-    numIterations++;
+    const res = await runner.prompt(response);
+    console.log(res);
   }
+}
 
-  // Limit the number of function calls
-  return `No response in ${MAX_ITERATIONS} iterations`;
+export async function RunScript(messages: string[], tools: IFunctionTool[], systemPrompt: string): Promise<void> {
+  const host = new RunnerHost(async () => {
+    const chatStorage = new MemoryChatStorage();
+
+    chatStorage.append([{ role: 'system', content: systemPrompt}]);
+
+    return new Runner(
+      MODEL,
+      new MockSandbox(tools),
+      chatStorage,
+      HOST,
+    );
+  });
+
+  const runner = await host.getRunner('default');
+
+  for (const msg of messages) {
+    console.log(`Enter a message: ${msg}`);
+    console.log(await runner.prompt(msg));
+  }
+  console.log('DONE')
 }

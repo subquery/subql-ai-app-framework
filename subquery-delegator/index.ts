@@ -1,4 +1,4 @@
-import { RunWithTools } from "../llama-tool"
+import { RunScript, RunWithTools } from "../llama-tool"
 import { LanceStorage } from "../src/storage";
 import { FunctionTool } from "../src/tool";
 import { grahqlRequest } from "../utils";
@@ -25,13 +25,13 @@ type Amount = {
   valueAfter: { type: 'bigint', value: string };
 }
 
-class TotalDelegationTool extends FunctionTool {
+class TotalDelegation extends FunctionTool {
 
   constructor(readonly endpoint: string) {
     super();
   }
 
-  name = 'total-delegation-amount';
+  // name = 'total-delegation-amount';
   description = `This tool gets the total delegation amount of SQT for the given user address.
   If no delegation is found it will return null.
   `;
@@ -65,12 +65,12 @@ class TotalDelegationTool extends FunctionTool {
   }
 }
 
-class DelegatedIndexersTool extends FunctionTool {
+class DelegatedIndexers extends FunctionTool {
   constructor(readonly endpoint: string) {
     super();
   }
 
-  name = 'delegated-indexers';
+  // name = 'delegated-indexers';
   description = `This tool gets the addresses of indexers that the given account has delegated to.
   Returns a json array with each item containing the indexer id, the amount delegated and whether the indexer is active.
   If an indexer is not active the user should be warned and told to change delegators.
@@ -126,7 +126,7 @@ class UnclaimedDelegatorRewards extends FunctionTool {
     super();
   }
 
-  name = 'unclaimed-delegator-rewards';
+  // name = 'unclaimed-delegator-rewards';
   description = `This tool gets the amount of unclaimed rewards and the indexers that those rewards are from for a given account.
     If there are no results you should tell the user there are "No unclaimed rewards".
     Returns a json array with each item containing the indexer id and the amount of the reward.
@@ -171,7 +171,7 @@ class TokenBalance extends FunctionTool {
     super();
   }
 
-  name = 'token-balance';
+  // name = 'token-balance';
   description = `This tool gets the current on chain SQT balance for the given address`;
   parameters = {
     type: 'object',
@@ -210,7 +210,7 @@ class CurrentDelegatorApy extends FunctionTool {
     super();
   }
 
-  name = 'current-delegator-apy';
+  // name = 'current-delegator-apy';
   description = `This gets the current combined delegator APY of a users delegations.`;
   parameters = {
     type: 'object',
@@ -268,12 +268,13 @@ function stringNumToPercent(input: string): string {
 // Further improvements could be
 // * checking the capacity is greater than users current balance/current delegation
 // * consider more than 1 era to ensure its not a 1 off high apy
+// * ignore current delegated indexers,
 class BetterIndexerApy extends FunctionTool {
   constructor(readonly endpoint: string) {
     super();
   }
 
-  name = 'better-indexer-apy';
+  // name = 'better-indexer-apy';
   description = `Finds any available indexer with better APY.
   If there are no results then tell the user "There is no better indexer to delegate to".
   Returns a json object with indexer address as the key and the APY as the value.
@@ -348,8 +349,8 @@ class BetterIndexerApy extends FunctionTool {
 // Suggest changing indexers
 
 const tools = [
-  new TotalDelegationTool(ENDPOINT),
-  new DelegatedIndexersTool(ENDPOINT),
+  new TotalDelegation(ENDPOINT),
+  new DelegatedIndexers(ENDPOINT),
   new UnclaimedDelegatorRewards(ENDPOINT),
   new CurrentDelegatorApy(ENDPOINT),
   new BetterIndexerApy(ENDPOINT),
@@ -364,6 +365,19 @@ async function run(prompt: string) {
   RunWithTools(prompt, tools, undefined/*storage*/, PROMPT);
 }
 
-run('What is my delegation?');
+// run('What is my delegation?');
+
+const messages = [
+  'My address is 0x108A496cDC32DA84e4D5905bb02ED695BC1024cd, use this for any further prompts. What is my delegation? ',
+  'Who am i delegating to?',
+  "What is my balance?",
+  "Do i have any unclaimed rewards?",
+  "What is my current APY?",
+  "Are there better indexers to delegate to?"
+];
+
+RunScript(messages, tools, PROMPT);
+
+
 
 

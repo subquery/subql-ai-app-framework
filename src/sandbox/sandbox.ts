@@ -1,0 +1,14 @@
+import { Tool } from "ollama";
+
+
+/**
+ * The sandbox provides a defined interface to run untrusted code
+ * */
+export interface ISandbox {
+
+  getTools(): Promise<Tool[]>;
+
+  runTool(toolName: string, args: any): Promise<any>;
+
+  // TODO expand this interface with more untrusted data/functions. e.g RAG
+}
