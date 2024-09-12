@@ -5,28 +5,24 @@ import { ISandbox } from './sandbox';
 
 export class Runner {
 
-  private ollama: Ollama;
+  #ollama: Ollama;
 
   constructor(
-    private model: string,
     private sandbox: ISandbox,
     private chatStorage: IChatStorage,
     private host ='http://127.0.0.1:11434',
   ) {
-    this.ollama = new Ollama({ host: this.host });
+    this.#ollama = new Ollama({ host: this.host });
   }
 
   private async runChat(): Promise<ChatResponse> {
-    console.time('chat');
-
-    const res = await this.ollama.chat({
-      model: this.model,
+    const res = await this.#ollama.chat({
+      model: this.sandbox.model,
       stream: false,
       tools: await this.sandbox.getTools(),
       // TODO should there be a limit to the number of items in the chat history?
       messages: await this.chatStorage.getHistory(),
     });
-    console.timeEnd('chat');
     return res;
   }
 

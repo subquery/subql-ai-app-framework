@@ -1,22 +1,27 @@
 {
   "name": "ollama-functions",
   "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
+  "main": "./src/index.ts",
+  "license": "GPL-3.0",
+  "type": "module",
   "scripts": {
-    "run": "npx ts-node llama-tool-example.ts"
+    "run:dev": "npx vite-node ./src/index.ts",
+    "build": "tsc"
   },
   "dependencies": {
     "@lancedb/lancedb": "^0.9.0",
     "@langchain/core": "^0.2.23",
     "@langchain/ollama": "^0.0.4",
+    "@sinclair/typebox": "^0.33.9",
     "apache-arrow": "^17.0.0",
     "ethers": "^6.13.2",
     "langchain": "^0.2.16",
-    "ollama": "^0.5.8"
+    "ollama": "^0.5.8",
+    "ora": "^8.1.0",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "ts-node": "^10.9.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vite-node": "^2.0.5"
   }
 }

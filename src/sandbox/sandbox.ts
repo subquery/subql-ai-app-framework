@@ -6,6 +6,12 @@ import { Tool } from "ollama";
  * */
 export interface ISandbox {
 
+  model: string;
+
+  systemPrompt: string;
+
+  userMessage?: string;
+
   getTools(): Promise<Tool[]>;
 
   runTool(toolName: string, args: any): Promise<any>;

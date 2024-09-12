@@ -4,9 +4,7 @@ import { ISandbox } from "./sandbox";
 
 export class MockSandbox implements ISandbox {
 
-  constructor(private tools: IFunctionTool[]) {
-
-  }
+  constructor(readonly model: string, readonly systemPrompt: string, private tools: IFunctionTool[], readonly userMessage?: string) {}
 
   async getTools() {
     return this.tools.map(t => t.toTool());
