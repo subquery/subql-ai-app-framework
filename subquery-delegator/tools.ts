@@ -1,6 +1,9 @@
 import { AbstractProvider, Contract, formatEther, formatUnits, toBigInt } from "ethers";
+import ollama from 'ollama';
 import { FunctionTool } from "../src/tool";
 import { grahqlRequest } from "./utils";
+import { IEmbeddingReader } from "../src/embeddings/embeddings";
+import { LanceReader } from "../src/embeddings/lance";
 
 type Amount = {
   era: number;
@@ -325,6 +328,39 @@ export class BetterIndexerApy extends FunctionTool {
       acc[node.indexerId] = stringNumToPercent(node.delegatorApy);
       return acc;
     }, {} as Record<string, string>);
+  }
+}
+
+export class SubqueryDocs extends FunctionTool {
+
+  #storage: IEmbeddingReader;
+  #storageFactory: () => Promise<IEmbeddingReader>;
+
+  constructor(dbPath: string, tableName: string, emdeddingModel = 'nomic-embed-text') {
+    super();
+
+    this.#storageFactory = () => LanceReader.open(dbPath, tableName, ollama, emdeddingModel)
+  }
+
+  description = `This tool gets relevant information from the Subquery Docs. It returns a list of results separated by newlines.`
+
+    parameters = {
+    type: 'object',
+    required: ['query'],
+    properties: {
+      account: {
+        type: 'string',
+        description: 'A search string, generally the users prompt',
+      }
+    },
+  }
+
+  async call({ query }: { query: string }): Promise<string>{
+    this.#storage ??= await this.#storageFactory();
+
+    const res = await this.#storage.search(query);
+
+    return res.filter(f => !!f).join('\n');
   }
 }
 

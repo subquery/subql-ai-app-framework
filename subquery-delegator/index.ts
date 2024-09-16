@@ -1,5 +1,6 @@
+import path from 'path';
 import { JsonRpcProvider } from 'ethers';
-import { BetterIndexerApy, CurrentDelegatorApy, DelegatedIndexers, TokenBalance, TotalDelegation, UnclaimedDelegatorRewards } from "./tools";
+import { BetterIndexerApy, CurrentDelegatorApy, DelegatedIndexers, SubqueryDocs, TokenBalance, TotalDelegation, UnclaimedDelegatorRewards } from "./tools";
 import { IProject } from "../src/project/project";
 
 
@@ -30,6 +31,7 @@ const tools = [
     new JsonRpcProvider("https://gateway.subquery.network/rpc/base-full"),
     '0x858c50C3AF1913b0E849aFDB74617388a1a5340d'
   ),
+  new SubqueryDocs(path.resolve(__dirname, '../.db'), 'subql-docs')
 ];
 
 const project: IProject = {
@@ -43,11 +45,16 @@ export default project;
 
 // Some example messages to ask with this set of tools
 const messages = [
+  // Delegation
   'My address is 0x108A496cDC32DA84e4D5905bb02ED695BC1024cd, use this for any further prompts. What is my delegation?',
   'Who am i delegating to?',
   "What is my balance?",
   "Do i have any unclaimed rewards?",
   "What is my current APY?",
-  "Are there better indexers to delegate to?"
+  "Are there better indexers to delegate to?",
+  // Docs knowledge
+  "What networks does subquery support?",
+  "How do i define a one-to-many relationship in a subquery project graphql schema?",
+  "Does subquery support the solana blockchain?",
 ];
 

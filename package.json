@@ -5,7 +5,8 @@
   "license": "GPL-3.0",
   "type": "module",
   "scripts": {
-    "run:dev": "npx vite-node ./src/index.ts",
+    "run:dev": "npx vite-node -w ./src/index.ts",
+    "run:prod": "npx vite-node ./src/index.ts",
     "build": "tsc"
   },
   "dependencies": {
@@ -15,9 +16,18 @@
     "@sinclair/typebox": "^0.33.9",
     "apache-arrow": "^17.0.0",
     "ethers": "^6.13.2",
+    "github-slugger": "^2.0.0",
     "langchain": "^0.2.16",
+    "mdast": "^3.0.0",
+    "mdast-util-from-markdown": "^2.0.1",
+    "mdast-util-mdx": "^3.0.0",
+    "mdast-util-to-markdown": "^2.1.0",
+    "mdast-util-to-string": "^4.0.0",
+    "micromark-extension-mdxjs": "^3.0.0",
     "ollama": "^0.5.8",
     "ora": "^8.1.0",
+    "unist-builder": "^4.0.0",
+    "unist-util-filter": "^5.0.1",
     "yargs": "^17.7.2"
   },
   "devDependencies": {

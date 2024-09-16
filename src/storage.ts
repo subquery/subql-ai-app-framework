@@ -1,6 +1,7 @@
 import ollama from "ollama";
 import * as lancedb from '@lancedb/lancedb';
 
+// import {SubqlEmbeddingFunction} from './embeddings/embeddingFunction';
 
 
 export class LanceStorage {
@@ -12,19 +13,39 @@ export class LanceStorage {
   public static async create(dbPath: string, tableName: string, model = 'nomic-embed-text'): Promise<LanceStorage> {
     const db = await lancedb.connect(dbPath);
 
-    const table = await db.openTable(tableName);
+    // const func = new SubqlEmbeddingFunction(ollama, model);
+
+
+    const table = await db.openTable(tableName, {
+      // embeddingFunction: {
+      //   function: func,
+      //   sourceColumn: 'content',
+      //   vectorColumn: 'vector',
+      // },
+    });
 
     return new LanceStorage(table, model);
   }
 
   async search(input: string): Promise<string[]> {
-    const { embeddings } = await ollama.embed({
+    console.log('Embeddings for', input);
+    const { embeddings: [embedding] } = await ollama.embed({
       model: this.model,
-      input,
+      input: input,
     });
 
-    const res = await this.dbTable.vectorSearch(embeddings[0]).toArray();
+    console.log('RUnning vector search')
 
-    return res.map(r => r.pageContent);
+    // const res1 = await this.dbTable.search(input)
+    //   .limit(10)
+    //   .toArray();
+
+    // console.log('res1', res1.map(r => r.content));
+
+    const res = await this.dbTable.vectorSearch(embedding)
+      .limit(10)
+      .toArray();
+
+    return res.map(r => r.content);
   }
 }
