@@ -1,6 +1,6 @@
 import { Tool } from "ollama";
-import { IProject, validateProject, getProjectFromEntrypoint } from "../project/project";
-import { ISandbox } from "./sandbox";
+import { IProject, validateProject, getProjectFromEntrypoint } from "../project/project.ts";
+import { ISandbox } from "./sandbox.ts";
 import { Value } from '@sinclair/typebox/value';
 
 /**

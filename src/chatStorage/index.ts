@@ -1,2 +1,2 @@
-export * from './chatStorage';
-export * from './memoryChatStoarge';
+export * from './chatStorage.ts';
+export * from './memoryChatStoarge.ts';

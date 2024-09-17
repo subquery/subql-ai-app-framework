@@ -1,7 +1,7 @@
 // This file is based on https://github.com/supabase-community/nextjs-openai-doc-search/blob/main/lib/generate-embeddings.ts
 
 
-import { ObjectExpression } from 'estree';
+// import { ObjectExpression } from 'estree';
 import { Content, Root } from 'mdast';
 import { fromMarkdown } from 'mdast-util-from-markdown';
 import { mdxFromMarkdown, MdxjsEsm } from 'mdast-util-mdx';
@@ -10,16 +10,19 @@ import { toString } from 'mdast-util-to-string';
 import { mdxjs } from 'micromark-extension-mdxjs';
 import { u } from 'unist-builder';
 import { filter } from 'unist-util-filter';
-import { readdir, readFile, stat } from 'fs/promises';
-import { basename, dirname, join } from 'path';
-import { createHash } from 'crypto';
-import GithubSlugger from 'github-slugger'
+import { basename } from "@std/path/basename";
+import { dirname } from "@std/path/dirname";
+import { join } from "@std/path/join";
+import { createHash } from 'node:crypto';
+import GithubSlugger from 'github-slugger';
+
+type OE = any;
 
 /**
  * Extracts ES literals from an `estree` `ObjectExpression`
  * into a plain JavaScript object.
  */
-function getObjectFromExpression(node: ObjectExpression) {
+function getObjectFromExpression(node: OE) {
   return node.properties.reduce<
     Record<string, string | number | bigint | true | RegExp | undefined>
   >((object, property) => {
@@ -179,32 +182,66 @@ type WalkEntry = {
 }
 
 export async function walk(dir: string, parentPath?: string): Promise<WalkEntry[]> {
-  const immediateFiles = await readdir(dir)
+  for await (const entry of Deno.readDir(dir)) {
+    if (entry.isDirectory) {
+      // Keep track of document hierarchy (if this dir has corresponding doc file)
+      const docPath = `${basename(path)}.mdx`
 
-  const recursiveFiles = await Promise.all(
-    immediateFiles.map(async (file) => {
-      const path = join(dir, file)
-      const stats = await stat(path)
-      if (stats.isDirectory()) {
-        // Keep track of document hierarchy (if this dir has corresponding doc file)
-        const docPath = `${basename(path)}.mdx`
+      return walk(
+        path,
+        immediateFiles.includes(docPath) ? join(dirname(path), docPath) : parentPath
+      )
+    } else if (entry.isFile) {
+      return [
+        {
+          path: path,
+          parentPath,
+        },
+      ]
+    } else {
+      return []
+    }
 
-        return walk(
-          path,
-          immediateFiles.includes(docPath) ? join(dirname(path), docPath) : parentPath
-        )
-      } else if (stats.isFile()) {
-        return [
-          {
-            path: path,
-            parentPath,
-          },
-        ]
-      } else {
-        return []
-      }
-    })
-  )
+    const path = join(dir, file)
+    const stats = await stat(path)
+    if (stats.isDirectory()) {
+
+    } else if (stats.isFile()) {
+      return [
+        {
+          path: path,
+          parentPath,
+        },
+      ]
+    } else {
+      return []
+    }
+  }
+
+  // const recursiveFiles = await Promise.all(
+  //   immediateFiles.map(async (file) => {
+  //     const path = join(dir, file)
+  //     const stats = await stat(path)
+  //     if (stats.isDirectory()) {
+  //       // Keep track of document hierarchy (if this dir has corresponding doc file)
+  //       const docPath = `${basename(path)}.mdx`
+
+  //       return walk(
+  //         path,
+  //         immediateFiles.includes(docPath) ? join(dirname(path), docPath) : parentPath
+  //       )
+  //     } else if (stats.isFile()) {
+  //       return [
+  //         {
+  //           path: path,
+  //           parentPath,
+  //         },
+  //       ]
+  //     } else {
+  //       return []
+  //     }
+  //   })
+  // )
 
   const flattenedFiles = recursiveFiles.reduce(
     (all, folderContents) => all.concat(folderContents),
@@ -239,7 +276,7 @@ export class MarkdownEmbeddingSource extends BaseEmbeddingSource {
   }
 
   async load() {
-    const contents = await readFile(this.filePath, 'utf8')
+    const contents = await Deno.readTextFile(this.filePath)
 
     const { checksum, meta, sections } = processMdxForSearch(contents)
 

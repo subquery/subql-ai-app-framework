@@ -1,16 +1,14 @@
-
-import { Ollama, ChatResponse, Message } from 'ollama';
-import { IChatStorage } from './chatStorage';
-import { ISandbox } from './sandbox';
+import { ChatResponse, Message, Ollama } from "ollama";
+import { IChatStorage } from "./chatStorage/index.ts";
+import { ISandbox } from "./sandbox/index.ts";
 
 export class Runner {
-
   #ollama: Ollama;
 
   constructor(
     private sandbox: ISandbox,
     private chatStorage: IChatStorage,
-    private host ='http://127.0.0.1:11434',
+    private host = "http://127.0.0.1:11434",
   ) {
     this.#ollama = new Ollama({ host: this.host });
   }
@@ -27,9 +25,9 @@ export class Runner {
   }
 
   async prompt(message: string): Promise<string> {
-    this.chatStorage.append([{ role: 'user', content: message }]);
+    this.chatStorage.append([{ role: "user", content: message }]);
 
-    while(true) {
+    while (true) {
       const res = await this.runChat();
 
       // Add to the chat history
@@ -41,11 +39,20 @@ export class Runner {
       }
 
       // Run tools and use their responses
-      const toolResponses = await Promise.all((res.message.tool_calls ?? []).map(async (toolCall) => {
-        return this.sandbox.runTool(toolCall.function.name, toolCall.function.arguments);
-      }));
+      const toolResponses = await Promise.all(
+        (res.message.tool_calls ?? []).map(async (toolCall) => {
+          const res = await  this.sandbox.runTool(
+            toolCall.function.name,
+            toolCall.function.arguments,
+          );
 
-      this.chatStorage.append(toolResponses.map(m => ({ role: 'tool', content: m })));
+          return res;
+        }),
+      );
+
+      this.chatStorage.append(
+        toolResponses.map((m) => ({ role: "tool", content: m })),
+      );
     }
   }
 
@@ -56,6 +63,6 @@ export class Runner {
       return fullHistory;
     }
 
-    return fullHistory.filter(m => m.role !== 'tool' && m.role !== 'system');
+    return fullHistory.filter((m) => m.role !== "tool" && m.role !== "system");
   }
 }

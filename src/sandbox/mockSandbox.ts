@@ -1,5 +1,5 @@
-import { IFunctionTool } from "../tool";
-import { ISandbox } from "./sandbox";
+import { IFunctionTool } from "../tool.ts";
+import { ISandbox } from "./sandbox.ts";
 
 
 export class MockSandbox implements ISandbox {

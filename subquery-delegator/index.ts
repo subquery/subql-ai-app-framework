@@ -1,14 +1,14 @@
-import path from 'path';
+import { resolve } from "@std/path/resolve";
 import { JsonRpcProvider } from 'ethers';
-import { BetterIndexerApy, CurrentDelegatorApy, DelegatedIndexers, SubqueryDocs, TokenBalance, TotalDelegation, UnclaimedDelegatorRewards } from "./tools";
+import { BetterIndexerApy, CurrentDelegatorApy, DelegatedIndexers, SubqueryDocs, TokenBalance, TotalDelegation, UnclaimedDelegatorRewards } from "./tools.ts";
 import { Type, type Static } from '@sinclair/typebox';
-import {IProjectEntrypoint } from '../src/project/project';
+import {IProjectEntrypoint } from '../src/project/project.ts';
 
 const ConfigType = Type.Object({
   GRAPHQL_ENDPOINT: Type.String({ default: 'https://gateway.subquery.network/query/QmcoJLxSeBnGwtmtNmWFCRusXVTGjYWCK1LoujthZ2NyGP' }),
   BASE_RPC: Type.String({ default: "https://gateway.subquery.network/rpc/base-full" }),
   BASE_SQT_ADDR: Type.String({ default: '0x858c50C3AF1913b0E849aFDB74617388a1a5340d' }),
-  DOCS_DB: Type.String({ default: '../.db' }),
+  DOCS_DB: Type.String({ default: '.db' }),
   DOCS_TABLE: Type.String({ default: 'subql-docs'}),
   TOP_K: Type.Integer({ default: 10 })
 });
@@ -38,7 +38,7 @@ export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
         new JsonRpcProvider(config.BASE_RPC),
         config.BASE_SQT_ADDR
       ),
-      new SubqueryDocs(path.resolve(__dirname, config.DOCS_DB), config.DOCS_TABLE, 'nomic-embed-text', config.TOP_K)
+      new SubqueryDocs(resolve(Deno.cwd(), config.DOCS_DB), config.DOCS_TABLE, 'nomic-embed-text', config.TOP_K)
     ];
 
     return {

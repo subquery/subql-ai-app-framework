@@ -1,7 +1,6 @@
-import path from 'path';
-import { BaseEmbeddingSource, MarkdownEmbeddingSource, walk } from "./mdSource";
+import { BaseEmbeddingSource, MarkdownEmbeddingSource, walk } from "./mdSource.ts";
 import ollama from 'ollama';
-import { LanceWriter } from '../lance';
+import { LanceWriter } from '../lance/index.ts';
 
 const DEFAULT_IGNORED_FILES = ['pages/404.mdx'];
 

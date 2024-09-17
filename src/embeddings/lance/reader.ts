@@ -1,6 +1,6 @@
 
 import * as lancedb from "@lancedb/lancedb";
-import { IEmbeddingReader } from "../embeddings";
+import { IEmbeddingReader } from "../embeddings.ts";
 import ollama, { Ollama } from "ollama";
 
 export class LanceReader implements IEmbeddingReader {

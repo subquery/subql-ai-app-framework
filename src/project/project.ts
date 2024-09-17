@@ -34,7 +34,6 @@ type IProjectEntry<Config extends TObject> = TUnion<[
 ]>;
 
 export type IProject = Static<typeof Project>;
-
 export type IProjectEntrypoint<T extends TObject = TObject> = Static<IProjectEntry<T>>;
 
 
@@ -60,7 +59,7 @@ const ProjectEntrypointGen2 = <T extends TObject>(t: T) => Type.Union([
 ]);
 
 
-export async function getProjectFromEntrypoint(entrypoint: any, rawConfig = process.env): Promise<IProject> {
+export async function getProjectFromEntrypoint(entrypoint: any, rawConfig: Record<string, unknown> = {}/*process.env*/): Promise<IProject> {
   if (!entrypoint) {
     throw new Error("Project entry is invalid");
   }

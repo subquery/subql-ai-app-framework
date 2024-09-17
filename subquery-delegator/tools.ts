@@ -1,9 +1,9 @@
 import { AbstractProvider, Contract, formatEther, formatUnits, toBigInt } from "ethers";
 import ollama from 'ollama';
-import { FunctionTool } from "../src/tool";
-import { grahqlRequest } from "./utils";
-import { IEmbeddingReader } from "../src/embeddings/embeddings";
-import { LanceReader } from "../src/embeddings/lance";
+import { FunctionTool } from "../src/tool.ts";
+import { grahqlRequest } from "./utils.ts";
+import { type IEmbeddingReader } from "../src/embeddings/embeddings.ts";
+import { LanceReader } from "../src/embeddings/lance/index.ts";
 
 type Amount = {
   era: number;

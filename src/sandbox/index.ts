@@ -1,4 +1,4 @@
 
-export * from './sandbox';
-export * from './mockSandbox';
-export * from './unsafeSandbox';
+export * from './sandbox.ts';
+export * from './mockSandbox.ts';
+export * from './unsafeSandbox.ts';

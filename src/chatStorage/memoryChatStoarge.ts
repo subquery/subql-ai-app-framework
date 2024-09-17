@@ -1,5 +1,5 @@
 import { Message } from "ollama";
-import { IChatStorage } from "./chatStorage";
+import { IChatStorage } from "./chatStorage.ts";
 
 
 export class MemoryChatStorage implements IChatStorage {

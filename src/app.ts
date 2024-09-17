@@ -1,12 +1,11 @@
 
-import path from 'path';
-import readline from 'readline/promises';
-import { MemoryChatStorage } from "./chatStorage/index";
-import { Runner } from "./runner";
-import { RunnerHost } from "./runnerHost";
-import { UnsafeSandbox } from "./sandbox/index";
+import { resolve } from "@std/path/resolve";
 import ora from 'ora';
 import chalk from 'chalk';
+import { MemoryChatStorage } from "./chatStorage/index.ts";
+import { Runner } from "./runner.ts";
+import { RunnerHost } from "./runnerHost.ts";
+import { UnsafeSandbox } from "./sandbox/index.ts";
 
 export async function runApp(config: {
   projectPath: string,
@@ -14,7 +13,7 @@ export async function runApp(config: {
   interface: 'cli' | 'http',
 }): Promise<void> {
 
-  const sandbox = await UnsafeSandbox.create(path.resolve(config.projectPath));
+  const sandbox = await UnsafeSandbox.create(resolve(config.projectPath));
 
   const runnerHost = new RunnerHost(async () => {
     const chatStorage = new MemoryChatStorage();
@@ -43,13 +42,8 @@ export async function runApp(config: {
 async function cli(runnerHost: RunnerHost): Promise<void> {
   const runner = await runnerHost.getRunner('default');
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
   while(true) {
-    const response = await rl.question(chalk.blueBright(`Enter a message: `));
+    const response = prompt(chalk.blueBright(`Enter a message: `));
 
     const spinner = ora({
       text: '',
@@ -64,4 +58,9 @@ async function cli(runnerHost: RunnerHost): Promise<void> {
       text: `${chalk.magentaBright(res)}`,
     });
   }
+}
+
+//https://platform.openai.com/docs/api-reference/chat/create
+async function http(runnerHost: RunnerHost, port: number): Promise<void> {
+
 }

@@ -1,7 +1,7 @@
 
 import * as lancedb from "@lancedb/lancedb";
 import { Schema, Field, Utf8, FixedSizeList, Float64 } from 'apache-arrow';
-import { IEmbeddingWriter } from "../embeddings";
+import { IEmbeddingWriter } from "../embeddings.ts";
 import ollama, { Ollama } from "ollama";
 
 
