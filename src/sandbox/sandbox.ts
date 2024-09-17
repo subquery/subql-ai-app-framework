@@ -1,5 +1,4 @@
-import { Tool } from "ollama";
-
+import { type Tool } from "ollama";
 
 /**
  * The sandbox provides a defined interface to run untrusted code
@@ -11,6 +10,8 @@ export interface ISandbox {
   systemPrompt: string;
 
   userMessage?: string;
+
+  config?: any;
 
   getTools(): Promise<Tool[]>;
 

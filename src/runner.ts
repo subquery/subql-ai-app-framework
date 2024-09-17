@@ -42,7 +42,7 @@ export class Runner {
 
       // Run tools and use their responses
       const toolResponses = await Promise.all((res.message.tool_calls ?? []).map(async (toolCall) => {
-        return this.sandbox.runTool(toolCall.function.name, toolCall.function.arguments)
+        return this.sandbox.runTool(toolCall.function.name, toolCall.function.arguments);
       }));
 
       this.chatStorage.append(toolResponses.map(m => ({ role: 'tool', content: m })));

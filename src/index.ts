@@ -1,9 +1,11 @@
 #!/usr/bin/env vite-node --script
 
+import 'dotenv/config';
 import path from 'path';
 import yargs from 'yargs/yargs';
 import { runApp } from './app';
 import { generate } from './embeddings/generator/generator';
+import { projectInfo } from './info';
 
 yargs(process.argv.slice(2))
   .command(
@@ -30,12 +32,43 @@ yargs(process.argv.slice(2))
         default: 'cli'
       },
     },
-    (argv) => {
-      return runApp({
-        projectPath: argv.project,
-        host: argv.host,
-        interface: argv.interface as 'cli' | 'http',
-      });
+    async (argv) => {
+      try {
+        return await runApp({
+          projectPath: argv.project,
+          host: argv.host,
+          interface: argv.interface as 'cli' | 'http',
+        });
+      } catch (e) {
+        console.log(e);
+        process.exit(1);
+      }
+    }
+  )
+  .command(
+    'info',
+    'Get information on a project',
+    {
+      project: {
+        alias: 'p',
+        description: 'A path to a project file',
+        type: 'string',
+        required: true,
+      },
+      json: {
+        description: 'Log the project in JSON format',
+        default: false,
+        type: 'boolean',
+      }
+    },
+    async (argv) => {
+      try {
+        return await projectInfo(argv.project, argv.json)
+      }
+      catch (e) {
+        console.log(e);
+        process.exit(1);
+      }
     }
   )
   .command(
@@ -66,14 +99,20 @@ yargs(process.argv.slice(2))
         string: true,
       }
     },
-    (argv) => {
-      return generate(
-        path.resolve(argv.input),
-        path.resolve(argv.output),
-        argv.table,
-        argv.ignoredFiles?.map(f => path.resolve(f)),
-      );
+    async (argv) => {
+      try {
+        return await generate(
+          path.resolve(argv.input),
+          path.resolve(argv.output),
+          argv.table,
+          argv.ignoredFiles?.map(f => path.resolve(f)),
+        );
+      } catch (e) {
+        console.log(e);
+        process.exit(1);
+      }
     }
   )
+  // .fail(() => {}) // Disable logging --help if theres an error with a command // TODO need to fix so it only logs when error is with yargs
   .help()
   .argv;

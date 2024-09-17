@@ -336,10 +336,10 @@ export class SubqueryDocs extends FunctionTool {
   #storage: IEmbeddingReader;
   #storageFactory: () => Promise<IEmbeddingReader>;
 
-  constructor(dbPath: string, tableName: string, emdeddingModel = 'nomic-embed-text') {
+  constructor(dbPath: string, tableName: string, emdeddingModel = 'nomic-embed-text', topK = 10) {
     super();
 
-    this.#storageFactory = () => LanceReader.open(dbPath, tableName, ollama, emdeddingModel)
+    this.#storageFactory = () => LanceReader.open(dbPath, tableName, ollama, emdeddingModel, topK)
   }
 
   description = `This tool gets relevant information from the Subquery Docs. It returns a list of results separated by newlines.`

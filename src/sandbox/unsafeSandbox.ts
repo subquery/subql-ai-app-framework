@@ -1,6 +1,7 @@
 import { Tool } from "ollama";
-import { IProject, validateProject } from "../project/project";
+import { IProject, validateProject, getProjectFromEntrypoint } from "../project/project";
 import { ISandbox } from "./sandbox";
+import { Value } from '@sinclair/typebox/value';
 
 /**
  * This class is considered unsafe as users code is directly required
@@ -10,8 +11,11 @@ export class UnsafeSandbox implements ISandbox {
   #project: IProject;
 
   public static async create(path: string): Promise<UnsafeSandbox> {
-    const project = await import(path);
-    return new UnsafeSandbox(project.default);
+    const p = await import(path);
+
+    const project = await getProjectFromEntrypoint(p.entrypoint);
+
+    return new UnsafeSandbox(project);
   }
 
   private constructor(project: IProject) {
@@ -22,6 +26,10 @@ export class UnsafeSandbox implements ISandbox {
 
   get model(): string {
     return this.#project.model;
+  }
+
+  get config(): any {
+    return this.#project.config;
   }
 
   get systemPrompt(): string {
