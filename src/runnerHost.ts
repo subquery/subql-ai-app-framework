@@ -10,4 +10,8 @@ export class RunnerHost {
 
     return this.#runners[id];
   }
+
+  async getAnonymousRunner(): Promise<Runner> {
+    return this.initRunner();
+  }
 }

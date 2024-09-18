@@ -13,35 +13,48 @@ export class Runner {
     this.#ollama = new Ollama({ host: this.host });
   }
 
-  private async runChat(): Promise<ChatResponse> {
+  private async runChat(messages: Message[]): Promise<ChatResponse> {
     const res = await this.#ollama.chat({
       model: this.sandbox.model,
       stream: false,
       tools: await this.sandbox.getTools(),
       // TODO should there be a limit to the number of items in the chat history?
-      messages: await this.chatStorage.getHistory(),
+      messages,
     });
     return res;
   }
 
   async prompt(message: string): Promise<string> {
-    this.chatStorage.append([{ role: "user", content: message }]);
+    return this.promptMessages([{ role: "user", content: message }]);
+  }
 
+  async promptMessages(messages: Message[]): Promise<string> {
+    await this.chatStorage.append(messages);
+    const tmpMessages = await this.chatStorage.getHistory();
+
+    return this.scopedPropmt(tmpMessages);
+  }
+
+  private async scopedPropmt(messages: Message[]): Promise<Message> {
+    // Tmp messages include the message history + any internal messages from tools
+    const tmpMessages = [...messages];
     while (true) {
-      const res = await this.runChat();
+
+      const res = await this.runChat(tmpMessages);
 
       // Add to the chat history
-      this.chatStorage.append([res.message]);
+      tmpMessages.push(res.message);
 
       // No more tools to work with return the result
       if (!res.message.tool_calls?.length) {
+        this.chatStorage.append([res.message]);
         return res.message.content;
       }
 
       // Run tools and use their responses
       const toolResponses = await Promise.all(
         (res.message.tool_calls ?? []).map(async (toolCall) => {
-          const res = await  this.sandbox.runTool(
+          const res = await this.sandbox.runTool(
             toolCall.function.name,
             toolCall.function.arguments,
           );
@@ -50,9 +63,7 @@ export class Runner {
         }),
       );
 
-      this.chatStorage.append(
-        toolResponses.map((m) => ({ role: "tool", content: m })),
-      );
+      tmpMessages.push(...toolResponses.map((m) => ({ role: "tool", content: m })));
     }
   }
 
