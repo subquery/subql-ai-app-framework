@@ -1,7 +1,7 @@
 import { Tool } from "ollama";
 import { IProject, validateProject, getProjectFromEntrypoint } from "../project/project.ts";
 import { ISandbox } from "./sandbox.ts";
-import { Value } from '@sinclair/typebox/value';
+import { TSchema } from '@sinclair/typebox';
 
 /**
  * This class is considered unsafe as users code is directly required
@@ -28,7 +28,7 @@ export class UnsafeSandbox implements ISandbox {
     return this.#project.model;
   }
 
-  get config(): any {
+  get config(): TSchema {
     return this.#project.config;
   }
 

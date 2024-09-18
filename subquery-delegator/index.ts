@@ -2,14 +2,14 @@ import { resolve } from "@std/path/resolve";
 import { JsonRpcProvider } from 'ethers';
 import { BetterIndexerApy, CurrentDelegatorApy, DelegatedIndexers, SubqueryDocs, TokenBalance, TotalDelegation, UnclaimedDelegatorRewards } from "./tools.ts";
 import { Type, type Static } from '@sinclair/typebox';
-import {IProjectEntrypoint } from '../src/project/project.ts';
+import { IProjectEntrypoint } from '../src/project/project.ts';
 
 const ConfigType = Type.Object({
   GRAPHQL_ENDPOINT: Type.String({ default: 'https://gateway.subquery.network/query/QmcoJLxSeBnGwtmtNmWFCRusXVTGjYWCK1LoujthZ2NyGP' }),
   BASE_RPC: Type.String({ default: "https://gateway.subquery.network/rpc/base-full" }),
   BASE_SQT_ADDR: Type.String({ default: '0x858c50C3AF1913b0E849aFDB74617388a1a5340d' }),
   DOCS_DB: Type.String({ default: '.db' }),
-  DOCS_TABLE: Type.String({ default: 'subql-docs'}),
+  DOCS_TABLE: Type.String({ default: 'subql-docs' }),
   TOP_K: Type.Integer({ default: 10 })
 });
 

@@ -1,4 +1,5 @@
 import { type Tool } from "ollama";
+import { TSchema } from "@sinclair/typebox";
 
 /**
  * The sandbox provides a defined interface to run untrusted code
@@ -11,7 +12,7 @@ export interface ISandbox {
 
   userMessage?: string;
 
-  config?: any;
+  config?: TSchema;
 
   getTools(): Promise<Tool[]>;
 

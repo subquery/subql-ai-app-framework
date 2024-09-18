@@ -2,15 +2,18 @@
 import { resolve } from "@std/path/resolve";
 import ora from 'ora';
 import chalk from 'chalk';
+import { Message } from 'ollama';
 import { MemoryChatStorage } from "./chatStorage/index.ts";
 import { Runner } from "./runner.ts";
 import { RunnerHost } from "./runnerHost.ts";
 import { UnsafeSandbox } from "./sandbox/index.ts";
+import { ChatResponse, http } from './http.ts';
 
 export async function runApp(config: {
   projectPath: string,
   host: string,
   interface: 'cli' | 'http',
+  port: number,
 }): Promise<void> {
 
   const sandbox = await UnsafeSandbox.create(resolve(config.projectPath));
@@ -33,17 +36,22 @@ export async function runApp(config: {
         console.log(sandbox.userMessage);
       }
       await cli(runnerHost);
+      break;
     case 'http':
     default:
-      throw new Error(`Only "cli" interface is supported currently`);
+      http(runnerHost, config.port);
+      await httpCli(config.port);
   }
 }
 
 async function cli(runnerHost: RunnerHost): Promise<void> {
   const runner = await runnerHost.getRunner('default');
 
-  while(true) {
+  while (true) {
     const response = prompt(chalk.blueBright(`Enter a message: `));
+    if (!response) {
+      continue;
+    }
 
     const spinner = ora({
       text: '',
@@ -60,7 +68,51 @@ async function cli(runnerHost: RunnerHost): Promise<void> {
   }
 }
 
-//https://platform.openai.com/docs/api-reference/chat/create
-async function http(runnerHost: RunnerHost, port: number): Promise<void> {
+async function httpCli(port: number): Promise<void> {
+  const messages: Message[] = [];
+
+  while (true) {
+    const response = prompt(chalk.blueBright(`Enter a message: `));
+    if (!response) {
+      continue;
+    }
+
+    messages.push({ content: response, role: 'user' });
+
+    const spinner = ora({
+      text: '',
+      color: 'yellow',
+      spinner: 'simpleDotsScrolling',
+      discardStdin: false,
+    }).start();
+
+    const r = await fetch(`http://localhost:${port}/v1/chat/completions`, {
+      method: 'POST',
+      body: JSON.stringify({
+        messages,
+        n: 1,
+        stream: false,
+      })
+    });
+
+    if (!r.ok) {
+      console.error('Response error', r.status, await r.text());
+      throw new Error("Bad response");
+    }
+
+    const resBody: ChatResponse = await r.json();
+
+    const res = resBody.choices[0]?.message;
+    if (!res) {
+      spinner.fail(chalk.redBright('Received invalid response message'));
+      continue;
+    }
+
+    messages.push(res);
+
+    spinner.stopAndPersist({
+      text: `${chalk.magentaBright(res.content)}`,
+    });
+  }
 
 }

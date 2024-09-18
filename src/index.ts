@@ -34,6 +34,12 @@ yargs(Deno.args)
         choices: ["cli", "http"],
         default: "cli",
       },
+      port: {
+        description: "The port the http service runs on",
+        type: 'number',
+        default: 7827,
+        // TODO set max value
+      }
     },
     async (argv) => {
       try {
@@ -41,6 +47,7 @@ yargs(Deno.args)
           projectPath: argv.project,
           host: argv.host,
           interface: argv.interface as "cli" | "http",
+          port: argv.port,
         });
       } catch (e) {
         console.log(e);

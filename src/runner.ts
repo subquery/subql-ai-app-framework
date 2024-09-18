@@ -25,17 +25,18 @@ export class Runner {
   }
 
   async prompt(message: string): Promise<string> {
-    return this.promptMessages([{ role: "user", content: message }]);
+    const outMessage = await this.promptMessages([{ role: "user", content: message }]);
+    return outMessage.message.content;
   }
 
-  async promptMessages(messages: Message[]): Promise<string> {
+  async promptMessages(messages: Message[]): Promise<ChatResponse> {
     await this.chatStorage.append(messages);
     const tmpMessages = await this.chatStorage.getHistory();
 
-    return this.scopedPropmt(tmpMessages);
+    return await this.scopedPrompt(tmpMessages);
   }
 
-  private async scopedPropmt(messages: Message[]): Promise<Message> {
+  private async scopedPrompt(messages: Message[]): Promise<ChatResponse> {
     // Tmp messages include the message history + any internal messages from tools
     const tmpMessages = [...messages];
     while (true) {
@@ -48,7 +49,7 @@ export class Runner {
       // No more tools to work with return the result
       if (!res.message.tool_calls?.length) {
         this.chatStorage.append([res.message]);
-        return res.message.content;
+        return res;
       }
 
       // Run tools and use their responses
