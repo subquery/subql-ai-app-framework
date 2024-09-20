@@ -9,6 +9,7 @@
       "jsr:@std/path@^1.0.6": "jsr:@std/path@1.0.6",
       "npm:@lancedb/lancedb@^0.10.0": "npm:@lancedb/lancedb@0.10.0_apache-arrow@17.0.0",
       "npm:@sinclair/typebox@^0.33.11": "npm:@sinclair/typebox@0.33.11",
+      "npm:@types/node": "npm:@types/node@18.15.13",
       "npm:apache-arrow@^17.0.0": "npm:apache-arrow@17.0.0",
       "npm:chalk@^5.3.0": "npm:chalk@5.3.0",
       "npm:ethers@^6.13.2": "npm:ethers@6.13.2",
@@ -24,6 +25,7 @@
       "npm:ora@^8.1.0": "npm:ora@8.1.0",
       "npm:unist-builder@^4.0.0": "npm:unist-builder@4.0.0",
       "npm:unist-util-filter@^5.0.1": "npm:unist-util-filter@5.0.1",
+      "npm:vscode-jsonrpc@^8.2.1": "npm:vscode-jsonrpc@8.2.1",
       "npm:yargs@^17.7.2": "npm:yargs@17.7.2"
     },
     "jsr": {
@@ -1044,6 +1046,10 @@
           "unist-util-stringify-position": "unist-util-stringify-position@4.0.0"
         }
       },
+      "vscode-jsonrpc@8.2.1": {
+        "integrity": "sha512-kdjOSJ2lLIn7r1rtrMbbNCHjyMPfRnowdKjBQ+mGq6NAW5QY2bEZC/khaC5OR8svbbjvLEaIXkOq45e2X9BIbQ==",
+        "dependencies": {}
+      },
       "whatwg-fetch@3.6.20": {
         "integrity": "sha512-EqhiFU6daOA8kpjOWTL0olhVOF3i7OrFzSYiGsEMB8GcXS+RrzauAERX65xMeNWVqxA6HXH2m69Z9LaKKdisfg==",
         "dependencies": {}
@@ -1113,6 +1119,7 @@
       "npm:ora@^8.1.0",
       "npm:unist-builder@^4.0.0",
       "npm:unist-util-filter@^5.0.1",
+      "npm:vscode-jsonrpc@^8.2.1",
       "npm:yargs@^17.7.2"
     ]
   }

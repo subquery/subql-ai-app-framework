@@ -6,7 +6,7 @@ import { Message } from 'ollama';
 import { MemoryChatStorage } from "./chatStorage/index.ts";
 import { Runner } from "./runner.ts";
 import { RunnerHost } from "./runnerHost.ts";
-import { UnsafeSandbox } from "./sandbox/index.ts";
+import { getDefaultSandbox } from "./sandbox/index.ts";
 import { ChatResponse, http } from './http.ts';
 
 export async function runApp(config: {
@@ -16,7 +16,7 @@ export async function runApp(config: {
   port: number,
 }): Promise<void> {
 
-  const sandbox = await UnsafeSandbox.create(resolve(config.projectPath));
+  const sandbox = await getDefaultSandbox(resolve(config.projectPath));
 
   const runnerHost = new RunnerHost(async () => {
     const chatStorage = new MemoryChatStorage();
@@ -44,11 +44,21 @@ export async function runApp(config: {
   }
 }
 
+function getPrompt(): string | null {
+  const response = prompt(chalk.blueBright(`Enter a message: `));
+
+  if (response === '/bye') {
+    Deno.exit(0);
+  }
+
+  return response;
+}
+
 async function cli(runnerHost: RunnerHost): Promise<void> {
   const runner = await runnerHost.getRunner('default');
 
   while (true) {
-    const response = prompt(chalk.blueBright(`Enter a message: `));
+    const response = getPrompt();
     if (!response) {
       continue;
     }
@@ -72,7 +82,7 @@ async function httpCli(port: number): Promise<void> {
   const messages: Message[] = [];
 
   while (true) {
-    const response = prompt(chalk.blueBright(`Enter a message: `));
+    const response = getPrompt();
     if (!response) {
       continue;
     }

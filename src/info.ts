@@ -1,12 +1,12 @@
 import { resolve } from "@std/path/resolve";
 import chalk from "chalk";
-import { UnsafeSandbox } from "./sandbox/index.ts";
+import { getDefaultSandbox } from "./sandbox/index.ts";
 
 export async function projectInfo(
   projectPath: string,
   json = false,
 ): Promise<void> {
-  const sandbox = await UnsafeSandbox.create(resolve(projectPath));
+  const sandbox = await getDefaultSandbox(resolve(projectPath));
 
   if (json) {
     console.log(JSON.stringify(

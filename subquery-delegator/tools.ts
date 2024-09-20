@@ -2,8 +2,8 @@ import { AbstractProvider, Contract, formatEther, formatUnits, toBigInt } from "
 import ollama from 'ollama';
 import { FunctionTool } from "../src/tool.ts";
 import { grahqlRequest } from "./utils.ts";
-import { type IEmbeddingReader } from "../src/embeddings/embeddings.ts";
-import { LanceReader } from "../src/embeddings/lance/index.ts";
+// import { type IEmbeddingReader } from "../src/embeddings/embeddings.ts";
+// import { LanceReader } from "../src/embeddings/lance/index.ts";
 
 type Amount = {
   era: number;
@@ -331,36 +331,36 @@ export class BetterIndexerApy extends FunctionTool {
   }
 }
 
-export class SubqueryDocs extends FunctionTool {
+// export class SubqueryDocs extends FunctionTool {
 
-  #storage: IEmbeddingReader;
-  #storageFactory: () => Promise<IEmbeddingReader>;
+//   #storage: IEmbeddingReader;
+//   #storageFactory: () => Promise<IEmbeddingReader>;
 
-  constructor(dbPath: string, tableName: string, emdeddingModel = 'nomic-embed-text', topK = 10) {
-    super();
+//   constructor(dbPath: string, tableName: string, emdeddingModel = 'nomic-embed-text', topK = 10) {
+//     super();
 
-    this.#storageFactory = () => LanceReader.open(dbPath, tableName, ollama, emdeddingModel, topK)
-  }
+//     this.#storageFactory = () => LanceReader.open(dbPath, tableName, ollama, emdeddingModel, topK)
+//   }
 
-  description = `This tool gets relevant information from the Subquery Docs. It returns a list of results separated by newlines.`
+//   description = `This tool gets relevant information from the Subquery Docs. It returns a list of results separated by newlines.`
 
-    parameters = {
-    type: 'object',
-    required: ['query'],
-    properties: {
-      account: {
-        type: 'string',
-        description: 'A search string, generally the users prompt',
-      }
-    },
-  }
+//     parameters = {
+//     type: 'object',
+//     required: ['query'],
+//     properties: {
+//       account: {
+//         type: 'string',
+//         description: 'A search string, generally the users prompt',
+//       }
+//     },
+//   }
 
-  async call({ query }: { query: string }): Promise<string>{
-    this.#storage ??= await this.#storageFactory();
+//   async call({ query }: { query: string }): Promise<string>{
+//     this.#storage ??= await this.#storageFactory();
 
-    const res = await this.#storage.search(query);
+//     const res = await this.#storage.search(query);
 
-    return res.filter(f => !!f).join('\n');
-  }
-}
+//     return res.filter(f => !!f).join('\n');
+//   }
+// }
 

@@ -1,6 +1,6 @@
 import { resolve } from "@std/path/resolve";
 import { JsonRpcProvider } from 'ethers';
-import { BetterIndexerApy, CurrentDelegatorApy, DelegatedIndexers, SubqueryDocs, TokenBalance, TotalDelegation, UnclaimedDelegatorRewards } from "./tools.ts";
+import { BetterIndexerApy, CurrentDelegatorApy, DelegatedIndexers, /*SubqueryDocs,*/ TokenBalance, TotalDelegation, UnclaimedDelegatorRewards } from "./tools.ts";
 import { Type, type Static } from '@sinclair/typebox';
 import { IProjectEntrypoint } from '../src/project/project.ts';
 
@@ -28,6 +28,8 @@ If the question seems to be unrelated to the API, just return "I don't know" as 
 export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
   configType: ConfigType,
   projectFactory: async (config: Config) => {
+    console.log("YOOYOYO config", config)
+
     const tools = [
       new TotalDelegation(config.GRAPHQL_ENDPOINT),
       new DelegatedIndexers(config.GRAPHQL_ENDPOINT),
@@ -38,7 +40,7 @@ export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
         new JsonRpcProvider(config.BASE_RPC),
         config.BASE_SQT_ADDR
       ),
-      new SubqueryDocs(resolve(Deno.cwd(), config.DOCS_DB), config.DOCS_TABLE, 'nomic-embed-text', config.TOP_K)
+      // new SubqueryDocs(resolve(Deno.cwd(), config.DOCS_DB), config.DOCS_TABLE, 'nomic-embed-text', config.TOP_K)
     ];
 
     return {

@@ -1,5 +1,6 @@
 import { type TSchema, Type, type Static, type TObject, TFunction, TPromise, TUndefined, TUnion } from '@sinclair/typebox';
 import { Value } from '@sinclair/typebox/value';
+import { loadConfigFromEnv } from "../util.ts";
 
 // TODO link this to the types defined in tool
 export const FunctionToolType = Type.Object({
@@ -42,12 +43,12 @@ export function validateProject(project: any): void {
 }
 
 function validateProjectEntry(entry: any): void {
-  const projectType = ProjectEntrypointGen2(entry?.configType);
+  const projectType = ProjectEntrypointGen(entry?.configType);
 
   Value.Assert(projectType, entry);
 }
 
-const ProjectEntrypointGen2 = <T extends TObject>(t: T) => Type.Union([
+const ProjectEntrypointGen = <T extends TObject>(t: T) => Type.Union([
   Type.Object({
     configType: Type.Any(),
     projectFactory: Type.Function([t], Type.Promise(Project))
@@ -59,16 +60,14 @@ const ProjectEntrypointGen2 = <T extends TObject>(t: T) => Type.Union([
 ]);
 
 
-export async function getProjectFromEntrypoint(entrypoint: any, rawConfig: Record<string, unknown> = {}/*process.env*/): Promise<IProject> {
+export async function getProjectFromEntrypoint(entrypoint: any): Promise<IProject> {
   if (!entrypoint) {
     throw new Error("Project entry is invalid");
   }
   // Validate the entrypoint
   validateProjectEntry(entrypoint);
 
-  const config = entrypoint.configType
-    ? Value.Parse(entrypoint.configType, rawConfig)
-    : undefined;
+  const config = loadConfigFromEnv(entrypoint.configType);
 
   // Check that the constructed project is valid
   const project = await entrypoint.projectFactory(config);
