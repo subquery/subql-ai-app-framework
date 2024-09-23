@@ -1,4 +1,6 @@
 import { Tool } from "ollama";
+import { IFunctionTool } from "./project/project.ts";
+import { IContext } from "./context/context.ts";
 
 type Parameters = Tool["function"]["parameters"];
 
@@ -29,27 +31,20 @@ type OptionalParams<P extends Parameters> = {
   ]?: ExtractParameters<P>[K];
 };
 
-export interface IFunctionTool<P extends Parameters = Parameters> {
-  name: string;
-
-  description: string;
-
+export type ITool<P extends Parameters = Parameters> = IFunctionTool & {
   parameters: P;
-
-  call: (args: any /*RequiredParams<P> & OptionalParams<P>*/) => Promise<any>;
-
-  toTool: () => Tool;
-}
+};
 
 // TODO map paramaters type to call args, it doesn't seem to be able to inferred with typescript without being explicit on the generic param
-export abstract class FunctionTool /*<P extends Parameters>*/
-  implements IFunctionTool<Parameters> {
+export abstract class FunctionTool<P extends Parameters = Parameters>
+  implements ITool<P> {
   name = this.constructor.name;
 
-  abstract parameters: Parameters;
+  abstract parameters: P;
   abstract description: string;
   abstract call(
     args: Record<any, any>, /*RequiredParams<P> & OptionalParams<P>*/
+    ctx: IContext,
   ): Promise<any>;
 
   toTool(): Tool {

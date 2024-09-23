@@ -1,16 +1,20 @@
 import { ChatResponse, Message, Ollama } from "ollama";
 import { IChatStorage } from "./chatStorage/index.ts";
 import { ISandbox } from "./sandbox/index.ts";
+import { IContext } from "./context/context.ts";
 
 export class Runner {
   #ollama: Ollama;
+  #context: IContext;
 
   constructor(
     private sandbox: ISandbox,
     private chatStorage: IChatStorage,
-    private host = "http://127.0.0.1:11434",
+    ollama: Ollama,
+    context: IContext,
   ) {
-    this.#ollama = new Ollama({ host: this.host });
+    this.#ollama = ollama;
+    this.#context = context;
   }
 
   private async runChat(messages: Message[]): Promise<ChatResponse> {
@@ -25,7 +29,10 @@ export class Runner {
   }
 
   async prompt(message: string): Promise<string> {
-    const outMessage = await this.promptMessages([{ role: "user", content: message }]);
+    const outMessage = await this.promptMessages([{
+      role: "user",
+      content: message,
+    }]);
     return outMessage.message.content;
   }
 
@@ -40,7 +47,6 @@ export class Runner {
     // Tmp messages include the message history + any internal messages from tools
     const tmpMessages = [...messages];
     while (true) {
-
       const res = await this.runChat(tmpMessages);
 
       // Add to the chat history
@@ -58,13 +64,16 @@ export class Runner {
           const res = await this.sandbox.runTool(
             toolCall.function.name,
             toolCall.function.arguments,
+            this.#context,
           );
 
           return res;
         }),
       );
 
-      tmpMessages.push(...toolResponses.map((m) => ({ role: "tool", content: m })));
+      tmpMessages.push(
+        ...toolResponses.map((m) => ({ role: "tool", content: m })),
+      );
     }
   }
 

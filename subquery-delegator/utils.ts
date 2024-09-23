@@ -1,8 +1,12 @@
-export async function grahqlRequest<T = any>(endpoint: string, query: string, variables?: unknown): Promise<T> {
+export async function grahqlRequest<T = any>(
+  endpoint: string,
+  query: string,
+  variables?: unknown,
+): Promise<T> {
   const response = await fetch(endpoint, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       query,
@@ -15,9 +19,9 @@ export async function grahqlRequest<T = any>(endpoint: string, query: string, va
   // console.log('XXXX raw response', res);
 
   if (res.errors) {
-    console.log(`Request failed\n${query}`)
+    console.log(`Request failed\n${query}`);
 
-    throw new Error(res.errors.map((e: any) => e.message).join('\n'));
+    throw new Error(res.errors.map((e: any) => e.message).join("\n"));
   }
 
   return res.data;

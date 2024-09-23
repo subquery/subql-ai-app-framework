@@ -15,6 +15,7 @@ export async function projectInfo(
         config: sandbox.config,
         tools: (await sandbox.getTools()).map((t) => t.function.name),
         systemPrompt: sandbox.systemPrompt,
+        vectorStorage: sandbox.vectorStorage,
       },
       null,
       2,
@@ -22,22 +23,32 @@ export async function projectInfo(
     return;
   }
 
-  console.log(`${chalk.magentaBright("Project Information")}:
-    ${chalk.blueBright("Model")}: \n\t${sandbox.model}
-    ${chalk.blueBright("Config")}: \n${
-    indentString(JSON.stringify(sandbox.config, null, 2))
-  }
-    ${chalk.blueBright("Tools")}: \n${
-    indentString(
+  const info: [string, string][] = [
+    ["Model", sandbox.model],
+    ["Conifg", JSON.stringify(sandbox.config, null, 2)],
+    [
+      "Tools",
       (await sandbox.getTools()).map((t) => t.function.name).join("\n"),
-    )
+    ],
+    ["System Prompt", sandbox.systemPrompt],
+  ];
+
+  if (sandbox.vectorStorage) {
+    info.push([
+      "Vector Storage",
+      `Type: ${sandbox.vectorStorage.type}\nPath: ${sandbox.vectorStorage.path}`,
+    ]);
   }
-    ${chalk.blueBright("System Prompt")}: \n\t${
-    indentString(sandbox.systemPrompt)
+
+  console.log(`${chalk.magentaBright("Project Information")}:
+${
+    info.map(([key, value]) =>
+      `    ${chalk.blueBright(key)}:\n${indentString(value)}`
+    ).join("\n")
   }
   `);
 }
 
-function indentString(input: string): String {
+function indentString(input: string): string {
   return input.split("\n").map((l) => `\t${l}`).join("\n");
 }

@@ -1,63 +1,81 @@
+import * as rpc from "vscode-jsonrpc";
+import {
+  BrowserMessageReader,
+  BrowserMessageWriter,
+} from "vscode-jsonrpc/browser.js";
+import {
+  CallTool,
+  CtxComputeQueryEmbedding,
+  CtxVectorSearch,
+  GetConfig,
+  Init,
+  IProjectJson,
+  Load,
+} from "./messages.ts";
 
-
-import * as rpc from 'vscode-jsonrpc';
-import { BrowserMessageReader, BrowserMessageWriter } from 'vscode-jsonrpc/browser.js';
-import { Init, GetConfig, CallTool, IProjectJson, Load } from './messages.ts';
-
-import { getProjectFromEntrypoint, IProject, IProjectEntrypoint } from "../../project/project.ts";
-
+import {
+  getProjectFromEntrypoint,
+  IProject,
+  IProjectEntrypoint,
+} from "../../project/project.ts";
+import { IContext } from "../../context/context.ts";
 
 const conn = rpc.createMessageConnection(
-    new BrowserMessageReader(self),
-    new BrowserMessageWriter(self),
+  new BrowserMessageReader(self),
+  new BrowserMessageWriter(self),
 );
 
 let entrypoint: IProjectEntrypoint;
 let project: IProject;
 
+const context = {
+  vectorSearch: (table, vectors) =>
+    conn.sendRequest(CtxVectorSearch, table, vectors),
+  computeQueryEmbedding: (query) =>
+    conn.sendRequest(CtxComputeQueryEmbedding, query),
+} satisfies IContext;
+
 function toJsonProject(): IProjectJson {
-    return {
-        model: project.model,
-        prompt: project.prompt,
-        userMessage: project.userMessage,
-        tools: project.tools.map(t => t.toTool()),
-    }
+  const { tools, ...rest } = project;
+  return {
+    ...rest,
+    tools: tools.map((t) => t.toTool()),
+  };
 }
 
 conn.onRequest(Load, async (path) => {
-    entrypoint ??= (await import(path)).entrypoint;
-})
+  entrypoint ??= (await import(path)).entrypoint;
+});
 
 conn.onRequest(Init, async (config) => {
-    if (!entrypoint) {
-        throw new Error("Please call `load` first");
-    }
-    
-    project ??= await getProjectFromEntrypoint(entrypoint, config);
-    
-    return toJsonProject()
+  if (!entrypoint) {
+    throw new Error("Please call `load` first");
+  }
+
+  project ??= await getProjectFromEntrypoint(entrypoint, config);
+
+  return toJsonProject();
 });
 
 conn.onRequest(GetConfig, () => {
-    if (!entrypoint) {
-        throw new Error('Project is not initialized');
-    }
-    return entrypoint.configType;
+  if (!entrypoint) {
+    throw new Error("Project is not initialized");
+  }
+  return entrypoint.configType;
 });
 
 conn.onRequest(CallTool, (toolName, args) => {
-    if (!project) {
-        throw new Error('Project is not initialized');
-    }
+  if (!project) {
+    throw new Error("Project is not initialized");
+  }
 
-    const tool = project.tools.find(t => t.name === toolName);
+  const tool = project.tools.find((t) => t.name === toolName);
 
-    if (!tool) {
+  if (!tool) {
     throw new Error(`Tool not found: ${toolName}`);
-    }
+  }
 
-    return tool.call(args);
+  return tool.call(args, context);
 });
 
 conn.listen();
-

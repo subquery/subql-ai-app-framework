@@ -1,9 +1,7 @@
-
 import * as lancedb from "@lancedb/lancedb";
-import { Schema, Field, Utf8, FixedSizeList, Float64 } from 'apache-arrow';
+import { Field, FixedSizeList, Float64, Schema, Utf8 } from "apache-arrow";
 import { IEmbeddingWriter } from "../embeddings.ts";
 import ollama, { Ollama } from "ollama";
-
 
 export class LanceWriter implements IEmbeddingWriter {
   #table: lancedb.Table;
@@ -21,13 +19,22 @@ export class LanceWriter implements IEmbeddingWriter {
     ),
   ]);
 
-  constructor(table: lancedb.Table, model: Ollama, embedModel = 'nomic-embed-text') {
+  constructor(
+    table: lancedb.Table,
+    model: Ollama,
+    embedModel = "nomic-embed-text",
+  ) {
     this.#table = table;
     this.#model = model;
     this.#embedModel = embedModel;
   }
 
-  static async createNewTable(dbPath: string, tableName: string, model: Ollama = ollama, embedModel = 'nomic-embed-text'): Promise<LanceWriter> {
+  static async createNewTable(
+    dbPath: string,
+    tableName: string,
+    model: Ollama = ollama,
+    embedModel = "nomic-embed-text",
+  ): Promise<LanceWriter> {
     const db = await lancedb.connect(dbPath);
 
     const table = await db.createEmptyTable(tableName, this.#schema);
@@ -46,7 +53,7 @@ export class LanceWriter implements IEmbeddingWriter {
       return {
         content: input,
         vector: embeddings[idx],
-      }
+      };
     });
 
     await this.#table.add(data);

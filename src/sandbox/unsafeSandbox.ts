@@ -1,13 +1,18 @@
 import { Tool } from "ollama";
-import { IProject, validateProject, getProjectFromEntrypoint } from "../project/project.ts";
+import {
+  getProjectFromEntrypoint,
+  IProject,
+  IVectorConfig,
+  validateProject,
+} from "../project/project.ts";
 import { ISandbox } from "./sandbox.ts";
-import { TSchema } from '@sinclair/typebox';
+import { TSchema } from "@sinclair/typebox";
+import { IContext } from "../context/context.ts";
 
 /**
  * This class is considered unsafe as users code is directly required
- * */
+ */
 export class UnsafeSandbox implements ISandbox {
-
   #project: IProject;
 
   public static async create(path: string): Promise<UnsafeSandbox> {
@@ -28,9 +33,9 @@ export class UnsafeSandbox implements ISandbox {
     return this.#project.model;
   }
 
-  get config(): TSchema {
-    return this.#project.config;
-  }
+  // get config(): TSchema {
+  //   return this.#project.config;
+  // }
 
   get systemPrompt(): string {
     return this.#project.prompt;
@@ -40,17 +45,21 @@ export class UnsafeSandbox implements ISandbox {
     return this.#project.userMessage;
   }
 
-  async getTools(): Promise<Tool[]> {
-    return this.#project.tools.map(t => t.toTool());
+  get vectorStorage(): IVectorConfig | undefined {
+    return this.#project.vectorStorage;
   }
 
-  runTool(toolName: string, args: any): Promise<any> {
-    const tool = this.#project.tools.find(t => t.name === toolName);
+  async getTools(): Promise<Tool[]> {
+    return this.#project.tools.map((t) => t.toTool());
+  }
+
+  runTool(toolName: string, args: any, ctx: IContext): Promise<any> {
+    const tool = this.#project.tools.find((t) => t.name === toolName);
 
     if (!tool) {
       throw new Error(`Tool not found: ${toolName}`);
     }
 
-    return tool.call(args);
+    return tool.call(args, ctx);
   }
 }

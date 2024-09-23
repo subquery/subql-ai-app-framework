@@ -1,6 +1,16 @@
-import { type TSchema, Type, type Static, type TObject, TFunction, TPromise, TUndefined, TUnion } from '@sinclair/typebox';
-import { Value } from '@sinclair/typebox/value';
+import {
+  type Static,
+  TFunction,
+  type TObject,
+  TPromise,
+  type TSchema,
+  TUndefined,
+  TUnion,
+  Type,
+} from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 import { loadConfigFromEnv } from "../util.ts";
+import { ContextType, IContext } from "../context/context.ts";
 
 // TODO link this to the types defined in tool
 export const FunctionToolType = Type.Object({
@@ -9,34 +19,54 @@ export const FunctionToolType = Type.Object({
 
   parameters: Type.Any(),
 
-  call: Type.Function([Type.Any()], Type.Promise(Type.Any())),
+  call: Type.Function([Type.Any(), ContextType], Type.Promise(Type.Any())),
   toTool: Type.Function([], Type.Any()),
+});
+
+export const VectorConfig = Type.Object({
+  path: Type.String({ description: "The path to the db" }),
+  type: Type.Literal("lancedb"),
 });
 
 export const Project = Type.Object({
   model: Type.String({
-    description: 'The llm model to use'
+    description: "The llm model to use",
   }),
+  embedModel: Type.Optional(Type.String({
+    description: "The model used to generate embeddings queries",
+  })),
   prompt: Type.String({
-    description: 'The initial system prompt of the app'
+    description: "The initial system prompt of the app",
   }),
   userMessage: Type.Optional(Type.String({
-    description: 'An initial message to present to the user',
+    description: "An initial message to present to the user",
   })),
   tools: Type.Array(FunctionToolType),
-  config: Type.Optional(Type.Any({
-    description: 'Environment variables for the project',
-  }))
+  vectorStorage: Type.Optional(VectorConfig),
 });
 
+export type IFunctionTool = Static<typeof FunctionToolType>;
+export type IVectorConfig = Static<typeof VectorConfig>;
+
 type IProjectEntry<Config extends TObject> = TUnion<[
-  TObject<{ configType: TSchema, projectFactory: TFunction<[Config], TPromise<typeof Project>>}>,
-  TObject<{ configType: TUndefined, projectFactory: TFunction<[], TPromise<typeof Project>>}>
+  TObject<
+    {
+      configType: TSchema;
+      projectFactory: TFunction<[Config], TPromise<typeof Project>>;
+    }
+  >,
+  TObject<
+    {
+      configType: TUndefined;
+      projectFactory: TFunction<[], TPromise<typeof Project>>;
+    }
+  >,
 ]>;
 
 export type IProject = Static<typeof Project>;
-export type IProjectEntrypoint<T extends TObject = TObject> = Static<IProjectEntry<T>>;
-
+export type IProjectEntrypoint<T extends TObject = TObject> = Static<
+  IProjectEntry<T>
+>;
 
 export function validateProject(project: any): void {
   return Value.Assert(Project, project);
@@ -48,19 +78,21 @@ function validateProjectEntry(entry: any): void {
   Value.Assert(projectType, entry);
 }
 
-const ProjectEntrypointGen = <T extends TObject>(t: T) => Type.Union([
-  Type.Object({
-    configType: Type.Any(),
-    projectFactory: Type.Function([t], Type.Promise(Project))
-  }),
-  Type.Object({
-    // configType: Type.Undefined(),
-    projectFactory: Type.Function([], Type.Promise(Project))
-  }),
-]);
+const ProjectEntrypointGen = <T extends TObject>(t: T) =>
+  Type.Union([
+    Type.Object({
+      configType: Type.Any(),
+      projectFactory: Type.Function([t], Type.Promise(Project)),
+    }),
+    Type.Object({
+      // configType: Type.Undefined(),
+      projectFactory: Type.Function([], Type.Promise(Project)),
+    }),
+  ]);
 
-
-export async function getProjectFromEntrypoint(entrypoint: any): Promise<IProject> {
+export async function getProjectFromEntrypoint(
+  entrypoint: any,
+): Promise<IProject> {
   if (!entrypoint) {
     throw new Error("Project entry is invalid");
   }
@@ -72,7 +104,7 @@ export async function getProjectFromEntrypoint(entrypoint: any): Promise<IProjec
   // Check that the constructed project is valid
   const project = await entrypoint.projectFactory(config);
 
-  validateProject(project)
+  validateProject(project);
 
   return project;
 }

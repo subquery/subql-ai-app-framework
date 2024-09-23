@@ -36,10 +36,10 @@ yargs(Deno.args)
       },
       port: {
         description: "The port the http service runs on",
-        type: 'number',
+        type: "number",
         default: 7827,
         // TODO set max value
-      }
+      },
     },
     async (argv) => {
       try {

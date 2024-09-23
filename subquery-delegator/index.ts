@@ -1,16 +1,27 @@
-import { resolve } from "@std/path/resolve";
-import { JsonRpcProvider } from 'ethers';
-import { BetterIndexerApy, CurrentDelegatorApy, DelegatedIndexers, /*SubqueryDocs,*/ TokenBalance, TotalDelegation, UnclaimedDelegatorRewards } from "./tools.ts";
-import { Type, type Static } from '@sinclair/typebox';
-import { IProjectEntrypoint } from '../src/project/project.ts';
+import { JsonRpcProvider } from "ethers";
+import {
+  BetterIndexerApy,
+  CurrentDelegatorApy,
+  DelegatedIndexers,
+  SubqueryDocs,
+  TokenBalance,
+  TotalDelegation,
+  UnclaimedDelegatorRewards,
+} from "./tools.ts";
+import { type Static, Type } from "@sinclair/typebox";
+import { IProjectEntrypoint } from "../src/project/project.ts";
 
 const ConfigType = Type.Object({
-  GRAPHQL_ENDPOINT: Type.String({ default: 'https://gateway.subquery.network/query/QmcoJLxSeBnGwtmtNmWFCRusXVTGjYWCK1LoujthZ2NyGP' }),
-  BASE_RPC: Type.String({ default: "https://gateway.subquery.network/rpc/base-full" }),
-  BASE_SQT_ADDR: Type.String({ default: '0x858c50C3AF1913b0E849aFDB74617388a1a5340d' }),
-  DOCS_DB: Type.String({ default: '.db' }),
-  DOCS_TABLE: Type.String({ default: 'subql-docs' }),
-  TOP_K: Type.Integer({ default: 10 })
+  GRAPHQL_ENDPOINT: Type.String({
+    default:
+      "https://gateway.subquery.network/query/QmcoJLxSeBnGwtmtNmWFCRusXVTGjYWCK1LoujthZ2NyGP",
+  }),
+  BASE_RPC: Type.String({
+    default: "https://gateway.subquery.network/rpc/base-full",
+  }),
+  BASE_SQT_ADDR: Type.String({
+    default: "0x858c50C3AF1913b0E849aFDB74617388a1a5340d",
+  }),
 });
 
 type Config = Static<typeof ConfigType>;
@@ -28,8 +39,6 @@ If the question seems to be unrelated to the API, just return "I don't know" as 
 export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
   configType: ConfigType,
   projectFactory: async (config: Config) => {
-    console.log("YOOYOYO config", config)
-
     const tools = [
       new TotalDelegation(config.GRAPHQL_ENDPOINT),
       new DelegatedIndexers(config.GRAPHQL_ENDPOINT),
@@ -38,26 +47,30 @@ export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
       new BetterIndexerApy(config.GRAPHQL_ENDPOINT),
       new TokenBalance(
         new JsonRpcProvider(config.BASE_RPC),
-        config.BASE_SQT_ADDR
+        config.BASE_SQT_ADDR,
       ),
-      // new SubqueryDocs(resolve(Deno.cwd(), config.DOCS_DB), config.DOCS_TABLE, 'nomic-embed-text', config.TOP_K)
+      new SubqueryDocs(),
     ];
 
     return {
       tools,
-      model: 'llama3.1',
+      model: "llama3.1",
+      vectorStorage: {
+        type: "lancedb",
+        path: "../.db",
+      },
       prompt: PROMPT,
-      userMessage: 'Welcome to the SubQuery Delegator Agent! How can I help you today?',
-      config: ConfigType,
-    }
-  }
-}
+      userMessage:
+        "Welcome to the SubQuery Delegator Agent! How can I help you today?",
+    };
+  },
+};
 
 // Some example messages to ask with this set of tools
 const messages = [
   // Delegation
-  'My address is 0x108A496cDC32DA84e4D5905bb02ED695BC1024cd, use this for any further prompts. What is my delegation?',
-  'Who am i delegating to?',
+  "My address is 0x108A496cDC32DA84e4D5905bb02ED695BC1024cd, use this for any further prompts. What is my delegation?",
+  "Who am i delegating to?",
   "What is my balance?",
   "Do i have any unclaimed rewards?",
   "What is my current APY?",
@@ -67,6 +80,4 @@ const messages = [
   "How do i define a one-to-many relationship in a subquery project graphql schema?",
   "Does subquery support the solana blockchain?",
   "How do i swap ksqt for sqt?",
-
 ];
-
