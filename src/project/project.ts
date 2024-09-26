@@ -10,7 +10,7 @@ import {
 } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import { loadConfigFromEnv } from "../util.ts";
-import { ContextType, IContext } from "../context/context.ts";
+import { ContextType } from "../context/context.ts";
 
 // TODO link this to the types defined in tool
 export const FunctionToolType = Type.Object({
@@ -24,7 +24,10 @@ export const FunctionToolType = Type.Object({
 });
 
 export const VectorConfig = Type.Object({
-  path: Type.String({ description: "The path to the db" }),
+  path: Type.String({
+    description:
+      "The path to the db, this can be any uri that lancedb supports as well as an ipfs CID to an archive",
+  }),
   type: Type.Literal("lancedb"),
 });
 
@@ -35,7 +38,7 @@ export const Project = Type.Object({
   embedModel: Type.Optional(Type.String({
     description: "The model used to generate embeddings queries",
   })),
-  prompt: Type.String({
+  systemPrompt: Type.String({
     description: "The initial system prompt of the app",
   }),
   userMessage: Type.Optional(Type.String({

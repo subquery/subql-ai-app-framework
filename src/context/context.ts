@@ -1,6 +1,6 @@
 import { type Static, Type } from "@sinclair/typebox";
-import { Ollama } from "ollama";
-import * as LanceDb from "@lancedb/lancedb";
+import type { Ollama } from "ollama";
+import type { Connection } from "@lancedb/lancedb";
 
 export const ContextType = Type.Object({
   vectorSearch: Type.Function(
@@ -29,11 +29,11 @@ export type IContext = Static<typeof ContextType>;
 
 export class Context implements IContext {
   #model: Ollama;
-  #vectorStorage?: LanceDb.Connection;
+  #vectorStorage?: Connection;
 
   constructor(
     model: Ollama,
-    vectorStorage?: LanceDb.Connection,
+    vectorStorage?: Connection,
     readonly embedModel = "nomic-embed-text",
     readonly topK = 10,
   ) {

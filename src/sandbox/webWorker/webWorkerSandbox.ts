@@ -56,6 +56,7 @@ export class WebWorkerSandbox implements ISandbox {
 
     // Need to restore the config and make it compatible as it uses symbols internally
     const configType = rawConfigType
+      // @ts-ignore
       ? FromSchema(JSON.parse(JSON.stringify(rawConfigType)))
       : undefined;
     const config = loadConfigFromEnv(configType);
@@ -65,7 +66,7 @@ export class WebWorkerSandbox implements ISandbox {
       conn,
       configType,
       project.model,
-      project.prompt,
+      project.systemPrompt,
       project.tools,
       project.userMessage,
       project.vectorStorage,

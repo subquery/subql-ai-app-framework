@@ -1,4 +1,4 @@
-import { JsonRpcProvider } from "ethers";
+import { JsonRpcProvider } from "npm:ethers";
 import {
   BetterIndexerApy,
   CurrentDelegatorApy,
@@ -8,7 +8,7 @@ import {
   TotalDelegation,
   UnclaimedDelegatorRewards,
 } from "./tools.ts";
-import { type Static, Type } from "@sinclair/typebox";
+import { type Static, Type } from "npm:@sinclair/typebox";
 import { IProjectEntrypoint } from "../src/project/project.ts";
 
 const ConfigType = Type.Object({
@@ -59,7 +59,7 @@ export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
         type: "lancedb",
         path: "../.db",
       },
-      prompt: PROMPT,
+      systemPrompt: PROMPT,
       userMessage:
         "Welcome to the SubQuery Delegator Agent! How can I help you today?",
     };

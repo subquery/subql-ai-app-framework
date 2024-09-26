@@ -4,10 +4,10 @@ import {
   formatEther,
   formatUnits,
   toBigInt,
-} from "ethers";
+} from "npm:ethers";
 import { FunctionTool } from "../src/tool.ts";
 import { grahqlRequest } from "./utils.ts";
-import { IContext } from "../src/context/context.ts";
+import type { IContext } from "../src/context/context.ts";
 
 type Amount = {
   era: number;

@@ -1,6 +1,6 @@
-import { Tool } from "ollama";
-import { IFunctionTool } from "./project/project.ts";
-import { IContext } from "./context/context.ts";
+import type { Tool } from "ollama";
+import type { IFunctionTool } from "./project/project.ts";
+import type { IContext } from "./context/context.ts";
 
 type Parameters = Tool["function"]["parameters"];
 

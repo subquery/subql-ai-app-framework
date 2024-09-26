@@ -38,7 +38,7 @@ export class UnsafeSandbox implements ISandbox {
   // }
 
   get systemPrompt(): string {
-    return this.#project.prompt;
+    return this.#project.systemPrompt;
   }
 
   get userMessage(): string | undefined {

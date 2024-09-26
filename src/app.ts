@@ -1,7 +1,6 @@
 import { resolve } from "@std/path/resolve";
-import { dirname } from "@std/path/dirname";
 import ora from "ora";
-import chalk from "chalk";
+import { brightBlue, brightMagenta, brightRed } from "@std/fmt/colors";
 import { Message, Ollama } from "ollama";
 import { MemoryChatStorage } from "./chatStorage/index.ts";
 import { Runner } from "./runner.ts";
@@ -11,17 +10,25 @@ import { ChatResponse, http } from "./http.ts";
 import { Context, IContext } from "./context/context.ts";
 import { ISandbox } from "./sandbox/sandbox.ts";
 import * as lancedb from "@lancedb/lancedb";
+import { IPFSClient } from "./ipfs.ts";
+import { loadProject, loadVectorStoragePath } from "./loader.ts";
 
 export async function runApp(config: {
   projectPath: string;
   host: string;
   interface: "cli" | "http";
   port: number;
+  ipfs: IPFSClient;
 }): Promise<void> {
   const model = new Ollama({ host: config.host });
-  const sandbox = await getDefaultSandbox(resolve(config.projectPath));
+  const projectPath = await loadProject(config.projectPath, config.ipfs);
+  const sandbox = await getDefaultSandbox(resolve(projectPath));
 
-  const ctx = await makeContext(sandbox, model, config.projectPath);
+  const ctx = await makeContext(
+    sandbox,
+    model,
+    (dbPath) => loadVectorStoragePath(projectPath, dbPath, config.ipfs),
+  );
 
   const runnerHost = new RunnerHost(async () => {
     const chatStorage = new MemoryChatStorage();
@@ -53,7 +60,7 @@ export async function runApp(config: {
 async function makeContext(
   sandbox: ISandbox,
   model: Ollama,
-  projectPath: string,
+  loadVectorStoragePath: (vectorStoragePath: string) => Promise<string>,
 ): Promise<IContext> {
   if (!sandbox.vectorStorage) {
     return new Context(model);
@@ -63,14 +70,14 @@ async function makeContext(
   if (type !== "lancedb") {
     throw new Error("Only lancedb vector storage is supported");
   }
-  const dbPath = resolve(dirname(projectPath), path);
+  const dbPath = await loadVectorStoragePath(path);
   const connection = await lancedb.connect(dbPath);
 
   return new Context(model, connection);
 }
 
 function getPrompt(): string | null {
-  const response = prompt(chalk.blueBright(`Enter a message: `));
+  const response = prompt(brightBlue(`Enter a message: `));
 
   if (response === "/bye") {
     Deno.exit(0);
@@ -98,7 +105,7 @@ async function cli(runnerHost: RunnerHost): Promise<void> {
     const res = await runner.prompt(response);
 
     spinner.stopAndPersist({
-      text: `${chalk.magentaBright(res)}`,
+      text: `${brightMagenta(res)}`,
     });
   }
 }
@@ -139,14 +146,14 @@ async function httpCli(port: number): Promise<void> {
 
     const res = resBody.choices[0]?.message;
     if (!res) {
-      spinner.fail(chalk.redBright("Received invalid response message"));
+      spinner.fail(brightRed("Received invalid response message"));
       continue;
     }
 
     messages.push(res);
 
     spinner.stopAndPersist({
-      text: `${chalk.magentaBright(res.content)}`,
+      text: `${brightMagenta(res.content)}`,
     });
   }
 }

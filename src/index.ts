@@ -5,22 +5,52 @@
 
 import "@std/dotenv/load"; // Automatically load .env
 import { resolve } from "@std/path/resolve";
-import yargs from "yargs/yargs";
+// @ts-types="npm:@types/yargs"
+import yargs, {
+  ArgumentsCamelCase,
+  InferredOptionTypes,
+  Options,
+} from "yargs/yargs";
 import { runApp } from "./app.ts";
 import { generate } from "./embeddings/generator/generator.ts";
 import { projectInfo } from "./info.ts";
+import { publishProject } from "./bundle.ts";
+import { IPFSClient } from "./ipfs.ts";
+
+const sharedArgs = {
+  project: {
+    alias: "p",
+    description: "A path to a project file",
+    type: "string",
+    required: true,
+  },
+  ipfsEndpoint: {
+    description: "An endpoint to an IPFS gateway",
+    type: "string",
+    default: "https://unauthipfs.subquery.network/ipfs/api/v0/",
+  },
+  ipfsAccessToken: {
+    description:
+      "A bearer authentication token to be used with the ipfs endpoint",
+    type: "string",
+  },
+} satisfies Record<string, Options>;
+
+function ipfsFromArgs(
+  argv: ArgumentsCamelCase<InferredOptionTypes<typeof sharedArgs>>,
+): IPFSClient {
+  return new IPFSClient(argv.ipfsEndpoint, {
+    Authorization: `Bearer ${argv.ipfsAccessToken}`,
+  });
+}
 
 yargs(Deno.args)
+  .env("SUBQL_AI")
   .command(
     "$0",
     "Run an AI app",
     {
-      project: {
-        alias: "p",
-        description: "A path to a project file",
-        type: "string",
-        required: true,
-      },
+      ...sharedArgs,
       host: {
         alias: "h",
         description: "The ollama RPC host",
@@ -48,6 +78,7 @@ yargs(Deno.args)
           host: argv.host,
           interface: argv.interface as "cli" | "http",
           port: argv.port,
+          ipfs: ipfsFromArgs(argv),
         });
       } catch (e) {
         console.log(e);
@@ -59,12 +90,7 @@ yargs(Deno.args)
     "info",
     "Get information on a project",
     {
-      project: {
-        alias: "p",
-        description: "A path to a project file",
-        type: "string",
-        required: true,
-      },
+      project: sharedArgs.project,
       json: {
         description: "Log the project in JSON format",
         default: false,
@@ -116,6 +142,26 @@ yargs(Deno.args)
           argv.table,
           argv.ignoredFiles?.map((f) => resolve(f)),
         );
+      } catch (e) {
+        console.log(e);
+        Deno.exit(1);
+      }
+    },
+  )
+  .command(
+    "publish",
+    "Publishes a project to IPFS so it can be easily distributed",
+    {
+      ...sharedArgs,
+    },
+    async (argv) => {
+      try {
+        const cid = await publishProject(
+          argv.project,
+          ipfsFromArgs(argv),
+        );
+
+        console.log(cid);
       } catch (e) {
         console.log(e);
         Deno.exit(1);

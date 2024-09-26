@@ -11,12 +11,12 @@ Deno.test("loads a valid project WITH a config", async () => {
     projectFactory: (config: Static<typeof configType>) =>
       Promise.resolve({
         model: "test-model",
-        prompt: "you are a test behave like a test:" + config.TEST_OPT,
+        systemPrompt: "you are a test behave like a test:" + config.TEST_OPT,
         tools: [],
       }),
   })).resolves.toEqual({
     model: "test-model",
-    prompt: "you are a test behave like a test:test-opt",
+    systemPrompt: "you are a test behave like a test:test-opt",
     tools: [],
   });
 });
@@ -26,7 +26,7 @@ Deno.test("loads a valid project WITHOUT a config", async () => {
     projectFactory: () =>
       Promise.resolve({
         model: "test-model",
-        prompt: "you are a test behave like a test",
+        systemPrompt: "you are a test behave like a test",
         tools: [],
       }),
   })).resolves.not.toThrow();
@@ -53,7 +53,7 @@ Deno.test("handles an invalid conifg", async () => {
     projectFactory: (config: Static<typeof configType>) =>
       Promise.resolve({
         model: "test-model",
-        prompt: "you are a test behave like a test:" + config.TEST_OPT,
+        systemPropmt: "you are a test behave like a test:" + config.TEST_OPT,
         tools: [],
       }),
   })).rejects.toThrow("Expected required property"); // TODO return better error message
