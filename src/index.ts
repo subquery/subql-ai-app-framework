@@ -1,7 +1,10 @@
-#!/usr/bin/env -S deno run --allow-env --allow-net --allow-read --allow-ffi --allow-run --unstable-worker-options
+#!/usr/bin/env -S deno run --allow-env --allow-net --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options
 // TODO limit --allow-ffi to just lancedb
 // TODO limit --deny-net on localhost except ollama/db
 // TODO limit --allow-run needed for Deno.exit
+// Allow run is for esbuild
+// Allow write is for tmp directory access
+// Allow read is for reading form tmp and projects
 
 import "@std/dotenv/load"; // Automatically load .env
 import { resolve } from "@std/path/resolve";
@@ -16,6 +19,9 @@ import { generate } from "./embeddings/generator/generator.ts";
 import { projectInfo } from "./info.ts";
 import { publishProject } from "./bundle.ts";
 import { IPFSClient } from "./ipfs.ts";
+import ora from "ora";
+import { setSpinner } from "./util.ts";
+import { boolean } from "npm:@types/yargs";
 
 const sharedArgs = {
   project: {
@@ -70,6 +76,12 @@ yargs(Deno.args)
         default: 7827,
         // TODO set max value
       },
+      forceReload: {
+        description:
+          "If the project is from IPFS force reload it and don't use the cached version",
+        type: "boolean",
+        default: false,
+      },
     },
     async (argv) => {
       try {
@@ -79,6 +91,7 @@ yargs(Deno.args)
           interface: argv.interface as "cli" | "http",
           port: argv.port,
           ipfs: ipfsFromArgs(argv),
+          forceReload: argv.forceReload,
         });
       } catch (e) {
         console.log(e);
@@ -90,7 +103,7 @@ yargs(Deno.args)
     "info",
     "Get information on a project",
     {
-      project: sharedArgs.project,
+      ...sharedArgs,
       json: {
         description: "Log the project in JSON format",
         default: false,
@@ -99,7 +112,8 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
-        return await projectInfo(argv.project, argv.json);
+        await projectInfo(argv.project, ipfsFromArgs(argv), argv.json);
+        Deno.exit(0);
       } catch (e) {
         console.log(e);
         Deno.exit(1);
@@ -153,15 +167,23 @@ yargs(Deno.args)
     "Publishes a project to IPFS so it can be easily distributed",
     {
       ...sharedArgs,
+      silent: {
+        description: "Disable all logging except for the output",
+        type: "boolean",
+      },
     },
     async (argv) => {
       try {
+        if (argv.silent) {
+          setSpinner(ora({ isSilent: true }));
+        }
         const cid = await publishProject(
           argv.project,
           ipfsFromArgs(argv),
         );
 
         console.log(cid);
+        Deno.exit(0);
       } catch (e) {
         console.log(e);
         Deno.exit(1);

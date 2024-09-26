@@ -3,6 +3,8 @@ import { brightBlue, brightMagenta } from "@std/fmt/colors";
 import { getDefaultSandbox } from "./sandbox/index.ts";
 import { IProject } from "./project/project.ts";
 import { TSchema } from "@sinclair/typebox";
+import { IPFSClient } from "./ipfs.ts";
+import { loadProject } from "./loader.ts";
 
 export async function getProjectJson(
   projectPath: string,
@@ -21,9 +23,11 @@ export async function getProjectJson(
 
 export async function projectInfo(
   projectPath: string,
+  ipfs: IPFSClient,
   json = false,
 ): Promise<void> {
-  const projectJson = await getProjectJson(projectPath);
+  const loadedPath = await loadProject(projectPath, ipfs);
+  const projectJson = await getProjectJson(loadedPath);
 
   if (json) {
     console.log(JSON.stringify(

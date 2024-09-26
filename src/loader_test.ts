@@ -1,7 +1,8 @@
 import { expect } from "@std/expect/expect";
-import { loadVectorStoragePath } from "./loader.ts";
+import { getOSTempDir, loadVectorStoragePath } from "./loader.ts";
 import { resolve } from "@std/path/resolve";
 import { IPFSClient } from "./ipfs.ts";
+import { tarDir } from "./bundle.ts";
 
 const ipfs = new IPFSClient(
   Deno.env.get("IPFS_ENDPOINT") ??
@@ -34,12 +35,23 @@ Deno.test("Load vector storage from LanceDB cloud", async () => {
 });
 
 Deno.test("Load vector storage from IPFS", async () => {
-  // TODO update CID to actuall db
+  // Because of limitations to the IPFS gateway its easier just to pipe from source
+  const mockIpfs = {
+    catStream: (() => tarDir(resolve("./.db"))) satisfies IPFSClient[
+      "catStream"
+    ],
+  } as unknown as IPFSClient;
+
   const dbPath = await loadVectorStoragePath(
     "",
     "ipfs://QmbSzrfrgexP4Fugys356MYmWf3Wvk7kfEMaMNXrDXB2nd",
-    ipfs,
+    mockIpfs,
   );
 
-  expect(dbPath).toBe("/tmp/QmbSzrfrgexP4Fugys356MYmWf3Wvk7kfEMaMNXrDXB2nd");
+  expect(dbPath).toBe(
+    resolve(getOSTempDir(), "QmbSzrfrgexP4Fugys356MYmWf3Wvk7kfEMaMNXrDXB2nd"),
+  );
+
+  // Clean up
+  await Deno.remove(dbPath, { recursive: true });
 });

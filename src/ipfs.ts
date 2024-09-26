@@ -63,15 +63,12 @@ export class IPFSClient {
     });
 
     if (!res.ok) {
-      console.log("XXX", url, cid);
       throw new Error(await res.text());
     }
 
     if (!res.body) {
       throw new Error("Missing response body");
     }
-
-    console.log("CONTENT TYPE", res.headers.get("Content-Type"));
 
     return res.body;
   }

@@ -19,15 +19,28 @@ export async function runApp(config: {
   interface: "cli" | "http";
   port: number;
   ipfs: IPFSClient;
+  forceReload?: boolean;
 }): Promise<void> {
   const model = new Ollama({ host: config.host });
-  const projectPath = await loadProject(config.projectPath, config.ipfs);
+  const projectPath = await loadProject(
+    config.projectPath,
+    config.ipfs,
+    undefined,
+    config.forceReload,
+  );
   const sandbox = await getDefaultSandbox(resolve(projectPath));
 
   const ctx = await makeContext(
     sandbox,
     model,
-    (dbPath) => loadVectorStoragePath(projectPath, dbPath, config.ipfs),
+    (dbPath) =>
+      loadVectorStoragePath(
+        projectPath,
+        dbPath,
+        config.ipfs,
+        undefined,
+        config.forceReload,
+      ),
   );
 
   const runnerHost = new RunnerHost(async () => {
