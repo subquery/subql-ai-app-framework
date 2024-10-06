@@ -17,6 +17,8 @@
     "@std/io": "jsr:@std/io@^0.224.8",
     "@std/path": "jsr:@std/path@^1.0.6",
     "@std/tar": "jsr:@std/tar@^0.1.1",
+    "@types/estree": "npm:@types/estree@^1.0.5",
+    "@types/mdast": "npm:@types/mdast@^4.0.4",
     "@types/yargs": "npm:@types/yargs@^17.0.33",
     "apache-arrow": "npm:apache-arrow@^17.0.0",
     "esbuild": "npm:esbuild@^0.24.0",

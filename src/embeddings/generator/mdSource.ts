@@ -1,6 +1,8 @@
 // This file is based on https://github.com/supabase-community/nextjs-openai-doc-search/blob/main/lib/generate-embeddings.ts
 
-// import { ObjectExpression } from 'estree';
+// @ts-types="npm:@types/estree"
+import { ObjectExpression } from 'estree';
+// @ts-types="npm:@types/mdast"
 import { Content, Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { mdxFromMarkdown, MdxjsEsm } from "mdast-util-mdx";
@@ -9,19 +11,14 @@ import { toString } from "mdast-util-to-string";
 import { mdxjs } from "micromark-extension-mdxjs";
 import { u } from "unist-builder";
 import { filter } from "unist-util-filter";
-import { basename } from "@std/path/basename";
-import { dirname } from "@std/path/dirname";
-import { join } from "@std/path/join";
 import { createHash } from "node:crypto";
 import GithubSlugger from "github-slugger";
-
-type OE = any;
 
 /**
  * Extracts ES literals from an `estree` `ObjectExpression`
  * into a plain JavaScript object.
  */
-function getObjectFromExpression(node: OE) {
+function getObjectFromExpression(node: ObjectExpression) {
   return node.properties.reduce<
     Record<string, string | number | bigint | true | RegExp | undefined>
   >((object, property) => {
@@ -57,7 +54,7 @@ function extractMetaExport(mdxTree: Root) {
       node.data?.estree?.body[0]?.type === "ExportNamedDeclaration" &&
       node.data.estree.body[0].declaration?.type === "VariableDeclaration" &&
       node.data.estree.body[0].declaration.declarations[0]?.id.type ===
-        "Identifier" &&
+      "Identifier" &&
       node.data.estree.body[0].declaration.declarations[0].id.name === "meta"
     );
   });
@@ -69,14 +66,14 @@ function extractMetaExport(mdxTree: Root) {
   const objectExpression =
     (metaExportNode.data?.estree?.body[0]?.type === "ExportNamedDeclaration" &&
       metaExportNode.data.estree.body[0].declaration?.type ===
-        "VariableDeclaration" &&
+      "VariableDeclaration" &&
       metaExportNode.data.estree.body[0].declaration.declarations[0]?.id
-          .type === "Identifier" &&
+        .type === "Identifier" &&
       metaExportNode.data.estree.body[0].declaration.declarations[0].id.name ===
-        "meta" &&
+      "meta" &&
       metaExportNode.data.estree.body[0].declaration.declarations[0].init
-          ?.type ===
-        "ObjectExpression" &&
+        ?.type ===
+      "ObjectExpression" &&
       metaExportNode.data.estree.body[0].declaration.declarations[0].init) ||
     undefined;
 
@@ -184,84 +181,85 @@ function processMdxForSearch(content: string): ProcessedMdx {
   };
 }
 
-type WalkEntry = {
-  path: string;
-  parentPath?: string;
-};
+// type WalkEntry = {
+//   path: string;
+//   parentPath?: string;
+// };
 
-export async function walk(
-  dir: string,
-  parentPath?: string,
-): Promise<WalkEntry[]> {
-  for await (const entry of Deno.readDir(dir)) {
-    if (entry.isDirectory) {
-      // Keep track of document hierarchy (if this dir has corresponding doc file)
-      const docPath = `${basename(path)}.mdx`;
+// export async function walk(
+//   dir: string,
+//   parentPath?: string,
+// ): Promise<WalkEntry[]> {
+//   for await (const entry of Deno.readDir(dir)) {
+//     const path = join(dir, entry);
+//     if (entry.isDirectory) {
+//       // Keep track of document hierarchy (if this dir has corresponding doc file)
+//       const docPath = `${basename(path)}.mdx`;
 
-      return walk(
-        path,
-        immediateFiles.includes(docPath)
-          ? join(dirname(path), docPath)
-          : parentPath,
-      );
-    } else if (entry.isFile) {
-      return [
-        {
-          path: path,
-          parentPath,
-        },
-      ];
-    } else {
-      return [];
-    }
+//       return walk(
+//         path,
+//         immediateFiles.includes(docPath)
+//           ? join(dirname(path), docPath)
+//           : parentPath,
+//       );
+//     } else if (entry.isFile) {
+//       return [
+//         {
+//           path: path,
+//           parentPath,
+//         },
+//       ];
+//     } else {
+//       return [];
+//     }
 
-    const path = join(dir, file);
-    const stats = await stat(path);
-    if (stats.isDirectory()) {
-    } else if (stats.isFile()) {
-      return [
-        {
-          path: path,
-          parentPath,
-        },
-      ];
-    } else {
-      return [];
-    }
-  }
+//     // const path = join(dir, file);
+//     // const stats = await stat(path);
+//     // if (stats.isDirectory()) {
+//     // } else if (stats.isFile()) {
+//     //   return [
+//     //     {
+//     //       path: path,
+//     //       parentPath,
+//     //     },
+//     //   ];
+//     // } else {
+//     //   return [];
+//     // }
+//   }
 
-  // const recursiveFiles = await Promise.all(
-  //   immediateFiles.map(async (file) => {
-  //     const path = join(dir, file)
-  //     const stats = await stat(path)
-  //     if (stats.isDirectory()) {
-  //       // Keep track of document hierarchy (if this dir has corresponding doc file)
-  //       const docPath = `${basename(path)}.mdx`
+//   // const recursiveFiles = await Promise.all(
+//   //   immediateFiles.map(async (file) => {
+//   //     const path = join(dir, file)
+//   //     const stats = await stat(path)
+//   //     if (stats.isDirectory()) {
+//   //       // Keep track of document hierarchy (if this dir has corresponding doc file)
+//   //       const docPath = `${basename(path)}.mdx`
 
-  //       return walk(
-  //         path,
-  //         immediateFiles.includes(docPath) ? join(dirname(path), docPath) : parentPath
-  //       )
-  //     } else if (stats.isFile()) {
-  //       return [
-  //         {
-  //           path: path,
-  //           parentPath,
-  //         },
-  //       ]
-  //     } else {
-  //       return []
-  //     }
-  //   })
-  // )
+//   //       return walk(
+//   //         path,
+//   //         immediateFiles.includes(docPath) ? join(dirname(path), docPath) : parentPath
+//   //       )
+//   //     } else if (stats.isFile()) {
+//   //       return [
+//   //         {
+//   //           path: path,
+//   //           parentPath,
+//   //         },
+//   //       ]
+//   //     } else {
+//   //       return []
+//   //     }
+//   //   })
+//   // )
 
-  const flattenedFiles = recursiveFiles.reduce(
-    (all, folderContents) => all.concat(folderContents),
-    [],
-  );
+//   const flattenedFiles = recursiveFiles.reduce(
+//     (all, folderContents) => all.concat(folderContents),
+//     [],
+//   );
 
-  return flattenedFiles.sort((a, b) => a.path.localeCompare(b.path));
-}
+//   return flattenedFiles.sort((a, b) => a.path.localeCompare(b.path));
+// }
 
 export abstract class BaseEmbeddingSource {
   checksum?: string;

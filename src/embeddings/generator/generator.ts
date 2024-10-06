@@ -1,8 +1,8 @@
 import {
   BaseEmbeddingSource,
   MarkdownEmbeddingSource,
-  walk,
 } from "./mdSource.ts";
+import { walk } from '@std/fs/walk';
 import ollama from "ollama";
 import { LanceWriter } from "../lance/index.ts";
 
@@ -15,7 +15,7 @@ export async function generate(
   ignoredFiles = DEFAULT_IGNORED_FILES,
 ) {
   const embeddingSources: BaseEmbeddingSource[] = [
-    ...(await walk(path))
+    ...(await Array.fromAsync(walk(path)))
       .filter(({ path }) => /\.mdx?$/.test(path))
       .filter(({ path }) => !ignoredFiles.includes(path))
       .map((entry) => new MarkdownEmbeddingSource("guide", entry.path)),
