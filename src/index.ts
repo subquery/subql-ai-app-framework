@@ -21,7 +21,6 @@ import { publishProject } from "./bundle.ts";
 import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
 import { setSpinner } from "./util.ts";
-import { boolean } from "npm:@types/yargs";
 
 const sharedArgs = {
   project: {

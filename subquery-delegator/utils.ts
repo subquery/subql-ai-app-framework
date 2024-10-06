@@ -16,8 +16,6 @@ export async function grahqlRequest<T = any>(
 
   const res = await response.json();
 
-  // console.log('XXXX raw response', res);
-
   if (res.errors) {
     console.log(`Request failed\n${query}`);
 
