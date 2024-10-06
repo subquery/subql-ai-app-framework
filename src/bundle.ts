@@ -127,7 +127,7 @@ async function fsExists(path: string): Promise<boolean> {
   try {
     await Deno.lstat(path);
     return true;
-  } catch (e) {
+  } catch (_e) {
     return false;
   }
 }

@@ -15,7 +15,7 @@ export const Init = new rpc.RequestType<
 export const GetConfig = new rpc.RequestType0<TSchema | undefined, void>(
   "get_config",
 );
-export const CallTool = new rpc.RequestType2<string, any, any, void>(
+export const CallTool = new rpc.RequestType2<string, unknown, string, void>(
   "call_tool",
 );
 
@@ -23,7 +23,7 @@ export const CallTool = new rpc.RequestType2<string, any, any, void>(
 export const CtxVectorSearch = new rpc.RequestType2<
   string,
   number[],
-  any,
+  unknown[],
   void
 >("ctx_vector_search");
 export const CtxComputeQueryEmbedding = new rpc.RequestType<

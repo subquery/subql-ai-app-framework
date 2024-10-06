@@ -91,7 +91,7 @@ export async function loadVectorStoragePath(
     if (uri.protocol) {
       return vectorStoragePath;
     }
-  } catch (e) {
+  } catch (_e) {
     // DO nothing
   }
 

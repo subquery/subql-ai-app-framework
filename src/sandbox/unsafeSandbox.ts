@@ -6,7 +6,6 @@ import {
   validateProject,
 } from "../project/project.ts";
 import { ISandbox } from "./sandbox.ts";
-import { TSchema } from "@sinclair/typebox";
 import { IContext } from "../context/context.ts";
 
 /**
@@ -49,11 +48,12 @@ export class UnsafeSandbox implements ISandbox {
     return this.#project.vectorStorage;
   }
 
+  // deno-lint-ignore require-await
   async getTools(): Promise<Tool[]> {
     return this.#project.tools.map((t) => t.toTool());
   }
 
-  runTool(toolName: string, args: any, ctx: IContext): Promise<any> {
+  runTool(toolName: string, args: unknown, ctx: IContext): Promise<string> {
     const tool = this.#project.tools.find((t) => t.name === toolName);
 
     if (!tool) {

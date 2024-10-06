@@ -51,7 +51,7 @@ export const Project = Type.Object({
 export type IFunctionTool = Static<typeof FunctionToolType>;
 export type IVectorConfig = Static<typeof VectorConfig>;
 
-type IProjectEntry<Config extends TObject> = TUnion<[
+type IProjectEntry<Config extends TObject = TObject> = TUnion<[
   TObject<
     {
       configType: TSchema;
@@ -71,14 +71,16 @@ export type IProjectEntrypoint<T extends TObject = TObject> = Static<
   IProjectEntry<T>
 >;
 
-export function validateProject(project: any): void {
+export function validateProject(project: unknown): void {
   return Value.Assert(Project, project);
 }
 
-function validateProjectEntry(entry: any): void {
-  const projectType = ProjectEntrypointGen(entry?.configType);
+function validateProjectEntry(entry: unknown): entry is IProjectEntry {
+  // deno-lint-ignore no-explicit-any
+  const projectType = ProjectEntrypointGen((entry as any)?.configType);
 
   Value.Assert(projectType, entry);
+  return true;
 }
 
 const ProjectEntrypointGen = <T extends TObject>(t: T) =>
@@ -94,20 +96,22 @@ const ProjectEntrypointGen = <T extends TObject>(t: T) =>
   ]);
 
 export async function getProjectFromEntrypoint(
-  entrypoint: any,
+  entrypoint: unknown,
 ): Promise<IProject> {
   if (!entrypoint) {
     throw new Error("Project entry is invalid");
   }
   // Validate the entrypoint
-  validateProjectEntry(entrypoint);
+  if (validateProjectEntry(entrypoint)) {
+    const config = loadConfigFromEnv(entrypoint.configType);
 
-  const config = loadConfigFromEnv(entrypoint.configType);
+    // Check that the constructed project is valid
+    const project = await entrypoint.projectFactory(config);
 
-  // Check that the constructed project is valid
-  const project = await entrypoint.projectFactory(config);
+    validateProject(project);
 
-  validateProject(project);
-
-  return project;
+    return project;
+  } else {
+    throw new Error('Unable to validate project');
+  }
 }

@@ -31,13 +31,11 @@ export async function generate(
 
   for (const source of embeddingSources) {
     try {
-      const { checksum, meta, sections } = await source.load();
+      const { sections } = await source.load();
 
-      for (const { slug, heading, content } of sections) {
+      for (const { content } of sections) {
         // OpenAI recommends replacing newlines with spaces for best results (specific to embeddings)
         const input = content.replace(/\n/g, " ");
-
-        // console.log('CONTENT', content);
 
         lanceWriter.write(input);
       }

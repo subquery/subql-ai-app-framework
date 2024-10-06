@@ -56,7 +56,7 @@ export class WebWorkerSandbox implements ISandbox {
 
     // Need to restore the config and make it compatible as it uses symbols internally
     const configType = rawConfigType
-      // @ts-ignore
+      // @ts-ignore functionally works but types are too complex
       ? FromSchema(JSON.parse(JSON.stringify(rawConfigType)))
       : undefined;
     const config = loadConfigFromEnv(configType);
@@ -91,6 +91,7 @@ export class WebWorkerSandbox implements ISandbox {
     return this.#config;
   }
 
+  // deno-lint-ignore require-await
   async getTools(): Promise<Tool[]> {
     return this.#tools;
   }
@@ -112,7 +113,7 @@ export class WebWorkerSandbox implements ISandbox {
     this.#hasSetupCxt = true;
   }
 
-  runTool(toolName: string, args: any, ctx: IContext): Promise<any> {
+  runTool(toolName: string, args: unknown, ctx: IContext): Promise<string> {
     // Connect up context so sandbox can call application
     this.#connection.onRequest(CtxVectorSearch, async (tableName, vector) => {
       const res = await ctx.vectorSearch(tableName, vector);

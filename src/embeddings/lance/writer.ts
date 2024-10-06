@@ -59,6 +59,7 @@ export class LanceWriter implements IEmbeddingWriter {
     await this.#table.add(data);
   }
 
+  // deno-lint-ignore require-await
   async close(): Promise<void> {
     return this.#table.close();
   }

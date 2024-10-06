@@ -135,6 +135,8 @@ export class IPFSClient {
       throw new Error(await res.text());
     }
 
+    // This could use typebox for runtime validation
+    // deno-lint-ignore no-explicit-any 
     const mapResponse = (raw: any): AddResult => ({
       path: raw.Name,
       cid: raw.Hash,

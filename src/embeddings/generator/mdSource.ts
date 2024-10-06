@@ -1,7 +1,7 @@
 // This file is based on https://github.com/supabase-community/nextjs-openai-doc-search/blob/main/lib/generate-embeddings.ts
 
 // @ts-types="npm:@types/estree"
-import { ObjectExpression } from 'estree';
+import type { ObjectExpression } from 'estree';
 // @ts-types="npm:@types/mdast"
 import { Content, Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";

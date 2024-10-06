@@ -3,7 +3,7 @@ import { Runner } from "./runner.ts";
 export class RunnerHost {
   #runners: Record<string, Runner> = {};
 
-  constructor(private initRunner: () => Promise<Runner>) {}
+  constructor(private initRunner: () => Runner | Promise<Runner>) {}
 
   async getRunner(id: string): Promise<Runner> {
     this.#runners[id] ??= await this.initRunner();
@@ -12,6 +12,6 @@ export class RunnerHost {
   }
 
   async getAnonymousRunner(): Promise<Runner> {
-    return this.initRunner();
+    return await this.initRunner();
   }
 }

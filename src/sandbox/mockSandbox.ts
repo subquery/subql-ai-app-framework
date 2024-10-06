@@ -1,3 +1,4 @@
+import { TSchema } from "@sinclair/typebox";
 import { IContext } from "../context/context.ts";
 import { ITool } from "../tool.ts";
 import { ISandbox } from "./sandbox.ts";
@@ -8,14 +9,15 @@ export class MockSandbox implements ISandbox {
     readonly systemPrompt: string,
     private tools: ITool[],
     readonly userMessage?: string,
-    readonly config?: any,
+    readonly config?: TSchema,
   ) {}
 
+  // deno-lint-ignore require-await
   async getTools() {
     return this.tools.map((t) => t.toTool());
   }
 
-  async runTool(toolName: string, args: any, ctx: IContext): Promise<any> {
+  runTool(toolName: string, args: unknown, ctx: IContext): Promise<string> {
     const tool = this.tools.find((t) => t.name === toolName);
 
     if (!tool) {

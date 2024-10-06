@@ -28,7 +28,7 @@ export interface ISandbox {
 
   getTools(): Promise<Tool[]>;
 
-  runTool(toolName: string, args: any, ctx: IContext): Promise<any>;
+  runTool(toolName: string, args: unknown, ctx: IContext): Promise<string>;
 
   // TODO expand this interface with more untrusted data/functions. e.g RAG
 }

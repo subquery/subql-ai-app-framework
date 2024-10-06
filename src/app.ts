@@ -43,7 +43,7 @@ export async function runApp(config: {
       ),
   );
 
-  const runnerHost = new RunnerHost(async () => {
+  const runnerHost = new RunnerHost(() => {
     const chatStorage = new MemoryChatStorage();
 
     chatStorage.append([{ role: "system", content: sandbox.systemPrompt }]);

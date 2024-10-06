@@ -38,6 +38,7 @@ If the question seems to be unrelated to the API, just return "I don't know" as 
 
 export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
   configType: ConfigType,
+  // deno-lint-ignore require-await
   projectFactory: async (config: Config) => {
     const tools = [
       new TotalDelegation(config.GRAPHQL_ENDPOINT),
@@ -67,7 +68,7 @@ export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
 };
 
 // Some example messages to ask with this set of tools
-const messages = [
+const _messages = [
   // Delegation
   "My address is 0x108A496cDC32DA84e4D5905bb02ED695BC1024cd, use this for any further prompts. What is my delegation?",
   "Who am i delegating to?",

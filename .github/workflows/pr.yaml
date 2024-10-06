@@ -33,8 +33,18 @@ jobs:
         with:
           deno-version: v1.x
 
-      - name: Check typescript
-        run: deno task check-ts
-
       - name: Lint
         run: deno lint
+
+  typescript:
+    name: typescript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Check typescript
+        run: deno task check-ts
