@@ -1,4 +1,7 @@
 {
+  "name": "@subql/ai-app-framework",
+  "version": "1.0.0-0",
+  "exports": "./src/index.ts",
   "tasks": {
     "dev": "deno run --watch src/index.ts",
     "check-ts": "deno check src/index.ts",
