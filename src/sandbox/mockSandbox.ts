@@ -1,7 +1,7 @@
-import { TSchema } from "@sinclair/typebox";
-import { IContext } from "../context/context.ts";
-import { ITool } from "../tool.ts";
-import { ISandbox } from "./sandbox.ts";
+import type { TSchema } from "@sinclair/typebox";
+import type { IContext } from "../context/context.ts";
+import type { ITool } from "../tool.ts";
+import type { ISandbox } from "./sandbox.ts";
 
 export class MockSandbox implements ISandbox {
   constructor(

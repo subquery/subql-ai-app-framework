@@ -2,7 +2,7 @@ import { type Static, Type } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { RunnerHost } from "./runnerHost.ts";
+import type { RunnerHost } from "./runnerHost.ts";
 
 const Message = Type.Object({
   content: Type.String(),

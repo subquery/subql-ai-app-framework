@@ -1,11 +1,11 @@
-import { type Tool } from "ollama";
-import { type TSchema } from "@sinclair/typebox";
+import type { Tool } from "ollama";
+import type { TSchema } from "@sinclair/typebox";
 import * as rpc from "vscode-jsonrpc";
 import {
   BrowserMessageReader,
   BrowserMessageWriter,
 } from "vscode-jsonrpc/browser.js";
-import { ISandbox } from "../sandbox.ts";
+import type { ISandbox } from "../sandbox.ts";
 import {
   CallTool,
   CtxComputeQueryEmbedding,
@@ -16,8 +16,8 @@ import {
 } from "./messages.ts";
 import { loadConfigFromEnv } from "../../util.ts";
 import { FromSchema } from "../../fromSchema.ts";
-import { IContext } from "../../context/context.ts";
-import { IVectorConfig } from "../../project/project.ts";
+import type { IContext } from "../../context/context.ts";
+import type { IVectorConfig } from "../../project/project.ts";
 
 export class WebWorkerSandbox implements ISandbox {
   #connection: rpc.MessageConnection;

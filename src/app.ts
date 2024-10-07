@@ -1,16 +1,16 @@
 import { resolve } from "@std/path/resolve";
 import ora from "ora";
 import { brightBlue, brightMagenta, brightRed } from "@std/fmt/colors";
-import { Message, Ollama } from "ollama";
+import { type Message, Ollama } from "ollama";
 import { MemoryChatStorage } from "./chatStorage/index.ts";
 import { Runner } from "./runner.ts";
 import { RunnerHost } from "./runnerHost.ts";
 import { getDefaultSandbox } from "./sandbox/index.ts";
-import { ChatResponse, http } from "./http.ts";
-import { Context, IContext } from "./context/context.ts";
-import { ISandbox } from "./sandbox/sandbox.ts";
+import { type ChatResponse, http } from "./http.ts";
+import { Context, type IContext } from "./context/context.ts";
+import type { ISandbox } from "./sandbox/sandbox.ts";
 import * as lancedb from "@lancedb/lancedb";
-import { IPFSClient } from "./ipfs.ts";
+import type { IPFSClient } from "./ipfs.ts";
 import { loadProject, loadVectorStoragePath } from "./loader.ts";
 
 export async function runApp(config: {

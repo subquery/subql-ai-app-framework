@@ -9,7 +9,7 @@ import {
   UnclaimedDelegatorRewards,
 } from "./tools.ts";
 import { type Static, Type } from "npm:@sinclair/typebox";
-import { IProjectEntrypoint } from "../src/project/project.ts";
+import type { IProjectEntrypoint } from "../src/project/project.ts";
 
 const ConfigType = Type.Object({
   GRAPHQL_ENDPOINT: Type.String({

@@ -1,9 +1,9 @@
 import { resolve } from "@std/path/resolve";
 import { brightBlue, brightMagenta } from "@std/fmt/colors";
 import { getDefaultSandbox } from "./sandbox/index.ts";
-import { IProject } from "./project/project.ts";
-import { TSchema } from "@sinclair/typebox";
-import { IPFSClient } from "./ipfs.ts";
+import type { IProject } from "./project/project.ts";
+import type { TSchema } from "@sinclair/typebox";
+import type { IPFSClient } from "./ipfs.ts";
 import { loadProject } from "./loader.ts";
 
 export async function getProjectJson(

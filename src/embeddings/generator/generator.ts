@@ -1,5 +1,5 @@
 import {
-  BaseEmbeddingSource,
+  type BaseEmbeddingSource,
   MarkdownEmbeddingSource,
 } from "./mdSource.ts";
 import { walk } from '@std/fs/walk';

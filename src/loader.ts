@@ -1,5 +1,5 @@
 import { dirname } from "@std/path/dirname";
-import { CIDReg, IPFSClient } from "./ipfs.ts";
+import { CIDReg, type IPFSClient } from "./ipfs.ts";
 import { resolve } from "@std/path/resolve";
 import { UntarStream } from "@std/tar";
 import { ensureDir, exists } from "@std/fs";

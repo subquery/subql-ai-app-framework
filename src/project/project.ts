@@ -1,11 +1,11 @@
 import {
   type Static,
-  TFunction,
+  type TFunction,
   type TObject,
-  TPromise,
+  type TPromise,
   type TSchema,
-  TUndefined,
-  TUnion,
+  type TUndefined,
+  type TUnion,
   Type,
 } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";

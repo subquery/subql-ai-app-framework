@@ -4,7 +4,7 @@ import { Tar } from "@std/archive/tar";
 import { walk } from "@std/fs/walk";
 import { dirname } from "@std/path/dirname";
 import { Buffer } from "@std/io/buffer";
-import { IPFSClient } from "./ipfs.ts";
+import type { IPFSClient } from "./ipfs.ts";
 import * as esbuild from "esbuild";
 import { denoPlugins } from "@luca/esbuild-deno-loader";
 import { getDefaultSandbox } from "./sandbox/index.ts";

@@ -1,6 +1,6 @@
-import { type Static, type TSchema } from "@sinclair/typebox";
+import type { Static, TSchema } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
-import ora, { Ora } from "ora";
+import ora, { type Ora } from "ora";
 
 export function loadConfigFromEnv<T extends TSchema>(
   schema?: T,

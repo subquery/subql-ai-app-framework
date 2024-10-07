@@ -1,4 +1,4 @@
-import { Runner } from "./runner.ts";
+import type { Runner } from "./runner.ts";
 
 export class RunnerHost {
   #runners: Record<string, Runner> = {};

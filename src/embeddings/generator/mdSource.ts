@@ -2,10 +2,12 @@
 
 // @ts-types="npm:@types/estree"
 import type { ObjectExpression } from 'estree';
+// import type { ObjectExpression } from "https://esm.sh/@types/estree@1.0.5";
+
 // @ts-types="npm:@types/mdast"
-import { Content, Root } from "mdast";
+import type { Content, Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
-import { mdxFromMarkdown, MdxjsEsm } from "mdast-util-mdx";
+import { mdxFromMarkdown, type MdxjsEsm } from "mdast-util-mdx";
 import { toMarkdown } from "mdast-util-to-markdown";
 import { toString } from "mdast-util-to-string";
 import { mdxjs } from "micromark-extension-mdxjs";

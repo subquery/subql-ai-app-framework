@@ -1,5 +1,5 @@
-import { Message } from "ollama";
-import { IChatStorage } from "./chatStorage.ts";
+import type { Message } from "ollama";
+import type { IChatStorage } from "./chatStorage.ts";
 
 export class MemoryChatStorage implements IChatStorage {
   private messages: Message[] = [];

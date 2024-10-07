@@ -1,7 +1,7 @@
-import { type Tool } from "ollama";
-import { type TSchema } from "@sinclair/typebox";
+import type { Tool } from "ollama";
+import type { TSchema } from "@sinclair/typebox";
 import * as rpc from "vscode-jsonrpc";
-import { type IProject } from "../../project/project.ts";
+import type { IProject } from "../../project/project.ts";
 
 export type IProjectJson = Omit<IProject, "tools"> & { tools: Tool[] };
 

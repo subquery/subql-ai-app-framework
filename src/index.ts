@@ -10,9 +10,9 @@ import "@std/dotenv/load"; // Automatically load .env
 import { resolve } from "@std/path/resolve";
 // @ts-types="npm:@types/yargs"
 import yargs, {
-  ArgumentsCamelCase,
-  InferredOptionTypes,
-  Options,
+  type ArgumentsCamelCase,
+  type InferredOptionTypes,
+  type Options,
 } from "yargs/yargs";
 import { runApp } from "./app.ts";
 import { generate } from "./embeddings/generator/generator.ts";

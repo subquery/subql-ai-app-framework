@@ -1,7 +1,7 @@
-import { type Tool } from "ollama";
-import { TSchema } from "@sinclair/typebox";
-import { IContext } from "../context/context.ts";
-import { IVectorConfig } from "../project/project.ts";
+import type { Tool } from "ollama";
+import type { TSchema } from "@sinclair/typebox";
+import type { IContext } from "../context/context.ts";
+import type { IVectorConfig } from "../project/project.ts";
 
 /**
  * The sandbox provides a defined interface to run untrusted code
