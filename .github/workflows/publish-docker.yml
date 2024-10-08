@@ -12,7 +12,7 @@ on:
 
 jobs:
   publish-docker:
-    name: test
+    name: publish-docker
     runs-on: ubuntu-latest
 
     permissions:
