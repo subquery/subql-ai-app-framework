@@ -20,3 +20,10 @@ run a command like so:
 ## Tests
 
 Running tests: `deno test`
+
+
+### Installing
+
+To install 
+
+`deno install -g -f --allow-env --allow-net --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options -n subql-ai ./src/index.ts`
