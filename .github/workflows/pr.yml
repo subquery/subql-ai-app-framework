@@ -18,7 +18,7 @@ jobs:
 
       - uses: denoland/setup-deno@v1
         with:
-          deno-version: v2.x
+          deno-version: 2.0.0-rc.10
 
       - name: Run tests
         run: deno task test
@@ -31,7 +31,7 @@ jobs:
 
       - uses: denoland/setup-deno@v1
         with:
-          deno-version: v2.x
+          deno-version: 2.0.0-rc.10
 
       - name: Lint
         run: deno lint
@@ -44,7 +44,7 @@ jobs:
 
       - uses: denoland/setup-deno@v1
         with:
-          deno-version: v2.x
+          deno-version: 2.0.0-rc.10
 
       - name: Check typescript
         run: deno task check-ts
