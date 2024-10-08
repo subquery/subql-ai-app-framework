@@ -210,6 +210,7 @@ type TFromObject<T extends SObject> = TFromProperties<
   T["properties"],
   Exclude<T["required"], undefined>[number]
 > extends infer Properties extends Type.TProperties ? Type.TObject<Properties>
+  // deno-lint-ignore ban-types
   : Type.TObject<{}>;
 function FromObject<T extends SObject>(T: T): TFromObject<T> {
   const properties = globalThis.Object.getOwnPropertyNames(T.properties).reduce(

@@ -1,4 +1,4 @@
-import { ISandbox } from "./sandbox.ts";
+import type { ISandbox } from "./sandbox.ts";
 import { WebWorkerSandbox } from "./webWorker/webWorkerSandbox.ts";
 
 export * from "./sandbox.ts";

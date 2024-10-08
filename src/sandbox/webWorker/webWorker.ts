@@ -9,16 +9,16 @@ import {
   CtxVectorSearch,
   GetConfig,
   Init,
-  IProjectJson,
+  type IProjectJson,
   Load,
 } from "./messages.ts";
 
 import {
   getProjectFromEntrypoint,
-  IProject,
-  IProjectEntrypoint,
+  type IProject,
+  type IProjectEntrypoint,
 } from "../../project/project.ts";
-import { IContext } from "../../context/context.ts";
+import type { IContext } from "../../context/context.ts";
 
 const conn = rpc.createMessageConnection(
   new BrowserMessageReader(self),

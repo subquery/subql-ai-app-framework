@@ -1,8 +1,8 @@
 import {
-  BaseEmbeddingSource,
+  type BaseEmbeddingSource,
   MarkdownEmbeddingSource,
-  walk,
 } from "./mdSource.ts";
+import { walk } from "@std/fs/walk";
 import ollama from "ollama";
 import { LanceWriter } from "../lance/index.ts";
 
@@ -15,7 +15,7 @@ export async function generate(
   ignoredFiles = DEFAULT_IGNORED_FILES,
 ) {
   const embeddingSources: BaseEmbeddingSource[] = [
-    ...(await walk(path))
+    ...(await Array.fromAsync(walk(path)))
       .filter(({ path }) => /\.mdx?$/.test(path))
       .filter(({ path }) => !ignoredFiles.includes(path))
       .map((entry) => new MarkdownEmbeddingSource("guide", entry.path)),
@@ -31,13 +31,11 @@ export async function generate(
 
   for (const source of embeddingSources) {
     try {
-      const { checksum, meta, sections } = await source.load();
+      const { sections } = await source.load();
 
-      for (const { slug, heading, content } of sections) {
+      for (const { content } of sections) {
         // OpenAI recommends replacing newlines with spaces for best results (specific to embeddings)
         const input = content.replace(/\n/g, " ");
-
-        // console.log('CONTENT', content);
 
         lanceWriter.write(input);
       }

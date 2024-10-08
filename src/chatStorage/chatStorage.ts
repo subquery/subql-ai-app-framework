@@ -1,4 +1,4 @@
-import { Message } from "ollama";
+import type { Message } from "ollama";
 
 export interface IChatStorage {
   /**

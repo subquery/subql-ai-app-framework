@@ -1,6 +1,5 @@
 import { expect } from "@std/expect";
 import { IPFSClient } from "./ipfs.ts";
-import { Buffer } from "@std/io/buffer";
 
 const ipfs = new IPFSClient(
   Deno.env.get("IPFS_ENDPOINT") ??

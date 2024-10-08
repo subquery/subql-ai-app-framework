@@ -100,7 +100,7 @@ model:
   url: http://localhost:1234
 
 tools:
-  - name: 'get-balance'
+  - name: "get-balance"
     type: "code"
     file: "./get-balance.js"
     arguments:

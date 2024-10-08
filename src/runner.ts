@@ -1,7 +1,7 @@
-import { ChatResponse, Message, Ollama } from "ollama";
-import { IChatStorage } from "./chatStorage/index.ts";
-import { ISandbox } from "./sandbox/index.ts";
-import { IContext } from "./context/context.ts";
+import type { ChatResponse, Message, Ollama } from "ollama";
+import type { IChatStorage } from "./chatStorage/index.ts";
+import type { ISandbox } from "./sandbox/index.ts";
+import type { IContext } from "./context/context.ts";
 
 export class Runner {
   #ollama: Ollama;

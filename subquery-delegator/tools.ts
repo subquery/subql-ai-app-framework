@@ -1,5 +1,5 @@
 import {
-  AbstractProvider,
+  type AbstractProvider,
   Contract,
   formatEther,
   formatUnits,

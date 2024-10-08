@@ -2,7 +2,7 @@ import { type Static, Type } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { RunnerHost } from "./runnerHost.ts";
+import type { RunnerHost } from "./runnerHost.ts";
 
 const Message = Type.Object({
   content: Type.String(),
@@ -56,6 +56,10 @@ export function http(
 ): Deno.HttpServer<Deno.NetAddr> {
   const app = new Hono();
 
+  app.get("/health", (c) => {
+    return c.text("ok");
+  });
+
   app.post("/v1/chat/completions", async (c) => {
     try {
       const body = await c.req.json();
@@ -96,7 +100,6 @@ export function http(
       };
 
       Value.Assert(ChatResponse, response);
-
       return c.json(response);
     } catch (e) {
       if (e instanceof HTTPException) {

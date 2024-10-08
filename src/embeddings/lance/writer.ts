@@ -1,7 +1,7 @@
 import * as lancedb from "@lancedb/lancedb";
 import { Field, FixedSizeList, Float64, Schema, Utf8 } from "apache-arrow";
-import { IEmbeddingWriter } from "../embeddings.ts";
-import ollama, { Ollama } from "ollama";
+import type { IEmbeddingWriter } from "../embeddings.ts";
+import ollama, { type Ollama } from "ollama";
 
 export class LanceWriter implements IEmbeddingWriter {
   #table: lancedb.Table;
@@ -59,6 +59,7 @@ export class LanceWriter implements IEmbeddingWriter {
     await this.#table.add(data);
   }
 
+  // deno-lint-ignore require-await
   async close(): Promise<void> {
     return this.#table.close();
   }

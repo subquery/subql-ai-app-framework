@@ -41,7 +41,7 @@ export class Context implements IContext {
     this.#vectorStorage = vectorStorage;
   }
 
-  async vectorSearch(tableName: string, vector: number[]): Promise<any[]> {
+  async vectorSearch(tableName: string, vector: number[]): Promise<unknown[]> {
     if (!this.#vectorStorage) {
       throw new Error(
         "Project did not provide vector storage. Unable to perform search",

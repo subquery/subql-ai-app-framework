@@ -43,9 +43,9 @@ export abstract class FunctionTool<P extends Parameters = Parameters>
   abstract parameters: P;
   abstract description: string;
   abstract call(
-    args: Record<any, any>, /*RequiredParams<P> & OptionalParams<P>*/
+    args: unknown, /*RequiredParams<P> & OptionalParams<P>*/
     ctx: IContext,
-  ): Promise<any>;
+  ): Promise<string>;
 
   toTool(): Tool {
     return {

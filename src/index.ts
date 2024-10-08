@@ -1,7 +1,8 @@
-#!/usr/bin/env -S deno run --allow-env --allow-net --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options
+#!/usr/bin/env -S deno run --allow-env --allow-net --allow-sys --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options
 // TODO limit --allow-ffi to just lancedb
 // TODO limit --deny-net on localhost except ollama/db
 // TODO limit --allow-run needed for Deno.exit
+// Allow sys is for docker
 // Allow run is for esbuild
 // Allow write is for tmp directory access
 // Allow read is for reading form tmp and projects
@@ -10,18 +11,16 @@ import "@std/dotenv/load"; // Automatically load .env
 import { resolve } from "@std/path/resolve";
 // @ts-types="npm:@types/yargs"
 import yargs, {
-  ArgumentsCamelCase,
-  InferredOptionTypes,
-  Options,
+  type ArgumentsCamelCase,
+  type InferredOptionTypes,
+  type Options,
 } from "yargs/yargs";
-import { runApp } from "./app.ts";
-import { generate } from "./embeddings/generator/generator.ts";
-import { projectInfo } from "./info.ts";
-import { publishProject } from "./bundle.ts";
+
 import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
 import { setSpinner } from "./util.ts";
-import { boolean } from "npm:@types/yargs";
+
+const DEFAULT_PORT = 7827;
 
 const sharedArgs = {
   project: {
@@ -68,12 +67,12 @@ yargs(Deno.args)
         description: "The interface to interact with the app",
         type: "string",
         choices: ["cli", "http"],
-        default: "cli",
+        default: "http",
       },
       port: {
         description: "The port the http service runs on",
         type: "number",
-        default: 7827,
+        default: DEFAULT_PORT,
         // TODO set max value
       },
       forceReload: {
@@ -85,6 +84,7 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
+        const { runApp } = await import("./app.ts");
         return await runApp({
           projectPath: argv.project,
           host: argv.host,
@@ -112,6 +112,7 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
+        const { projectInfo } = await import("./info.ts");
         await projectInfo(argv.project, ipfsFromArgs(argv), argv.json);
         Deno.exit(0);
       } catch (e) {
@@ -150,6 +151,9 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
+        const { generate } = await import(
+          "./embeddings/generator/generator.ts"
+        );
         return await generate(
           resolve(argv.input),
           resolve(argv.output),
@@ -160,6 +164,21 @@ yargs(Deno.args)
         console.log(e);
         Deno.exit(1);
       }
+    },
+  )
+  .command(
+    "repl",
+    "Creates a CLI chat with a running app",
+    {
+      host: {
+        description: "The endpoint the AI app is exposed",
+        type: "string",
+        default: `http://localhost:${DEFAULT_PORT}`,
+      },
+    },
+    async (argv) => {
+      const { httpCli } = await import("./httpCli.ts");
+      await httpCli(argv.host);
     },
   )
   .command(
@@ -174,9 +193,11 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
+        const { publishProject } = await import("./bundle.ts");
         if (argv.silent) {
           setSpinner(ora({ isSilent: true }));
         }
+
         const cid = await publishProject(
           argv.project,
           ipfsFromArgs(argv),

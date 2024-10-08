@@ -1,4 +1,4 @@
-export async function grahqlRequest<T = any>(
+export async function grahqlRequest<T = unknown>(
   endpoint: string,
   query: string,
   variables?: unknown,
@@ -16,12 +16,12 @@ export async function grahqlRequest<T = any>(
 
   const res = await response.json();
 
-  // console.log('XXXX raw response', res);
-
   if (res.errors) {
     console.log(`Request failed\n${query}`);
 
-    throw new Error(res.errors.map((e: any) => e.message).join("\n"));
+    throw new Error(
+      res.errors.map((e: { message: string }) => e.message).join("\n"),
+    );
   }
 
   return res.data;

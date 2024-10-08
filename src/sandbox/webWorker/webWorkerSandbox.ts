@@ -1,11 +1,11 @@
-import { type Tool } from "ollama";
-import { type TSchema } from "@sinclair/typebox";
+import type { Tool } from "ollama";
+import type { TSchema } from "@sinclair/typebox";
 import * as rpc from "vscode-jsonrpc";
 import {
   BrowserMessageReader,
   BrowserMessageWriter,
 } from "vscode-jsonrpc/browser.js";
-import { ISandbox } from "../sandbox.ts";
+import type { ISandbox } from "../sandbox.ts";
 import {
   CallTool,
   CtxComputeQueryEmbedding,
@@ -16,8 +16,8 @@ import {
 } from "./messages.ts";
 import { loadConfigFromEnv } from "../../util.ts";
 import { FromSchema } from "../../fromSchema.ts";
-import { IContext } from "../../context/context.ts";
-import { IVectorConfig } from "../../project/project.ts";
+import type { IContext } from "../../context/context.ts";
+import type { IVectorConfig } from "../../project/project.ts";
 
 export class WebWorkerSandbox implements ISandbox {
   #connection: rpc.MessageConnection;
@@ -32,7 +32,7 @@ export class WebWorkerSandbox implements ISandbox {
         deno: {
           permissions: {
             env: true, // TODO limit this
-            hrtime: false,
+            // hrtime: false,
             net: "inherit", // TODO remove localhost
             ffi: true, // Needed for node js ffi
             read: true, // Needed for imports to node modules
@@ -56,7 +56,7 @@ export class WebWorkerSandbox implements ISandbox {
 
     // Need to restore the config and make it compatible as it uses symbols internally
     const configType = rawConfigType
-      // @ts-ignore
+      // @ts-ignore functionally works but types are too complex
       ? FromSchema(JSON.parse(JSON.stringify(rawConfigType)))
       : undefined;
     const config = loadConfigFromEnv(configType);
@@ -91,6 +91,7 @@ export class WebWorkerSandbox implements ISandbox {
     return this.#config;
   }
 
+  // deno-lint-ignore require-await
   async getTools(): Promise<Tool[]> {
     return this.#tools;
   }
@@ -112,7 +113,7 @@ export class WebWorkerSandbox implements ISandbox {
     this.#hasSetupCxt = true;
   }
 
-  runTool(toolName: string, args: any, ctx: IContext): Promise<any> {
+  runTool(toolName: string, args: unknown, ctx: IContext): Promise<string> {
     // Connect up context so sandbox can call application
     this.#connection.onRequest(CtxVectorSearch, async (tableName, vector) => {
       const res = await ctx.vectorSearch(tableName, vector);

@@ -4,8 +4,10 @@ import { Tar } from "@std/archive/tar";
 import { walk } from "@std/fs/walk";
 import { dirname } from "@std/path/dirname";
 import { Buffer } from "@std/io/buffer";
-import { IPFSClient } from "./ipfs.ts";
-import * as esbuild from "esbuild";
+import type { IPFSClient } from "./ipfs.ts";
+// Supporting WASM would allow dropping `--allow-run` option but its not currently supported https://github.com/evanw/esbuild/pull/2968
+// import * as esbuild from "https://deno.land/x/esbuild@v0.24.0/wasm.js";
+// import * as esbuild from "esbuild";
 import { denoPlugins } from "@luca/esbuild-deno-loader";
 import { getDefaultSandbox } from "./sandbox/index.ts";
 import { toReadableStream } from "@std/io/to-readable-stream";
@@ -59,6 +61,7 @@ export async function publishProject(
 export async function generateBundle(projectPath: string): Promise<string> {
   const spinner = getSpinner().start("Generating project bundle");
   try {
+    const esbuild = await import("esbuild");
     const res = await esbuild.build({
       plugins: [...denoPlugins()],
       entryPoints: [projectPath],
@@ -127,7 +130,7 @@ async function fsExists(path: string): Promise<boolean> {
   try {
     await Deno.lstat(path);
     return true;
-  } catch (e) {
+  } catch (_e) {
     return false;
   }
 }

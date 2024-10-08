@@ -1,0 +1,50 @@
+name: PR
+on:
+  pull_request:
+    paths-ignore:
+      - ".github/workflows/**"
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write # Needed for auth with Deno Deploy
+      contents: read # Needed to clone the repository
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: 2.0.0-rc.10
+
+      - name: Run tests
+        run: deno task test
+
+  code-style:
+    name: code-style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: 2.0.0-rc.10
+
+      - name: Lint
+        run: deno lint
+
+  typescript:
+    name: typescript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: 2.0.0-rc.10
+
+      - name: Check typescript
+        run: deno task check-ts
