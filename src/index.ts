@@ -151,7 +151,9 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
-        const { generate } = await import("./embeddings/generator/generator.ts");
+        const { generate } = await import(
+          "./embeddings/generator/generator.ts"
+        );
         return await generate(
           resolve(argv.input),
           resolve(argv.output),
@@ -169,15 +171,15 @@ yargs(Deno.args)
     "Creates a CLI chat with a running app",
     {
       host: {
-        description: 'The endpoint the AI app is exposed',
-        type: 'string',
-        default: `http://localhost:${DEFAULT_PORT}`
-      }
+        description: "The endpoint the AI app is exposed",
+        type: "string",
+        default: `http://localhost:${DEFAULT_PORT}`,
+      },
     },
     async (argv) => {
       const { httpCli } = await import("./httpCli.ts");
       await httpCli(argv.host);
-    }
+    },
   )
   .command(
     "publish",
@@ -195,7 +197,7 @@ yargs(Deno.args)
         if (argv.silent) {
           setSpinner(ora({ isSilent: true }));
         }
-        
+
         const cid = await publishProject(
           argv.project,
           ipfsFromArgs(argv),

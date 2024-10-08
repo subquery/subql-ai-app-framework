@@ -61,7 +61,7 @@ export async function publishProject(
 export async function generateBundle(projectPath: string): Promise<string> {
   const spinner = getSpinner().start("Generating project bundle");
   try {
-    const esbuild = await import('esbuild');
+    const esbuild = await import("esbuild");
     const res = await esbuild.build({
       plugins: [...denoPlugins()],
       entryPoints: [projectPath],

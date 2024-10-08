@@ -56,8 +56,8 @@ export function http(
 ): Deno.HttpServer<Deno.NetAddr> {
   const app = new Hono();
 
-  app.get('/health', (c) => {
-    return c.text('ok');
+  app.get("/health", (c) => {
+    return c.text("ok");
   });
 
   app.post("/v1/chat/completions", async (c) => {

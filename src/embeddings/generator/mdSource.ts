@@ -1,6 +1,5 @@
 // This file is based on https://github.com/supabase-community/nextjs-openai-doc-search/blob/main/lib/generate-embeddings.ts
 
-
 // @ts-types="npm:@types/estree"
 // import { ObjectExpression } from 'estree';
 // import type { ObjectExpression } from "https://esm.sh/@types/estree@1.0.5";
@@ -20,7 +19,11 @@ import GithubSlugger from "github-slugger";
 type PlainValue = string | number | bigint | true | RegExp | undefined;
 type PlainObj = Record<string, PlainValue>;
 type ObjectExpression = {
-  properties: { type: string; key: { type: string; name: string; }, value: { type: string; value: PlainValue}}[];
+  properties: {
+    type: string;
+    key: { type: string; name: string };
+    value: { type: string; value: PlainValue };
+  }[];
 };
 
 /**
@@ -62,7 +65,7 @@ function extractMetaExport(mdxTree: Root) {
       node.data?.estree?.body[0]?.type === "ExportNamedDeclaration" &&
       node.data.estree.body[0].declaration?.type === "VariableDeclaration" &&
       node.data.estree.body[0].declaration.declarations[0]?.id.type ===
-      "Identifier" &&
+        "Identifier" &&
       node.data.estree.body[0].declaration.declarations[0].id.name === "meta"
     );
   });
@@ -74,14 +77,14 @@ function extractMetaExport(mdxTree: Root) {
   const objectExpression =
     (metaExportNode.data?.estree?.body[0]?.type === "ExportNamedDeclaration" &&
       metaExportNode.data.estree.body[0].declaration?.type ===
-      "VariableDeclaration" &&
+        "VariableDeclaration" &&
       metaExportNode.data.estree.body[0].declaration.declarations[0]?.id
-        .type === "Identifier" &&
+          .type === "Identifier" &&
       metaExportNode.data.estree.body[0].declaration.declarations[0].id.name ===
-      "meta" &&
+        "meta" &&
       metaExportNode.data.estree.body[0].declaration.declarations[0].init
-        ?.type ===
-      "ObjectExpression" &&
+          ?.type ===
+        "ObjectExpression" &&
       metaExportNode.data.estree.body[0].declaration.declarations[0].init) ||
     undefined;
 
@@ -99,7 +102,10 @@ function extractMetaExport(mdxTree: Root) {
  *
  * Useful to split a markdown file into smaller sections.
  */
-function splitTreeBy(tree: Root, predicate: (node: Content) => boolean): Root[] {
+function splitTreeBy(
+  tree: Root,
+  predicate: (node: Content) => boolean,
+): Root[] {
   // @ts-ignore: this file was converted from nodejs. There are some type checks that don't seem to be working
   return tree.children.reduce<Root[]>((trees, node) => {
     const [lastTree] = trees.slice(-1);

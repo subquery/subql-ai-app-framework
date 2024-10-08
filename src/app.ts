@@ -112,5 +112,3 @@ async function cli(runnerHost: RunnerHost): Promise<void> {
     });
   }
 }
-
-

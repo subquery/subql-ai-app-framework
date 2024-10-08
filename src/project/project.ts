@@ -112,6 +112,6 @@ export async function getProjectFromEntrypoint(
 
     return project;
   } else {
-    throw new Error('Unable to validate project');
+    throw new Error("Unable to validate project");
   }
 }

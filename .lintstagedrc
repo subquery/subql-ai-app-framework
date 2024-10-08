@@ -1,0 +1,6 @@
+{
+  "*.ts": [
+    "deno lint --fix",
+    "deno fmt"
+    ]
+}

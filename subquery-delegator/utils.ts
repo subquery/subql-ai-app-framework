@@ -19,7 +19,9 @@ export async function grahqlRequest<T = unknown>(
   if (res.errors) {
     console.log(`Request failed\n${query}`);
 
-    throw new Error(res.errors.map((e: { message: string }) => e.message).join("\n"));
+    throw new Error(
+      res.errors.map((e: { message: string }) => e.message).join("\n"),
+    );
   }
 
   return res.data;

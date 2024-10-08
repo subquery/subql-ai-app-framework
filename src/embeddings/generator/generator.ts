@@ -2,7 +2,7 @@ import {
   type BaseEmbeddingSource,
   MarkdownEmbeddingSource,
 } from "./mdSource.ts";
-import { walk } from '@std/fs/walk';
+import { walk } from "@std/fs/walk";
 import ollama from "ollama";
 import { LanceWriter } from "../lance/index.ts";
 
