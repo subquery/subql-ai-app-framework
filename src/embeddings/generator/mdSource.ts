@@ -16,14 +16,15 @@ import { filter } from "unist-util-filter";
 import { createHash } from "node:crypto";
 import GithubSlugger from "github-slugger";
 
-type PlainValue = string | number | bigint | true | RegExp | undefined;
+type PlainValue = string | number | bigint | boolean | RegExp | undefined;
 type PlainObj = Record<string, PlainValue>;
 type ObjectExpression = {
-  properties: {
+  // deno-lint-ignore no-explicit-any
+  properties: any[] /*{
     type: string;
-    key: { type: string; name: string };
-    value: { type: string; value: PlainValue };
-  }[];
+    key: { type: string; name?: string };
+    value: { type: string; value?: PlainValue | null };
+  }[]*/;
 };
 
 /**
