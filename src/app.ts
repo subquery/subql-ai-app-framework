@@ -1,17 +1,19 @@
 import { resolve } from "@std/path/resolve";
 import ora from "ora";
-import { brightBlue, brightMagenta, brightRed } from "@std/fmt/colors";
-import { type Message, Ollama } from "ollama";
+import { brightMagenta } from "@std/fmt/colors";
+import { Ollama } from "ollama";
 import { MemoryChatStorage } from "./chatStorage/index.ts";
 import { Runner } from "./runner.ts";
 import { RunnerHost } from "./runnerHost.ts";
 import { getDefaultSandbox } from "./sandbox/index.ts";
-import { type ChatResponse, http } from "./http.ts";
+import { http } from "./http.ts";
 import { Context, type IContext } from "./context/context.ts";
 import type { ISandbox } from "./sandbox/sandbox.ts";
 import * as lancedb from "@lancedb/lancedb";
 import type { IPFSClient } from "./ipfs.ts";
 import { loadProject, loadVectorStoragePath } from "./loader.ts";
+import { httpCli } from "./httpCli.ts";
+import { getPrompt } from "./util.ts";
 
 export async function runApp(config: {
   projectPath: string;
@@ -66,7 +68,7 @@ export async function runApp(config: {
     case "http":
     default:
       http(runnerHost, config.port);
-      await httpCli(config.port);
+      // await httpCli(`http://localhost:${config.port}`);
   }
 }
 
@@ -87,16 +89,6 @@ async function makeContext(
   const connection = await lancedb.connect(dbPath);
 
   return new Context(model, connection);
-}
-
-function getPrompt(): string | null {
-  const response = prompt(brightBlue(`Enter a message: `));
-
-  if (response === "/bye") {
-    Deno.exit(0);
-  }
-
-  return response;
 }
 
 async function cli(runnerHost: RunnerHost): Promise<void> {
@@ -123,50 +115,4 @@ async function cli(runnerHost: RunnerHost): Promise<void> {
   }
 }
 
-async function httpCli(port: number): Promise<void> {
-  const messages: Message[] = [];
 
-  while (true) {
-    const response = getPrompt();
-    if (!response) {
-      continue;
-    }
-
-    messages.push({ content: response, role: "user" });
-
-    const spinner = ora({
-      text: "",
-      color: "yellow",
-      spinner: "simpleDotsScrolling",
-      discardStdin: false,
-    }).start();
-
-    const r = await fetch(`http://localhost:${port}/v1/chat/completions`, {
-      method: "POST",
-      body: JSON.stringify({
-        messages,
-        n: 1,
-        stream: false,
-      }),
-    });
-
-    if (!r.ok) {
-      console.error("Response error", r.status, await r.text());
-      throw new Error("Bad response");
-    }
-
-    const resBody: ChatResponse = await r.json();
-
-    const res = resBody.choices[0]?.message;
-    if (!res) {
-      spinner.fail(brightRed("Received invalid response message"));
-      continue;
-    }
-
-    messages.push(res);
-
-    spinner.stopAndPersist({
-      text: `${brightMagenta(res.content)}`,
-    });
-  }
-}

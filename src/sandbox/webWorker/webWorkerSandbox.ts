@@ -32,7 +32,7 @@ export class WebWorkerSandbox implements ISandbox {
         deno: {
           permissions: {
             env: true, // TODO limit this
-            hrtime: false,
+            // hrtime: false,
             net: "inherit", // TODO remove localhost
             ffi: true, // Needed for node js ffi
             read: true, // Needed for imports to node modules

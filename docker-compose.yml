@@ -1,0 +1,20 @@
+services:
+  subql-ai:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 7827:7827
+    restart: unless-stopped
+    volumes:
+      - ./subquery-delegator:/app
+    command:
+      - ${SUB_COMMAND:-} # set SUB_COMMAND env variable to "test" to run tests
+      # - -p=/app/index.ts
+      - -p=ipfs://QmXtvuU63gtv9fbEUNh7cKY3cb9U3BwxsFtKuqzNVDdYpt
+      - -h=http://host.docker.internal:11434
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://subql-ai:7827/health"]
+    #   interval: 3s
+    #   timeout: 5s
+    #   retries: 10

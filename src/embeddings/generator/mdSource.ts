@@ -1,7 +1,8 @@
 // This file is based on https://github.com/supabase-community/nextjs-openai-doc-search/blob/main/lib/generate-embeddings.ts
 
+
 // @ts-types="npm:@types/estree"
-import type { ObjectExpression } from 'estree';
+// import { ObjectExpression } from 'estree';
 // import type { ObjectExpression } from "https://esm.sh/@types/estree@1.0.5";
 
 // @ts-types="npm:@types/mdast"
@@ -16,14 +17,19 @@ import { filter } from "unist-util-filter";
 import { createHash } from "node:crypto";
 import GithubSlugger from "github-slugger";
 
+type ObjectExpression = {
+  properties: any[];
+};
+
+
+type PlainObj = Record<string, string | number | bigint | true | RegExp | undefined>;
+
 /**
  * Extracts ES literals from an `estree` `ObjectExpression`
  * into a plain JavaScript object.
  */
-function getObjectFromExpression(node: ObjectExpression) {
-  return node.properties.reduce<
-    Record<string, string | number | bigint | true | RegExp | undefined>
-  >((object, property) => {
+function getObjectFromExpression(node: ObjectExpression): PlainObj {
+  return node.properties.reduce<PlainObj>((object, property) => {
     if (property.type !== "Property") {
       return object;
     }
@@ -50,6 +56,7 @@ function getObjectFromExpression(node: ObjectExpression) {
  * This info is akin to frontmatter.
  */
 function extractMetaExport(mdxTree: Root) {
+  // @ts-ignore: this file was converted from nodejs. There are some type checks that don't seem to be working
   const metaExportNode = mdxTree.children.find((node): node is MdxjsEsm => {
     return (
       node.type === "mdxjsEsm" &&
@@ -93,7 +100,8 @@ function extractMetaExport(mdxTree: Root) {
  *
  * Useful to split a markdown file into smaller sections.
  */
-function splitTreeBy(tree: Root, predicate: (node: Content) => boolean) {
+function splitTreeBy(tree: Root, predicate: (node: Content) => boolean): Root[] {
+  // @ts-ignore: this file was converted from nodejs. There are some type checks that don't seem to be working
   return tree.children.reduce<Root[]>((trees, node) => {
     const [lastTree] = trees.slice(-1);
 

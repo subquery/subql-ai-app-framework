@@ -1,6 +1,7 @@
 import type { Static, TSchema } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import ora, { type Ora } from "ora";
+import { brightBlue } from "@std/fmt/colors";
 
 export function loadConfigFromEnv<T extends TSchema>(
   schema?: T,
@@ -19,4 +20,14 @@ export function getSpinner(): Ora {
 
 export function setSpinner(ora: Ora) {
   spinner = ora;
+}
+
+export function getPrompt(): string | null {
+  const response = prompt(brightBlue(`Enter a message: `));
+
+  if (response === "/bye") {
+    Deno.exit(0);
+  }
+
+  return response;
 }
