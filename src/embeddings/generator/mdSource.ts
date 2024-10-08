@@ -17,12 +17,11 @@ import { filter } from "unist-util-filter";
 import { createHash } from "node:crypto";
 import GithubSlugger from "github-slugger";
 
+type PlainValue = string | number | bigint | true | RegExp | undefined;
+type PlainObj = Record<string, PlainValue>;
 type ObjectExpression = {
-  properties: any[];
+  properties: { type: string; key: { type: string; name: string; }, value: { type: string; value: PlainValue}}[];
 };
-
-
-type PlainObj = Record<string, string | number | bigint | true | RegExp | undefined>;
 
 /**
  * Extracts ES literals from an `estree` `ObjectExpression`

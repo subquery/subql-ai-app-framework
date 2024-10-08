@@ -12,7 +12,6 @@ import type { ISandbox } from "./sandbox/sandbox.ts";
 import * as lancedb from "@lancedb/lancedb";
 import type { IPFSClient } from "./ipfs.ts";
 import { loadProject, loadVectorStoragePath } from "./loader.ts";
-import { httpCli } from "./httpCli.ts";
 import { getPrompt } from "./util.ts";
 
 export async function runApp(config: {
@@ -68,7 +67,6 @@ export async function runApp(config: {
     case "http":
     default:
       http(runnerHost, config.port);
-      // await httpCli(`http://localhost:${config.port}`);
   }
 }
 
