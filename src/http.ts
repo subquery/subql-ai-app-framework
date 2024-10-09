@@ -1,6 +1,7 @@
 import { type Static, Type } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import { Hono } from "hono";
+import { streamSSE } from "hono/streaming";
 import { HTTPException } from "hono/http-exception";
 import type { RunnerHost } from "./runnerHost.ts";
 
@@ -18,7 +19,14 @@ const CompletionChoice = Type.Object({
   index: Type.Integer(),
   message: Message,
   logprobs: Type.Null(),
-  finish_reason: Type.String(),
+  finish_reason: Type.Union([Type.String(), Type.Null()]),
+});
+
+const CompletionChunkChoice = Type.Object({
+  index: Type.Integer(),
+  delta: Message, // OpenAI has more types to this but were not using them
+  logprobs: Type.Null(),
+  finish_reason: Type.Union([Type.String(), Type.Null()]),
 });
 
 const ChatUsage = Type.Object({
@@ -45,7 +53,17 @@ const ChatResponse = Type.Object({
   usage: ChatUsage,
 });
 
+const ChatChunkResponse = Type.Object({
+  id: Type.String(),
+  model: Type.String(),
+  choices: Type.Array(CompletionChunkChoice),
+  created: Type.Number({ description: "Unix timestamp in seconds" }),
+  object: Type.Literal("chat.completion.chunk"),
+  // usage: ChatUsage, // TODO enable only if stream_options: {"include_usage": true}
+});
+
 export type ChatResponse = Static<typeof ChatResponse>;
+export type ChatChunkResponse = Static<typeof ChatChunkResponse>;
 
 /**
  * A minimal implementation of https://platform.openai.com/docs/api-reference/chat/create interface
@@ -60,20 +78,61 @@ export function http(
     return c.text("ok");
   });
 
+  app.get("/v1/models", (c) => {
+    return c.json({
+      object: "list",
+      data: [
+        {
+          id: "subql-ai-0",
+          object: "model",
+          created: new Date().getTime(),
+          owner: "SubQuery",
+        },
+      ],
+    });
+  });
+
   app.post("/v1/chat/completions", async (c) => {
     try {
       const body = await c.req.json();
       const req = Value.Parse(ChatRequest, body);
 
-      if (req.stream) {
-        throw new HTTPException(400, { message: "Streaming is not supported" });
-      }
       if (req.n != 1) {
         throw new HTTPException(400, { message: "Only `n` of 1 is supported" });
       }
 
       const runner = await runnerHost.getAnonymousRunner();
       const chatRes = await runner.promptMessages(req.messages);
+
+      // Mock streaming, current Ollama doesn't support streaming with tools. See https://github.com/subquery/subql-ai-app-framework/issues/3
+      if (req.stream) {
+        const parts = chatRes.message.content.split(" ");
+        return streamSSE(c, async (stream) => {
+          for (const [i, part] of parts.entries()) {
+            const last = i == parts.length - 1;
+
+            const res = createChatChunkResponse(
+              part,
+              chatRes.model,
+              chatRes.created_at,
+              last ? "stop" : null,
+            );
+            await stream.writeSSE({ data: JSON.stringify(res) });
+            await stream.sleep(20);
+
+            // Bring back white space
+            if (!last) {
+              const res_space = createChatChunkResponse(
+                " ",
+                chatRes.model,
+                chatRes.created_at,
+              );
+              await stream.writeSSE({ data: JSON.stringify(res_space) });
+              await stream.sleep(20);
+            }
+          }
+        });
+      }
 
       const response: ChatResponse = {
         id: "0",
@@ -100,6 +159,7 @@ export function http(
       };
 
       Value.Assert(ChatResponse, response);
+
       return c.json(response);
     } catch (e) {
       if (e instanceof HTTPException) {
@@ -111,4 +171,26 @@ export function http(
   });
 
   return Deno.serve({ port }, app.fetch);
+}
+
+function createChatChunkResponse(
+  message: string,
+  model: string,
+  createdAt: Date,
+  finish_reason: string | null = null,
+): ChatChunkResponse {
+  const res: ChatChunkResponse = {
+    id: "0",
+    object: "chat.completion.chunk",
+    model,
+    created: new Date(createdAt).getTime() / 1000,
+    choices: [{
+      index: 0,
+      delta: { role: "assistant", content: message },
+      logprobs: null,
+      finish_reason,
+    }],
+  };
+  Value.Assert(ChatChunkResponse, res);
+  return res;
 }
