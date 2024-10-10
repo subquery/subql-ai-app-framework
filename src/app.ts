@@ -59,6 +59,7 @@ export async function runApp(config: {
 
   switch (config.interface) {
     case "cli":
+      await pendingCtx;
       if (sandbox.userMessage) {
         console.log(sandbox.userMessage);
       }
