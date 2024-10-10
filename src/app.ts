@@ -31,7 +31,7 @@ export async function runApp(config: {
   );
   const sandbox = await getDefaultSandbox(resolve(projectPath));
 
-  const ctx = await makeContext(
+  const pendingCtx = makeContext(
     sandbox,
     model,
     (dbPath) =>
@@ -44,7 +44,7 @@ export async function runApp(config: {
       ),
   );
 
-  const runnerHost = new RunnerHost(() => {
+  const runnerHost = new RunnerHost(async () => {
     const chatStorage = new MemoryChatStorage();
 
     chatStorage.append([{ role: "system", content: sandbox.systemPrompt }]);
@@ -53,7 +53,7 @@ export async function runApp(config: {
       sandbox,
       chatStorage,
       model,
-      ctx,
+      await pendingCtx,
     );
   });
 
@@ -66,7 +66,7 @@ export async function runApp(config: {
       break;
     case "http":
     default:
-      http(runnerHost, config.port);
+      http(runnerHost, config.port, pendingCtx);
   }
 }
 

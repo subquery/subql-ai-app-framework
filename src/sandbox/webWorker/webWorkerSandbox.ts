@@ -26,7 +26,7 @@ export class WebWorkerSandbox implements ISandbox {
 
   public static async create(path: string): Promise<WebWorkerSandbox> {
     const w = new Worker(
-      import.meta.resolve("./webWorker.ts" /*path*/),
+      import.meta.resolve("./webWorker.ts"),
       {
         type: "module",
         deno: {
