@@ -5,9 +5,10 @@ import { brightBlue } from "@std/fmt/colors";
 
 export function loadConfigFromEnv<T extends TSchema>(
   schema?: T,
+  envObj?: Record<string, string>,
 ): Static<T> | undefined {
   if (!schema) return undefined;
-  const envObj = Deno.env.toObject();
+  envObj ??= Deno.env.toObject();
   return Value.Parse(schema, envObj);
 }
 

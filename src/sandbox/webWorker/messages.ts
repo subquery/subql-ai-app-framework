@@ -8,7 +8,7 @@ export type IProjectJson = Omit<IProject, "tools"> & { tools: Tool[] };
 // Framework -> Sandbox
 export const Load = new rpc.RequestType<string, void, string>("load");
 export const Init = new rpc.RequestType<
-  Record<string, unknown>,
+  Record<string, string>,
   IProjectJson,
   string
 >("init");

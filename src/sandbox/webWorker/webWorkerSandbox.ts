@@ -31,7 +31,7 @@ export class WebWorkerSandbox implements ISandbox {
         type: "module",
         deno: {
           permissions: {
-            env: true, // TODO limit this
+            env: false, // Should be passed through in loadConfigFromEnv below
             // hrtime: false,
             net: "inherit", // TODO remove localhost
             ffi: true, // Needed for node js ffi

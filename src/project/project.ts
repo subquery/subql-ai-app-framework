@@ -97,13 +97,14 @@ const ProjectEntrypointGen = <T extends TObject>(t: T) =>
 
 export async function getProjectFromEntrypoint(
   entrypoint: unknown,
+  providedConfig?: Record<string, string>,
 ): Promise<IProject> {
   if (!entrypoint) {
     throw new Error("Project entry is invalid");
   }
   // Validate the entrypoint
   if (validateProjectEntry(entrypoint)) {
-    const config = loadConfigFromEnv(entrypoint.configType);
+    const config = loadConfigFromEnv(entrypoint.configType, providedConfig);
 
     // Check that the constructed project is valid
     const project = await entrypoint.projectFactory(config);
