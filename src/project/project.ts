@@ -32,6 +32,11 @@ export const VectorConfig = Type.Object({
 });
 
 export const Project = Type.Object({
+  // Note: If a new spec version is introduced Type.TemplateLiteral could be used here
+  specVersion: Type.Literal(
+    "0.0.1",
+    { description: "The specification version of the project structure." },
+  ),
   model: Type.String({
     description: "The llm model to use",
   }),
@@ -71,8 +76,9 @@ export type IProjectEntrypoint<T extends TObject = TObject> = Static<
   IProjectEntry<T>
 >;
 
-export function validateProject(project: unknown): void {
-  return Value.Assert(Project, project);
+export function validateProject(project: unknown): project is IProject {
+  Value.Assert(Project, project);
+  return true;
 }
 
 function validateProjectEntry(entry: unknown): entry is IProjectEntry {
@@ -109,10 +115,9 @@ export async function getProjectFromEntrypoint(
     // Check that the constructed project is valid
     const project = await entrypoint.projectFactory(config);
 
-    validateProject(project);
-
-    return project;
-  } else {
-    throw new Error("Unable to validate project");
+    if (validateProject(project)) {
+      return project;
+    }
   }
+  throw new Error("Unable to validate project");
 }

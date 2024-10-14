@@ -56,6 +56,7 @@ export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
 
     return {
       tools,
+      specVersion: "0.0.1",
       model: "llama3.1",
       vectorStorage: {
         type: "lancedb",

@@ -20,7 +20,11 @@ export async function publishProject(
   sandboxFactory = getDefaultSandbox,
 ): Promise<string> {
   projectPath = await Deno.realPath(projectPath);
-  const projectJson = await getProjectJson(projectPath, sandboxFactory);
+  const projectJson = await getProjectJson(
+    projectPath,
+    "local",
+    sandboxFactory,
+  );
   let code = await generateBundle(projectPath);
   const vectorDbPath = projectJson.vectorStorage?.path;
   if (vectorDbPath) {

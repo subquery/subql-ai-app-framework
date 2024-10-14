@@ -1,5 +1,5 @@
 import type { Static, TSchema } from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
+import { AssertError, Value } from "@sinclair/typebox/value";
 import ora, { type Ora } from "ora";
 import { brightBlue } from "@std/fmt/colors";
 
@@ -35,3 +35,22 @@ export function getPrompt(): string | null {
 
 // Possible sources where projects can be loaded from
 export type ProjectSource = "local" | "ipfs";
+
+export function PrettyTypeboxError(
+  error: Error,
+  prefix = "Type Assertion Failed",
+): Error {
+  if (
+    error instanceof AssertError || error.constructor.name === "AssertError"
+  ) {
+    const errs = [...(error as AssertError).Errors()];
+
+    let msg = `${prefix}:\n`;
+    for (const e of errs) {
+      msg += `\t${e.path}: ${e.message}\n`;
+    }
+    return new Error(msg, { cause: error });
+  }
+
+  return error;
+}

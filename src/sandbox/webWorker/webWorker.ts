@@ -19,6 +19,7 @@ import {
   type IProjectEntrypoint,
 } from "../../project/project.ts";
 import type { IContext } from "../../context/context.ts";
+import { PrettyTypeboxError } from "../../util.ts";
 
 const conn = rpc.createMessageConnection(
   new BrowserMessageReader(self),
@@ -52,9 +53,16 @@ conn.onRequest(Init, async (config) => {
     throw new Error("Please call `load` first");
   }
 
-  project ??= await getProjectFromEntrypoint(entrypoint, config);
+  try {
+    project ??= await getProjectFromEntrypoint(entrypoint, config);
 
-  return toJsonProject();
+    return toJsonProject();
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      throw PrettyTypeboxError(e, "Project validation failed");
+    }
+    throw e;
+  }
 });
 
 conn.onRequest(GetConfig, () => {
