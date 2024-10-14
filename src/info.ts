@@ -5,12 +5,14 @@ import type { IProject } from "./project/project.ts";
 import type { TSchema } from "@sinclair/typebox";
 import type { IPFSClient } from "./ipfs.ts";
 import { loadProject } from "./loader.ts";
+import type { ProjectSource } from "./util.ts";
 
 export async function getProjectJson(
   projectPath: string,
+  source: ProjectSource,
   sandboxFactory = getDefaultSandbox,
 ): Promise<Omit<IProject, "tools"> & { tools: string[]; config?: TSchema }> {
-  const sandbox = await sandboxFactory(resolve(projectPath));
+  const sandbox = await sandboxFactory(resolve(projectPath), source);
 
   return {
     model: sandbox.model,
@@ -26,8 +28,8 @@ export async function projectInfo(
   ipfs: IPFSClient,
   json = false,
 ): Promise<void> {
-  const loadedPath = await loadProject(projectPath, ipfs);
-  const projectJson = await getProjectJson(loadedPath);
+  const [loadedPath, source] = await loadProject(projectPath, ipfs);
+  const projectJson = await getProjectJson(loadedPath, source);
 
   if (json) {
     console.log(JSON.stringify(

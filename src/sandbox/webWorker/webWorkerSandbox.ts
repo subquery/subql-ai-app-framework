@@ -18,13 +18,26 @@ import { loadConfigFromEnv } from "../../util.ts";
 import { FromSchema } from "../../fromSchema.ts";
 import type { IContext } from "../../context/context.ts";
 import type { IVectorConfig } from "../../project/project.ts";
+import { dirname } from "@std/path/dirname";
+
+export type Permissions = {
+  /**
+   * For local projects allow reading all locations for imports to work.
+   * TODO: This could be limited to the project dir + DENO_DIR cache but DENO_DIR doesn't provide the default currently
+   */
+  allowRead?: boolean;
+  allowFFI?: boolean;
+};
 
 export class WebWorkerSandbox implements ISandbox {
   #connection: rpc.MessageConnection;
   #config: TSchema | undefined;
   #tools: Tool[];
 
-  public static async create(path: string): Promise<WebWorkerSandbox> {
+  public static async create(
+    path: string,
+    permissions?: Permissions,
+  ): Promise<WebWorkerSandbox> {
     const w = new Worker(
       import.meta.resolve("./webWorker.ts"),
       {
@@ -32,10 +45,9 @@ export class WebWorkerSandbox implements ISandbox {
         deno: {
           permissions: {
             env: false, // Should be passed through in loadConfigFromEnv below
-            // hrtime: false,
             net: "inherit", // TODO remove localhost
-            ffi: true, // Needed for node js ffi
-            read: true, // Needed for imports to node modules
+            ffi: permissions?.allowFFI ?? false, // Needed for node js ffi, TODO this could be the same as read permissions
+            read: permissions?.allowRead ? true : [dirname(path)],
             run: false,
             write: false,
           },

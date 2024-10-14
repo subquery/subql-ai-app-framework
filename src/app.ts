@@ -23,13 +23,13 @@ export async function runApp(config: {
   forceReload?: boolean;
 }): Promise<void> {
   const model = new Ollama({ host: config.host });
-  const projectPath = await loadProject(
+  const [projectPath, source] = await loadProject(
     config.projectPath,
     config.ipfs,
     undefined,
     config.forceReload,
   );
-  const sandbox = await getDefaultSandbox(resolve(projectPath));
+  const sandbox = await getDefaultSandbox(resolve(projectPath), source);
 
   const pendingCtx = makeContext(
     sandbox,

@@ -32,3 +32,6 @@ export function getPrompt(): string | null {
 
   return response;
 }
+
+// Possible sources where projects can be loaded from
+export type ProjectSource = "local" | "ipfs";

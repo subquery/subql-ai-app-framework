@@ -3,7 +3,7 @@ import { CIDReg, type IPFSClient } from "./ipfs.ts";
 import { resolve } from "@std/path/resolve";
 import { UntarStream } from "@std/tar";
 import { ensureDir, exists } from "@std/fs";
-import { getSpinner } from "./util.ts";
+import { getSpinner, type ProjectSource } from "./util.ts";
 
 export const getOSTempDir = () =>
   Deno.env.get("TMPDIR") || Deno.env.get("TMP") || Deno.env.get("TEMP") ||
@@ -14,7 +14,7 @@ export async function loadProject(
   ipfs: IPFSClient,
   tmpDir?: string,
   forceReload?: boolean,
-): Promise<string> {
+): Promise<[string, ProjectSource]> {
   if (CIDReg.test(projectPath)) {
     const spinner = getSpinner().start("Loading project from IPFS");
     try {
@@ -25,7 +25,7 @@ export async function loadProject(
       // Early exit if the file has already been fetched
       if (!forceReload && (await exists(filePath))) {
         spinner.succeed("Loaded project from IPFS");
-        return filePath;
+        return [filePath, "ipfs"];
       }
       await ensureDir(tmp);
 
@@ -36,14 +36,14 @@ export async function loadProject(
 
       spinner.succeed("Loaded project from IPFS");
 
-      return filePath;
+      return [filePath, "ipfs"];
     } catch (e) {
       spinner.fail("Failed to load project");
       throw e;
     }
   }
 
-  return resolve(projectPath);
+  return [resolve(projectPath), "local"];
 }
 
 export async function loadVectorStoragePath(
