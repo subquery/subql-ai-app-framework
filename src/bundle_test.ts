@@ -11,7 +11,7 @@ Deno.test("Generates a bundle", async () => {
 Deno.test("Publishing a project to ipfs", async () => {
   // WebWorkers don't work in tests, use the unsafe sandbox instead
   const cid = await publishProject(
-    "./subquery-delegator/index.ts",
+    "./subquery-delegator/project.ts",
     new IPFSClient(
       Deno.env.get("IPFS_ENDPOINT") ??
         "https://unauthipfs.subquery.network/ipfs/api/v0",

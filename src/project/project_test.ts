@@ -39,8 +39,8 @@ Deno.test("handles an invalid entrypoint", async () => {
     "Project entry is invalid",
   );
   await expect(loadProject({} as ProjectManifest, {})).rejects.toThrow(
-    "Expected union value",
-  ); // TODO return better error message
+    "Project entry is invalid",
+  );
 });
 
 Deno.test("handles an invalid conifg", async () => {

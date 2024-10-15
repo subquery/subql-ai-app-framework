@@ -65,6 +65,7 @@ export function SpinnerLog(
     return async function (...args: unknown[]) {
       const spinner = getSpinner().start(messages.start);
       try {
+        // @ts-ignore need to apply this function call but unable to type "this"
         const v = await fn.apply(this, ...args);
         spinner.succeed(messages.success);
         return v;

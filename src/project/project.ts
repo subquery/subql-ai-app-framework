@@ -53,7 +53,12 @@ export async function loadProject(
   entry: unknown,
   config?: Record<string, string>,
 ): Promise<Project> {
-  Value.Assert(ProjectEntry, entry);
+  try {
+    Value.Assert(ProjectEntry, entry);
+  } catch (e) {
+    throw new Error("Project entry is invalid", { cause: e });
+  }
+
   const cfg = loadRawConfigFromEnv(manifest.config, config);
 
   const project = await entry(cfg);

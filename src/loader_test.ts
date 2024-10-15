@@ -13,25 +13,28 @@ const ipfs = new IPFSClient(
 );
 
 Deno.test("Load vector storage from dir", async () => {
-  const dbPath = await pullContent("./.db", ipfs, "");
+  const [dbPath, source] = await pullContent("./.db", ipfs, "");
 
   expect(dbPath).toBe(resolve("./.db"));
+  expect(source).toBe("local");
 });
 
 Deno.test("Load vector storage from cloud storage", async () => {
-  const [dbPath] = await pullContent(
+  const [dbPath, source] = await pullContent(
     "s3://my-bucket/lancedb",
     ipfs,
     "",
   );
 
   expect(dbPath).toBe("s3://my-bucket/lancedb");
+  expect(source).toBe("remote");
 });
 
 Deno.test("Load vector storage from LanceDB cloud", async () => {
-  const [dbPath] = await pullContent("db://my_database", ipfs, "");
+  const [dbPath, source] = await pullContent("db://my_database", ipfs, "");
 
   expect(dbPath).toBe("db://my_database");
+  expect(source).toBe("remote");
 });
 
 Deno.test("Load vector storage from IPFS", async () => {
@@ -42,7 +45,7 @@ Deno.test("Load vector storage from IPFS", async () => {
     ],
   } as unknown as IPFSClient;
 
-  const [dbPath] = await pullContent(
+  const [dbPath, source] = await pullContent(
     "ipfs://QmbSzrfrgexP4Fugys356MYmWf3Wvk7kfEMaMNXrDXB2nd",
     mockIpfs,
     "",
@@ -51,6 +54,7 @@ Deno.test("Load vector storage from IPFS", async () => {
   expect(dbPath).toBe(
     resolve(getOSTempDir(), "QmbSzrfrgexP4Fugys356MYmWf3Wvk7kfEMaMNXrDXB2nd"),
   );
+  expect(source).toBe("ipfs");
 
   // Clean up
   await Deno.remove(dbPath, { recursive: true });
