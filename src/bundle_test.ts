@@ -1,6 +1,5 @@
 import { generateBundle, publishProject } from "./bundle.ts";
 import { expect } from "jsr:@std/expect";
-import { UnsafeSandbox } from "./sandbox/unsafeSandbox.ts";
 import { IPFSClient } from "./ipfs.ts";
 
 Deno.test("Generates a bundle", async () => {
@@ -12,7 +11,7 @@ Deno.test("Generates a bundle", async () => {
 Deno.test("Publishing a project to ipfs", async () => {
   // WebWorkers don't work in tests, use the unsafe sandbox instead
   const cid = await publishProject(
-    "./subquery-delegator/index.ts",
+    "./subquery-delegator/project.ts",
     new IPFSClient(
       Deno.env.get("IPFS_ENDPOINT") ??
         "https://unauthipfs.subquery.network/ipfs/api/v0",
@@ -20,7 +19,6 @@ Deno.test("Publishing a project to ipfs", async () => {
         Authorization: `Bearer: ${Deno.env.get("SUBQL_ACCESS_TOKEN")}`,
       },
     ),
-    UnsafeSandbox.create,
   );
 
   // The example project could end up being modified so we only validate the response, not the content

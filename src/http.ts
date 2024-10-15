@@ -71,11 +71,20 @@ export type ChatChunkResponse = Static<typeof ChatChunkResponse>;
 export function http(
   runnerHost: RunnerHost,
   port: number,
+  onReady?: Promise<unknown>,
 ): Deno.HttpServer<Deno.NetAddr> {
   const app = new Hono();
 
+  // The ready status should change once the project is fully loaded, including the vector DB
+  let ready = false;
+  onReady?.then(() => ready = true);
+
   app.get("/health", (c) => {
     return c.text("ok");
+  });
+
+  app.get("/ready", (c) => {
+    return c.text(ready.toString());
   });
 
   app.get("/v1/models", (c) => {

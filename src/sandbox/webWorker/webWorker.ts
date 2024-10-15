@@ -7,26 +7,23 @@ import {
   CallTool,
   CtxComputeQueryEmbedding,
   CtxVectorSearch,
-  GetConfig,
   Init,
   type IProjectJson,
   Load,
 } from "./messages.ts";
 
-import {
-  getProjectFromEntrypoint,
-  type IProject,
-  type IProjectEntrypoint,
-} from "../../project/project.ts";
+import type { Project } from "../../project/project.ts";
 import type { IContext } from "../../context/context.ts";
+import { PrettyTypeboxError } from "../../util.ts";
+import { loadProject } from "../../project/project.ts";
 
 const conn = rpc.createMessageConnection(
   new BrowserMessageReader(self),
   new BrowserMessageWriter(self),
 );
 
-let entrypoint: IProjectEntrypoint;
-let project: IProject;
+let entrypoint: unknown;
+let project: Project;
 
 const context = {
   vectorSearch: (table, vectors) =>
@@ -44,24 +41,24 @@ function toJsonProject(): IProjectJson {
 }
 
 conn.onRequest(Load, async (path) => {
-  entrypoint ??= (await import(path)).entrypoint;
+  entrypoint ??= (await import(path)).default;
 });
 
-conn.onRequest(Init, async (config) => {
+conn.onRequest(Init, async (manifest, config) => {
   if (!entrypoint) {
     throw new Error("Please call `load` first");
   }
 
-  project ??= await getProjectFromEntrypoint(entrypoint, config);
+  try {
+    project ??= await loadProject(manifest, entrypoint, config);
 
-  return toJsonProject();
-});
-
-conn.onRequest(GetConfig, () => {
-  if (!entrypoint) {
-    throw new Error("Project is not initialized");
+    return toJsonProject();
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      throw PrettyTypeboxError(e, "Project validation failed");
+    }
+    throw e;
   }
-  return entrypoint.configType;
 });
 
 conn.onRequest(CallTool, (toolName, args) => {

@@ -1,13 +1,15 @@
-import type { Static, TSchema } from "@sinclair/typebox";
-import { Value } from "@sinclair/typebox/value";
+import { AssertError, Value } from "@sinclair/typebox/value";
 import ora, { type Ora } from "ora";
 import { brightBlue } from "@std/fmt/colors";
+import { FromSchema } from "./fromSchema.ts";
 
-export function loadConfigFromEnv<T extends TSchema>(
-  schema?: T,
+export function loadRawConfigFromEnv(
+  rawSchema?: unknown,
   envObj?: Record<string, string>,
-): Static<T> | undefined {
-  if (!schema) return undefined;
+) {
+  if (!rawSchema) return undefined;
+  // @ts-ignore functionally works but types are too complex
+  const schema = FromSchema(rawSchema);
   envObj ??= Deno.env.toObject();
   return Value.Parse(schema, envObj);
 }
@@ -31,4 +33,45 @@ export function getPrompt(): string | null {
   }
 
   return response;
+}
+
+// Possible sources where projects can be loaded from
+export type Source = "local" | "ipfs" | "remote";
+
+export function PrettyTypeboxError(
+  error: Error,
+  prefix = "Type Assertion Failed",
+): Error {
+  if (
+    error instanceof AssertError || error.constructor.name === "AssertError"
+  ) {
+    const errs = [...(error as AssertError).Errors()];
+
+    let msg = `${prefix}:\n`;
+    for (const e of errs) {
+      msg += `\t${e.path}: ${e.message}\n`;
+    }
+    return new Error(msg, { cause: error });
+  }
+
+  return error;
+}
+
+/** Gets the host names of any urls in a record */
+export function extractConfigHostNames(
+  config: Record<string, string>,
+): string[] {
+  const hosts = Object.values(config)
+    .filter((v) => typeof v === "string")
+    .map((v) => {
+      try {
+        return new URL(v).hostname;
+      } catch (_e) {
+        return undefined;
+      }
+    })
+    .filter((v) => !!v) as string[]; // Cast should be unnecessary with latest TS versions
+
+  // Make unique
+  return [...new Set(hosts)];
 }

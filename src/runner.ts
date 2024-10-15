@@ -19,7 +19,7 @@ export class Runner {
 
   private async runChat(messages: Message[]): Promise<ChatResponse> {
     const res = await this.#ollama.chat({
-      model: this.sandbox.model,
+      model: this.sandbox.manifest.model,
       stream: false,
       tools: await this.sandbox.getTools(),
       // TODO should there be a limit to the number of items in the chat history?

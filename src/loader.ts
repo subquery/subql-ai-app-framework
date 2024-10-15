@@ -3,70 +3,72 @@ import { CIDReg, type IPFSClient } from "./ipfs.ts";
 import { resolve } from "@std/path/resolve";
 import { UntarStream } from "@std/tar";
 import { ensureDir, exists } from "@std/fs";
-import { getSpinner } from "./util.ts";
+import type { Source } from "./util.ts";
+import { ProjectManifest } from "./project/project.ts";
+import { Value } from "@sinclair/typebox/value";
+import { Memoize, SpinnerLog } from "./decorators.ts";
 
 export const getOSTempDir = () =>
   Deno.env.get("TMPDIR") || Deno.env.get("TMP") || Deno.env.get("TEMP") ||
   "/tmp";
 
-export async function loadProject(
-  projectPath: string,
-  ipfs: IPFSClient,
-  tmpDir?: string,
-  forceReload?: boolean,
-): Promise<string> {
-  if (CIDReg.test(projectPath)) {
-    const spinner = getSpinner().start("Loading project from IPFS");
-    try {
-      const cid = projectPath.replace("ipfs://", "");
+async function loadJson(path: string): Promise<unknown> {
+  const decoder = new TextDecoder();
+  const data = await Deno.readFile(path);
+  const raw = decoder.decode(data);
 
-      const tmp = resolve(tmpDir ?? getOSTempDir(), cid);
-      const filePath = resolve(tmp, "index.ts");
-      // Early exit if the file has already been fetched
-      if (!forceReload && (await exists(filePath))) {
-        spinner.succeed("Loaded project from IPFS");
-        return filePath;
-      }
-      await ensureDir(tmp);
-
-      const file = await Deno.open(filePath, { create: true, write: true });
-
-      const readable = await ipfs.catStream(cid);
-      await readable.pipeTo(file.writable);
-
-      spinner.succeed("Loaded project from IPFS");
-
-      return filePath;
-    } catch (e) {
-      spinner.fail("Failed to load project");
-      throw e;
-    }
-  }
-
-  return resolve(projectPath);
+  return JSON.parse(raw);
 }
 
-export async function loadVectorStoragePath(
-  projectPath: string,
-  vectorStoragePath: string,
+async function loadScript(path: string): Promise<unknown> {
+  const { default: raw } = await import(path);
+  return raw;
+}
+
+/**
+ * Loads a local manifest file (either json, ts or js)
+ */
+export async function loadManfiest(path: string): Promise<ProjectManifest> {
+  let manifest: unknown;
+  try {
+    manifest = await loadJson(path);
+  } catch (_e: unknown) {
+    manifest = await loadScript(path);
+  }
+
+  Value.Assert(ProjectManifest, manifest);
+
+  return manifest;
+}
+
+/**
+ * @param path The content path or cid
+ * @param ipfs The IPFS client to fetch content if from IPFS
+ * @param fileName The name to save the file under, if using .gz exension it will unarchive
+ * @param tmpDir (optional) The location to cache content, defaults to the OS temp directory
+ * @param force  (optional) If true and the content is from IPFS it will check if its already been fetched
+ * @param workingPath (optional) If the content is local it will resolve the path relative to this
+ * @returns
+ */
+export async function pullContent(
+  path: string,
   ipfs: IPFSClient,
+  fileName: string,
   tmpDir?: string,
-  forceReload?: boolean,
-): Promise<string> {
-  if (CIDReg.test(vectorStoragePath)) {
-    const spinner = getSpinner().start("Loading vector db from IPFS");
-    try {
-      const cid = vectorStoragePath.replace("ipfs://", "");
-      const tmp = resolve(tmpDir ?? getOSTempDir(), cid);
+  force?: boolean,
+  workingPath?: string,
+): Promise<[string, Source]> {
+  if (CIDReg.test(path)) {
+    const cid = path.replace("ipfs://", "");
+    const tmp = resolve(tmpDir ?? getOSTempDir(), cid);
+    await ensureDir(tmp);
 
-      // Early exit if the file has already been fetched
-      if (!forceReload && (await exists(tmp))) {
-        spinner.succeed("Loaded vector db from IPFS");
-        return tmp;
-      }
-
-      await ensureDir(tmp);
+    if (fileName.endsWith(".gz")) {
       const readStream = await ipfs.catStream(cid);
+
+      if (!force && (await exists(tmp))) {
+        return [tmp, "ipfs"];
+      }
 
       for await (
         const entry of readStream.pipeThrough(new DecompressionStream("gzip"))
@@ -76,24 +78,114 @@ export async function loadVectorStoragePath(
         await ensureDir(dirname(path));
         await entry.readable?.pipeTo((await Deno.create(path)).writable);
       }
+      return [tmp, "ipfs"];
+    } else {
+      const filePath = resolve(tmp, fileName);
+      // Early exit if the file has already been fetched
+      if (!force && (await exists(filePath))) {
+        return [filePath, "ipfs"];
+      }
 
-      spinner.succeed("Loaded vector db from IPFS");
-      return tmp;
-    } catch (e) {
-      spinner.fail("Failed to load vector db");
-      throw e;
+      const file = await Deno.open(filePath, { create: true, write: true });
+
+      const readable = await ipfs.catStream(cid);
+      await readable.pipeTo(file.writable);
+
+      return [filePath, "ipfs"];
     }
   }
 
   try {
-    const uri = new URL(vectorStoragePath);
+    // This should throw if the project is not a valid URL. This allows loading lancedb from gcs/s3
+    new URL(path);
 
-    if (uri.protocol) {
-      return vectorStoragePath;
-    }
+    return [path, "remote"];
   } catch (_e) {
     // DO nothing
   }
 
-  return resolve(dirname(projectPath), vectorStoragePath);
+  return [resolve(workingPath ?? "", path), "local"];
+}
+
+export class Loader {
+  #ipfs: IPFSClient;
+  #force: boolean;
+
+  constructor(
+    readonly projectPath: string,
+    ipfs: IPFSClient,
+    readonly tmpDir?: string,
+    force?: boolean,
+  ) {
+    this.#ipfs = ipfs;
+    this.#force = force ?? false;
+  }
+
+  private async pullContent(
+    path: string,
+    fileName: string,
+    tmpDir = this.tmpDir,
+    workingPath?: string,
+  ): Promise<[string, Source]> {
+    return await pullContent(
+      path,
+      this.#ipfs,
+      fileName,
+      tmpDir,
+      this.#force,
+      workingPath,
+    );
+  }
+
+  @Memoize()
+  @SpinnerLog({
+    start: "Loading project manifest",
+    success: "Loaded project manifest",
+    fail: "Failed to load project manfiest",
+  })
+  async getManifest(): Promise<[string, ProjectManifest, Source]> {
+    const [manifestPath, source] = await this.pullContent(
+      this.projectPath,
+      "manifest.json",
+    );
+
+    const manifest = await loadManfiest(manifestPath);
+    return [manifestPath, manifest, source];
+  }
+
+  @SpinnerLog({
+    start: "Loading project",
+    success: "Loaded project",
+    fail: "Failed to load project",
+  })
+  async getProject(): Promise<[string, Source]> {
+    const [manifestPath, manifest, manifestSource] = await this.getManifest();
+    const [projectPath, source] = await this.pullContent(
+      manifest.entry,
+      "project.ts",
+      dirname(manifestPath),
+      manifestSource == "local" ? dirname(this.projectPath) : undefined,
+    );
+    return [projectPath, source];
+  }
+
+  @SpinnerLog({
+    start: "Loading vector db",
+    success: "Loaded vector db",
+    fail: "Failed to load vector db",
+  })
+  async getVectorDb(): Promise<[string, Source] | undefined> {
+    const [manifestPath, manifest, manifestSource] = await this.getManifest();
+    if (!manifest.vectorStorage?.path) {
+      return undefined;
+    }
+
+    const res = await this.pullContent(
+      manifest.vectorStorage.path,
+      "db.gz",
+      dirname(manifestPath),
+      manifestSource == "local" ? dirname(this.projectPath) : undefined,
+    );
+    return res;
+  }
 }

@@ -1,24 +1,31 @@
-import { resolve } from "@std/path/resolve";
 import { brightBlue, brightMagenta } from "@std/fmt/colors";
 import { getDefaultSandbox } from "./sandbox/index.ts";
-import type { IProject } from "./project/project.ts";
-import type { TSchema } from "@sinclair/typebox";
+import type { ProjectManifest } from "./project/project.ts";
 import type { IPFSClient } from "./ipfs.ts";
-import { loadProject } from "./loader.ts";
+import { Loader } from "./loader.ts";
+
+type StaticProject = ProjectManifest & {
+  tools?: string[];
+  systemPrompt?: string;
+};
 
 export async function getProjectJson(
-  projectPath: string,
+  manifest: ProjectManifest,
+  loader: Loader,
   sandboxFactory = getDefaultSandbox,
-): Promise<Omit<IProject, "tools"> & { tools: string[]; config?: TSchema }> {
-  const sandbox = await sandboxFactory(resolve(projectPath));
+): Promise<StaticProject> {
+  try {
+    const sandbox = await sandboxFactory(loader);
 
-  return {
-    model: sandbox.model,
-    config: sandbox.config,
-    tools: (await sandbox.getTools()).map((t) => t.function.name),
-    systemPrompt: sandbox.systemPrompt,
-    vectorStorage: sandbox.vectorStorage,
-  };
+    return {
+      ...sandbox.manifest,
+      tools: (await sandbox.getTools()).map((t) => t.function.name),
+      systemPrompt: sandbox.systemPrompt,
+    };
+  } catch (e) {
+    console.warn(`Failed to load project: ${e}`);
+    return manifest;
+  }
 }
 
 export async function projectInfo(
@@ -26,12 +33,13 @@ export async function projectInfo(
   ipfs: IPFSClient,
   json = false,
 ): Promise<void> {
-  const loadedPath = await loadProject(projectPath, ipfs);
-  const projectJson = await getProjectJson(loadedPath);
+  const loader = new Loader(projectPath, ipfs);
+  const [_, manifest] = await loader.getManifest();
+  const staticProject = await getProjectJson(manifest, loader);
 
   if (json) {
     console.log(JSON.stringify(
-      projectJson,
+      staticProject,
       null,
       2,
     ));
@@ -39,16 +47,20 @@ export async function projectInfo(
   }
 
   const info: [string, string][] = [
-    ["Model", projectJson.model],
-    ["Conifg", JSON.stringify(projectJson.config, null, 2)],
-    ["Tools", projectJson.tools.join("\n")],
-    ["System Prompt", projectJson.systemPrompt],
+    ["Model", staticProject.model],
+    ["Conifg", JSON.stringify(staticProject.config, null, 2)],
+    ["Tools", staticProject.tools?.join("\n") ?? "No Tools found"],
+    ["System Prompt", staticProject?.systemPrompt ?? "No System Prompt found"],
   ];
 
-  if (projectJson.vectorStorage) {
+  if (manifest.endpoints?.length) {
+    info.push(["Endpoints", manifest.endpoints.join("\n")]);
+  }
+
+  if (staticProject.vectorStorage) {
     info.push([
       "Vector Storage",
-      `Type: ${projectJson.vectorStorage.type}\nPath: ${projectJson.vectorStorage.path}`,
+      `Type: ${staticProject.vectorStorage.type}\nPath: ${staticProject.vectorStorage.path}`,
     ]);
   }
 

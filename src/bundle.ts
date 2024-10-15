@@ -1,4 +1,3 @@
-import { getProjectJson } from "./info.ts";
 import { resolve } from "@std/path/resolve";
 import { Tar } from "@std/archive/tar";
 import { walk } from "@std/fs/walk";
@@ -9,20 +8,39 @@ import type { IPFSClient } from "./ipfs.ts";
 // import * as esbuild from "https://deno.land/x/esbuild@v0.24.0/wasm.js";
 // import * as esbuild from "esbuild";
 import { denoPlugins } from "@luca/esbuild-deno-loader";
-import { getDefaultSandbox } from "./sandbox/index.ts";
 import { toReadableStream } from "@std/io/to-readable-stream";
 import { readerFromStreamReader } from "@std/io/reader-from-stream-reader";
 import { getSpinner } from "./util.ts";
+import { Loader } from "./loader.ts";
 
 export async function publishProject(
   projectPath: string,
   ipfs: IPFSClient,
-  sandboxFactory = getDefaultSandbox,
 ): Promise<string> {
-  projectPath = await Deno.realPath(projectPath);
-  const projectJson = await getProjectJson(projectPath, sandboxFactory);
-  let code = await generateBundle(projectPath);
-  const vectorDbPath = projectJson.vectorStorage?.path;
+  const loader = new Loader(projectPath, ipfs);
+
+  const [_, manifest, source] = await loader.getManifest();
+  if (source !== "local") {
+    throw new Error("Cannot bundle a project that isn't local");
+  }
+
+  // Upload project
+  const [project, projectSource] = await loader.getProject();
+  if (projectSource === "local") {
+    const spinner = getSpinner().start("Publishing project code");
+    try {
+      const code = await generateBundle(project);
+      const [{ cid: codeCid }] = await ipfs.addFile([code]);
+      manifest.entry = `ipfs://${codeCid}`;
+      spinner.succeed("Published project code");
+    } catch (e) {
+      spinner.fail("Failed to publish project code");
+      throw e;
+    }
+  }
+
+  // Upload vector db
+  const vectorDbPath = manifest.vectorStorage?.path;
   if (vectorDbPath) {
     // Resolve the db path relative to the project
     const dbPath = resolve(dirname(projectPath), vectorDbPath);
@@ -39,11 +57,9 @@ export async function publishProject(
 
         const [{ cid }] = await ipfs.addFile([dbBuf]);
 
-        code = updateProjectVectorDbPath(
-          code,
-          vectorDbPath,
-          `ipfs://${cid}`,
-        );
+        // Update manifest
+        manifest.vectorStorage!.path = `ipfs://${cid}`;
+
         spinner.succeed("Published vector db");
       } catch (e) {
         spinner.fail("Failed to publish project vectordb");
@@ -52,8 +68,9 @@ export async function publishProject(
     }
   }
 
+  // Upload manifest
   const spinner = getSpinner().start("Publishing project to IPFS");
-  const [{ cid }] = await ipfs.addFile([code]);
+  const [{ cid }] = await ipfs.addFile([JSON.stringify(manifest, null, 2)]);
   spinner.succeed("Published project to IPFS");
   return `ipfs://${cid}`;
 }
@@ -84,20 +101,6 @@ export async function generateBundle(projectPath: string): Promise<string> {
     spinner.fail("Failed to generate project bundle");
     throw e;
   }
-}
-
-/**
- * @param code The raw bundled code
- * @param currentPath The current db path that will get replaced
- * @param newPath The new db path to replace
- * @returns Updated raw bundled code
- */
-function updateProjectVectorDbPath(
-  code: string,
-  currentPath: string,
-  newPath: string,
-): string {
-  return code.replaceAll(currentPath, newPath);
 }
 
 /**

@@ -1,5 +1,4 @@
 import type { Tool } from "ollama";
-import type { TSchema } from "@sinclair/typebox";
 import * as rpc from "vscode-jsonrpc";
 import {
   BrowserMessageReader,
@@ -10,32 +9,84 @@ import {
   CallTool,
   CtxComputeQueryEmbedding,
   CtxVectorSearch,
-  GetConfig,
   Init,
   Load,
 } from "./messages.ts";
-import { loadConfigFromEnv } from "../../util.ts";
-import { FromSchema } from "../../fromSchema.ts";
+import {
+  extractConfigHostNames,
+  loadRawConfigFromEnv,
+  type Source,
+} from "../../util.ts";
 import type { IContext } from "../../context/context.ts";
-import type { IVectorConfig } from "../../project/project.ts";
+import type { ProjectManifest } from "../../project/project.ts";
+import type { Loader } from "../../loader.ts";
+import { dirname } from "@std/path/dirname";
+
+export type Permissions = {
+  /**
+   * For local projects allow reading all locations for imports to work.
+   * TODO: This could be limited to the project dir + DENO_DIR cache but DENO_DIR doesn't provide the default currently
+   */
+  allowRead?: boolean;
+  allowFFI?: boolean;
+};
+
+const IPFS_PERMISSIONS = (dir?: string): Deno.PermissionOptionsObject => ({
+  read: dir ? [dirname(dir)] : false, // Allow the cache dir
+  ffi: false,
+});
+
+const LOCAL_PERMISSIONS: Deno.PermissionOptionsObject = {
+  read: true,
+  ffi: true,
+};
+
+function getPermisionsForSource(
+  source: Source,
+  projectDir: string,
+): Deno.PermissionOptionsObject {
+  switch (source) {
+    case "local":
+      return LOCAL_PERMISSIONS;
+    case "ipfs":
+      return IPFS_PERMISSIONS(projectDir);
+    default:
+      throw new Error(
+        `Unable to set permissions for unknown source: ${source}`,
+      );
+  }
+}
 
 export class WebWorkerSandbox implements ISandbox {
   #connection: rpc.MessageConnection;
-  #config: TSchema | undefined;
+
   #tools: Tool[];
 
-  public static async create(path: string): Promise<WebWorkerSandbox> {
+  public static async create(
+    loader: Loader,
+  ): Promise<WebWorkerSandbox> {
+    const [manifestPath, manifest, source] = await loader.getManifest();
+    const config = loadRawConfigFromEnv(manifest.config);
+
+    const permissions = getPermisionsForSource(source, manifestPath);
+
+    // Add any project host names as well as any configured host names
+    const hostnames = [
+      ...new Set(
+        ...(manifest.endpoints ?? []),
+        ...extractConfigHostNames(config as Record<string, string>),
+      ),
+    ];
+
     const w = new Worker(
-      import.meta.resolve("./webWorker.ts" /*path*/),
+      import.meta.resolve("./webWorker.ts"),
       {
         type: "module",
         deno: {
           permissions: {
-            env: false, // Should be passed through in loadConfigFromEnv below
-            // hrtime: false,
-            net: "inherit", // TODO remove localhost
-            ffi: true, // Needed for node js ffi
-            read: true, // Needed for imports to node modules
+            ...permissions,
+            env: false, // Should be passed through in loadRawConfigFromEnv
+            net: hostnames,
             run: false,
             write: false,
           },
@@ -50,67 +101,37 @@ export class WebWorkerSandbox implements ISandbox {
     );
 
     conn.listen();
-    await conn.sendRequest(Load, path);
 
-    const rawConfigType = await conn.sendRequest(GetConfig);
+    const [entryPath] = await loader.getProject();
+    await conn.sendRequest(Load, entryPath);
 
-    // Need to restore the config and make it compatible as it uses symbols internally
-    const configType = rawConfigType
-      // @ts-ignore functionally works but types are too complex
-      ? FromSchema(JSON.parse(JSON.stringify(rawConfigType)))
-      : undefined;
-    const config = loadConfigFromEnv(configType);
-    const project = await conn.sendRequest(Init, config);
+    const { tools, systemPrompt } = await conn.sendRequest(
+      Init,
+      manifest,
+      config,
+    );
 
     return new WebWorkerSandbox(
       conn,
-      configType,
-      project.model,
-      project.systemPrompt,
-      project.tools,
-      project.userMessage,
-      project.vectorStorage,
+      manifest,
+      systemPrompt,
+      tools,
     );
   }
 
   private constructor(
     connection: rpc.MessageConnection,
-    config: TSchema | undefined,
-    readonly model: string,
+    readonly manifest: ProjectManifest,
     readonly systemPrompt: string,
     tools: Tool[],
-    readonly userMessage?: string,
-    readonly vectorStorage?: IVectorConfig,
   ) {
-    this.#connection = connection;
     this.#tools = tools;
-    this.#config = config;
-  }
-
-  get config(): TSchema | undefined {
-    return this.#config;
+    this.#connection = connection;
   }
 
   // deno-lint-ignore require-await
   async getTools(): Promise<Tool[]> {
     return this.#tools;
-  }
-
-  #hasSetupCxt = false;
-  private setupCtxMethods(ctx: IContext) {
-    if (this.#hasSetupCxt) return;
-    // Connect up context so sandbox can call application
-    this.#connection.onRequest(CtxVectorSearch, async (tableName, vector) => {
-      const res = await ctx.vectorSearch(tableName, vector);
-
-      // lancedb returns classes (Apache Arrow - Struct Row). It needs to be made serializable
-      // This is done here as its specific to the webworker sandbox
-      return res.map((r) => JSON.parse(JSON.stringify(r)));
-    });
-    this.#connection.onRequest(CtxComputeQueryEmbedding, async (query) => {
-      return await ctx.computeQueryEmbedding(query);
-    });
-    this.#hasSetupCxt = true;
   }
 
   runTool(toolName: string, args: unknown, ctx: IContext): Promise<string> {
