@@ -57,22 +57,21 @@ export function PrettyTypeboxError(
   return error;
 }
 
-export function SpinnerLog(
-  messages: { start: string; success: string; fail: string },
-) {
-  // deno-lint-ignore no-explicit-any
-  return function (fn: any, _ctx: ClassMethodDecoratorContext) {
-    return async function (...args: unknown[]) {
-      const spinner = getSpinner().start(messages.start);
+/** Gets the host names of any urls in a record */
+export function extractConfigHostNames(
+  config: Record<string, string>,
+): string[] {
+  const hosts = Object.values(config)
+    .filter((v) => typeof v === "string")
+    .map((v) => {
       try {
-        // @ts-ignore need to apply this function call but unable to type "this"
-        const v = await fn.apply(this, ...args);
-        spinner.succeed(messages.success);
-        return v;
-      } catch (e) {
-        spinner.fail(messages.fail);
-        throw e;
+        return new URL(v).hostname;
+      } catch (_e) {
+        return undefined;
       }
-    };
-  };
+    })
+    .filter((v) => !!v) as string[]; // Cast should be unnecessary with latest TS versions
+
+  // Make unique
+  return [...new Set(hosts)];
 }

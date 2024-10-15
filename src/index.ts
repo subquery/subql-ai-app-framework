@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-env --allow-net --allow-sys --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options
+#!/usr/bin/env -S deno run --allow-env --allow-net --allow-sys --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options --no-prompt
 // TODO limit --allow-ffi to just lancedb
 // TODO limit --deny-net on localhost except ollama/db
 // TODO limit --allow-run needed for Deno.exit

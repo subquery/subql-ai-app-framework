@@ -12,7 +12,11 @@ import {
   Init,
   Load,
 } from "./messages.ts";
-import { loadRawConfigFromEnv, type Source } from "../../util.ts";
+import {
+  extractConfigHostNames,
+  loadRawConfigFromEnv,
+  type Source,
+} from "../../util.ts";
 import type { IContext } from "../../context/context.ts";
 import type { ProjectManifest } from "../../project/project.ts";
 import type { Loader } from "../../loader.ts";
@@ -62,8 +66,17 @@ export class WebWorkerSandbox implements ISandbox {
     loader: Loader,
   ): Promise<WebWorkerSandbox> {
     const [manifestPath, manifest, source] = await loader.getManifest();
+    const config = loadRawConfigFromEnv(manifest.config);
 
     const permissions = getPermisionsForSource(source, manifestPath);
+
+    // Add any project host names as well as any configured host names
+    const hostnames = [
+      ...new Set(
+        ...(manifest.endpoints ?? []),
+        ...extractConfigHostNames(config as Record<string, string>),
+      ),
+    ];
 
     const w = new Worker(
       import.meta.resolve("./webWorker.ts"),
@@ -72,8 +85,8 @@ export class WebWorkerSandbox implements ISandbox {
         deno: {
           permissions: {
             ...permissions,
-            env: true, // Should be passed through in loadConfigFromEnv below
-            net: manifest.endpoints, // TODO add config endpoints
+            env: false, // Should be passed through in loadRawConfigFromEnv
+            net: hostnames,
             run: false,
             write: false,
           },
@@ -92,7 +105,6 @@ export class WebWorkerSandbox implements ISandbox {
     const [entryPath] = await loader.getProject();
     await conn.sendRequest(Load, entryPath);
 
-    const config = loadRawConfigFromEnv(manifest.config);
     const { tools, systemPrompt } = await conn.sendRequest(
       Init,
       manifest,
@@ -121,23 +133,6 @@ export class WebWorkerSandbox implements ISandbox {
   async getTools(): Promise<Tool[]> {
     return this.#tools;
   }
-
-  // #hasSetupCxt = false;
-  // private setupCtxMethods(ctx: IContext) {
-  //   if (this.#hasSetupCxt) return;
-  //   // Connect up context so sandbox can call application
-  //   this.#connection.onRequest(CtxVectorSearch, async (tableName, vector) => {
-  //     const res = await ctx.vectorSearch(tableName, vector);
-
-  //     // lancedb returns classes (Apache Arrow - Struct Row). It needs to be made serializable
-  //     // This is done here as its specific to the webworker sandbox
-  //     return res.map((r) => JSON.parse(JSON.stringify(r)));
-  //   });
-  //   this.#connection.onRequest(CtxComputeQueryEmbedding, async (query) => {
-  //     return await ctx.computeQueryEmbedding(query);
-  //   });
-  //   this.#hasSetupCxt = true;
-  // }
 
   runTool(toolName: string, args: unknown, ctx: IContext): Promise<string> {
     // Connect up context so sandbox can call application

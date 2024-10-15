@@ -3,9 +3,10 @@ import { CIDReg, type IPFSClient } from "./ipfs.ts";
 import { resolve } from "@std/path/resolve";
 import { UntarStream } from "@std/tar";
 import { ensureDir, exists } from "@std/fs";
-import { getSpinner, type Source, SpinnerLog } from "./util.ts";
+import type { Source } from "./util.ts";
 import { ProjectManifest } from "./project/project.ts";
 import { Value } from "@sinclair/typebox/value";
+import { Memoize, SpinnerLog } from "./decorators.ts";
 
 export const getOSTempDir = () =>
   Deno.env.get("TMPDIR") || Deno.env.get("TMP") || Deno.env.get("TEMP") ||
@@ -40,10 +41,10 @@ export async function loadManfiest(path: string): Promise<ProjectManifest> {
   return manifest;
 }
 
-// TODO support tar
 /**
  * @param path The content path or cid
  * @param ipfs The IPFS client to fetch content if from IPFS
+ * @param fileName The name to save the file under, if using .gz exension it will unarchive
  * @param tmpDir (optional) The location to cache content, defaults to the OS temp directory
  * @param force  (optional) If true and the content is from IPFS it will check if its already been fetched
  * @param workingPath (optional) If the content is local it will resolve the path relative to this
@@ -110,8 +111,6 @@ export class Loader {
   #ipfs: IPFSClient;
   #force: boolean;
 
-  #manifest?: [manifestPath: string, ProjectManifest, Source];
-
   constructor(
     readonly projectPath: string,
     ipfs: IPFSClient,
@@ -138,26 +137,20 @@ export class Loader {
     );
   }
 
-  // @SpinnerLog({ start: "Loading project manifest", success: "Loaded project manifest", fail: "Failed to load project manfiest"})
+  @Memoize()
+  @SpinnerLog({
+    start: "Loading project manifest",
+    success: "Loaded project manifest",
+    fail: "Failed to load project manfiest",
+  })
   async getManifest(): Promise<[string, ProjectManifest, Source]> {
-    if (!this.#manifest) {
-      const spinner = getSpinner().start("Loading project manifest");
-      try {
-        const [manifestPath, source] = await this.pullContent(
-          this.projectPath,
-          "manifest.json",
-        );
+    const [manifestPath, source] = await this.pullContent(
+      this.projectPath,
+      "manifest.json",
+    );
 
-        const manifest = await loadManfiest(manifestPath);
-
-        this.#manifest = [manifestPath, manifest, source];
-        spinner.succeed("Loaded project manifest");
-      } catch (e) {
-        spinner.fail("Failed to load project manifest");
-        throw e;
-      }
-    }
-    return this.#manifest;
+    const manifest = await loadManfiest(manifestPath);
+    return [manifestPath, manifest, source];
   }
 
   @SpinnerLog({
@@ -187,7 +180,6 @@ export class Loader {
       return undefined;
     }
 
-    // TODO resovle local paths
     const res = await this.pullContent(
       manifest.vectorStorage.path,
       "db.gz",
