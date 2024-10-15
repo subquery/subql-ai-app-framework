@@ -1,4 +1,3 @@
-import { resolve } from "@std/path/resolve";
 import ora from "ora";
 import { brightMagenta } from "@std/fmt/colors";
 import { Ollama } from "ollama";
@@ -11,7 +10,7 @@ import { Context, type IContext } from "./context/context.ts";
 import type { ISandbox } from "./sandbox/sandbox.ts";
 import * as lancedb from "@lancedb/lancedb";
 import type { IPFSClient } from "./ipfs.ts";
-import { loadProject, loadVectorStoragePath } from "./loader.ts";
+import { Loader } from "./loader.ts";
 import { getPrompt } from "./util.ts";
 
 export async function runApp(config: {
@@ -23,28 +22,23 @@ export async function runApp(config: {
   forceReload?: boolean;
 }): Promise<void> {
   const model = new Ollama({ host: config.host });
-  const [projectPath, source] = await loadProject(
+
+  const loader = new Loader(
     config.projectPath,
     config.ipfs,
     undefined,
     config.forceReload,
   );
-  const sandbox = await getDefaultSandbox(resolve(projectPath), source);
 
-  const pendingCtx = makeContext(
+  const sandbox = await getDefaultSandbox(loader);
+
+  const ctx = await makeContext(
     sandbox,
     model,
-    (dbPath) =>
-      loadVectorStoragePath(
-        projectPath,
-        dbPath,
-        config.ipfs,
-        undefined,
-        config.forceReload,
-      ),
+    loader,
   );
 
-  const runnerHost = new RunnerHost(async () => {
+  const runnerHost = new RunnerHost(() => {
     const chatStorage = new MemoryChatStorage();
 
     chatStorage.append([{ role: "system", content: sandbox.systemPrompt }]);
@@ -53,39 +47,37 @@ export async function runApp(config: {
       sandbox,
       chatStorage,
       model,
-      await pendingCtx,
+      ctx,
     );
   });
 
   switch (config.interface) {
     case "cli":
-      await pendingCtx;
-      if (sandbox.userMessage) {
-        console.log(sandbox.userMessage);
-      }
       await cli(runnerHost);
       break;
     case "http":
     default:
-      http(runnerHost, config.port, pendingCtx);
+      http(runnerHost, config.port);
   }
 }
 
 async function makeContext(
   sandbox: ISandbox,
   model: Ollama,
-  loadVectorStoragePath: (vectorStoragePath: string) => Promise<string>,
+  loader: Loader,
 ): Promise<IContext> {
-  if (!sandbox.vectorStorage) {
+  if (!sandbox.manifest.vectorStorage) {
     return new Context(model);
   }
 
-  const { type, path } = sandbox.vectorStorage;
+  const { type } = sandbox.manifest.vectorStorage;
   if (type !== "lancedb") {
     throw new Error("Only lancedb vector storage is supported");
   }
-  const dbPath = await loadVectorStoragePath(path);
-  const connection = await lancedb.connect(dbPath);
+
+  const loadRes = await loader.getVectorDb();
+  if (!loadRes) throw new Error("Failed to load vector db");
+  const connection = await lancedb.connect(loadRes[0]);
 
   return new Context(model, connection);
 }

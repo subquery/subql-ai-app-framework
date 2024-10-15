@@ -1,20 +1,17 @@
 import type { Tool } from "ollama";
-import type { TSchema } from "@sinclair/typebox";
 import * as rpc from "vscode-jsonrpc";
-import type { IProject } from "../../project/project.ts";
+import type { ProjectManifest } from "../../project/project.ts";
 
-export type IProjectJson = Omit<IProject, "tools"> & { tools: Tool[] };
+export type IProjectJson = { tools: Tool[]; systemPrompt: string };
 
 // Framework -> Sandbox
 export const Load = new rpc.RequestType<string, void, string>("load");
-export const Init = new rpc.RequestType<
+export const Init = new rpc.RequestType2<
+  ProjectManifest,
   Record<string, string>,
   IProjectJson,
   string
 >("init");
-export const GetConfig = new rpc.RequestType0<TSchema | undefined, void>(
-  "get_config",
-);
 export const CallTool = new rpc.RequestType2<string, unknown, string, void>(
   "call_tool",
 );

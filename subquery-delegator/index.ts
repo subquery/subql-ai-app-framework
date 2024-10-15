@@ -9,9 +9,9 @@ import {
   UnclaimedDelegatorRewards,
 } from "./tools.ts";
 import { type Static, Type } from "npm:@sinclair/typebox";
-import type { IProjectEntrypoint } from "../src/project/project.ts";
+import type { Project, ProjectEntry } from "../src/project/project.ts";
 
-const ConfigType = Type.Object({
+export const ConfigType = Type.Object({
   GRAPHQL_ENDPOINT: Type.String({
     default:
       "https://gateway.subquery.network/query/QmcoJLxSeBnGwtmtNmWFCRusXVTGjYWCK1LoujthZ2NyGP",
@@ -24,7 +24,7 @@ const ConfigType = Type.Object({
   }),
 });
 
-type Config = Static<typeof ConfigType>;
+export type Config = Static<typeof ConfigType>;
 
 const PROMPT = `
 You are an agent designed to help a user with their token delegation on the SubQuery Network.
@@ -37,11 +37,10 @@ All token amounts are in SQT.
 If the question seems to be unrelated to the API, just return "I don't know" as the answer.
 `;
 
-export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
-  configType: ConfigType,
-  // deno-lint-ignore require-await
-  projectFactory: async (config: Config) => {
-    const tools = [
+// deno-lint-ignore require-await
+const entrypoint: ProjectEntry = async (config: Config): Promise<Project> => {
+  return {
+    tools: [
       new TotalDelegation(config.GRAPHQL_ENDPOINT),
       new DelegatedIndexers(config.GRAPHQL_ENDPOINT),
       new UnclaimedDelegatorRewards(config.GRAPHQL_ENDPOINT),
@@ -52,22 +51,12 @@ export const entrypoint: IProjectEntrypoint<typeof ConfigType> = {
         config.BASE_SQT_ADDR,
       ),
       new SubqueryDocs(),
-    ];
-
-    return {
-      tools,
-      specVersion: "0.0.1",
-      model: "llama3.1",
-      vectorStorage: {
-        type: "lancedb",
-        path: "../.db",
-      },
-      systemPrompt: PROMPT,
-      userMessage:
-        "Welcome to the SubQuery Delegator Agent! How can I help you today?",
-    };
-  },
+    ],
+    systemPrompt: PROMPT,
+  };
 };
+
+export default entrypoint;
 
 // Some example messages to ask with this set of tools
 const _messages = [

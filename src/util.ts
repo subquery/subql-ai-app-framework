@@ -1,13 +1,15 @@
-import type { Static, TSchema } from "@sinclair/typebox";
 import { AssertError, Value } from "@sinclair/typebox/value";
 import ora, { type Ora } from "ora";
 import { brightBlue } from "@std/fmt/colors";
+import { FromSchema } from "./fromSchema.ts";
 
-export function loadConfigFromEnv<T extends TSchema>(
-  schema?: T,
+export function loadRawConfigFromEnv(
+  rawSchema?: unknown,
   envObj?: Record<string, string>,
-): Static<T> | undefined {
-  if (!schema) return undefined;
+) {
+  if (!rawSchema) return undefined;
+  // @ts-ignore functionally works but types are too complex
+  const schema = FromSchema(rawSchema);
   envObj ??= Deno.env.toObject();
   return Value.Parse(schema, envObj);
 }
@@ -34,7 +36,7 @@ export function getPrompt(): string | null {
 }
 
 // Possible sources where projects can be loaded from
-export type ProjectSource = "local" | "ipfs";
+export type Source = "local" | "ipfs" | "remote";
 
 export function PrettyTypeboxError(
   error: Error,
@@ -53,4 +55,23 @@ export function PrettyTypeboxError(
   }
 
   return error;
+}
+
+export function SpinnerLog(
+  messages: { start: string; success: string; fail: string },
+) {
+  // deno-lint-ignore no-explicit-any
+  return function (fn: any, _ctx: ClassMethodDecoratorContext) {
+    return async function (...args: unknown[]) {
+      const spinner = getSpinner().start(messages.start);
+      try {
+        const v = await fn.apply(this, ...args);
+        spinner.succeed(messages.success);
+        return v;
+      } catch (e) {
+        spinner.fail(messages.fail);
+        throw e;
+      }
+    };
+  };
 }
