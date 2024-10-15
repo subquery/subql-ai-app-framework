@@ -12,7 +12,7 @@ import {
   Load,
 } from "./messages.ts";
 
-import type { Project, ProjectEntry } from "../../project/project.ts";
+import type { Project } from "../../project/project.ts";
 import type { IContext } from "../../context/context.ts";
 import { PrettyTypeboxError } from "../../util.ts";
 import { loadProject } from "../../project/project.ts";
@@ -22,7 +22,7 @@ const conn = rpc.createMessageConnection(
   new BrowserMessageWriter(self),
 );
 
-let entrypoint: ProjectEntry;
+let entrypoint: unknown;
 let project: Project;
 
 const context = {

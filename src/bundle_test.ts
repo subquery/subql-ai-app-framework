@@ -1,6 +1,5 @@
 import { generateBundle, publishProject } from "./bundle.ts";
 import { expect } from "jsr:@std/expect";
-import { UnsafeSandbox } from "./sandbox/unsafeSandbox.ts";
 import { IPFSClient } from "./ipfs.ts";
 
 Deno.test("Generates a bundle", async () => {
@@ -20,7 +19,6 @@ Deno.test("Publishing a project to ipfs", async () => {
         Authorization: `Bearer: ${Deno.env.get("SUBQL_ACCESS_TOKEN")}`,
       },
     ),
-    UnsafeSandbox.create,
   );
 
   // The example project could end up being modified so we only validate the response, not the content
