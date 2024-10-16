@@ -25,8 +25,11 @@ export function setSpinner(ora: Ora) {
   spinner = ora;
 }
 
-export function getPrompt(): string | null {
-  const response = prompt(brightBlue(`Enter a message: `));
+export function getPrompt(
+  message = "Enter a message: ",
+  defaultValue?: string,
+): string {
+  const response = prompt(brightBlue(message), defaultValue);
 
   // null occurs with ctrl+c
   if (response === "/bye" || response === null) {

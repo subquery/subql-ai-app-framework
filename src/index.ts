@@ -18,8 +18,7 @@ import yargs, {
 
 import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
-import { setSpinner } from "./util.ts";
-
+import { getPrompt, setSpinner } from "./util.ts";
 const DEFAULT_PORT = 7827;
 
 const sharedArgs = {
@@ -112,7 +111,7 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
-        const { projectInfo } = await import("./info.ts");
+        const { projectInfo } = await import("./subcommands/info.ts");
         await projectInfo(argv.project, ipfsFromArgs(argv), argv.json);
         Deno.exit(0);
       } catch (e) {
@@ -177,7 +176,7 @@ yargs(Deno.args)
       },
     },
     async (argv) => {
-      const { httpCli } = await import("./httpCli.ts");
+      const { httpCli } = await import("./subcommands/httpCli.ts");
       await httpCli(argv.host);
     },
   )
@@ -193,7 +192,7 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
-        const { publishProject } = await import("./bundle.ts");
+        const { publishProject } = await import("./subcommands/bundle.ts");
         if (argv.silent) {
           setSpinner(ora({ isSilent: true }));
         }
@@ -205,6 +204,34 @@ yargs(Deno.args)
 
         console.log(cid);
         Deno.exit(0);
+      } catch (e) {
+        console.log(e);
+        Deno.exit(1);
+      }
+    },
+  )
+  .command(
+    "init",
+    "Create a new project skeleton",
+    {
+      name: {
+        description:
+          "The name of your project, this will create a directory with that name.",
+        type: "string",
+      },
+      model: {
+        description: "The LLM model you wish to use",
+        type: "string",
+      },
+    },
+    async (argv) => {
+      try {
+        argv.name ??= getPrompt("Enter a project name: ");
+        argv.model ??= getPrompt("Enter a LLM model", "llama3.1");
+
+        const { initProject } = await import("./subcommands/init.ts");
+
+        await initProject({ name: argv.name, model: argv.model });
       } catch (e) {
         console.log(e);
         Deno.exit(1);

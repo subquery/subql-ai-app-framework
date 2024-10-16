@@ -1,6 +1,6 @@
 import { generateBundle, publishProject } from "./bundle.ts";
 import { expect } from "jsr:@std/expect";
-import { IPFSClient } from "./ipfs.ts";
+import { IPFSClient } from "../ipfs.ts";
 
 Deno.test("Generates a bundle", async () => {
   const code = await generateBundle("./subquery-delegator/index.ts");
