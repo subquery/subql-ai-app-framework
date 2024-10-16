@@ -25,6 +25,7 @@
     "@types/mdast": "npm:@types/mdast@^4.0.4",
     "@types/yargs": "npm:@types/yargs@^17.0.33",
     "apache-arrow": "npm:apache-arrow@^17.0.0",
+    "dayjs": "npm:dayjs@^1.11.13",
     "esbuild": "npm:esbuild@^0.24.0",
     "form-data": "npm:form-data@^4.0.0",
     "github-slugger": "npm:github-slugger@^2.0.0",

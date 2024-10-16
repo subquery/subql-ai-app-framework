@@ -8,6 +8,7 @@
     "jsr:@std/archive@*": "0.225.3",
     "jsr:@std/archive@~0.225.4": "0.225.4",
     "jsr:@std/assert@0.223": "0.223.0",
+    "jsr:@std/assert@1": "1.0.6",
     "jsr:@std/assert@^1.0.5": "1.0.6",
     "jsr:@std/assert@^1.0.6": "1.0.6",
     "jsr:@std/assert@~0.213.1": "0.213.1",
@@ -42,13 +43,20 @@
     "npm:@sinclair/typebox@*": "0.33.11",
     "npm:@sinclair/typebox@~0.33.11": "0.33.11",
     "npm:@types/estree@*": "1.0.5",
+    "npm:@types/estree@^1.0.5": "1.0.5",
     "npm:@types/mdast@*": "4.0.4",
+    "npm:@types/mdast@^4.0.4": "4.0.4",
     "npm:@types/node@*": "22.5.4",
     "npm:@types/yargs@*": "17.0.33",
+    "npm:@types/yargs@^17.0.33": "17.0.33",
     "npm:apache-arrow@17": "17.0.0",
+    "npm:bignumber.js@*": "9.1.2",
     "npm:chalk@^5.3.0": "5.3.0",
+    "npm:dayjs@*": "1.11.13",
+    "npm:dayjs@^1.11.13": "1.11.13",
     "npm:esbuild@0.24": "0.24.0",
     "npm:ethers@*": "6.13.3",
+    "npm:form-data@4": "4.0.0",
     "npm:github-slugger@2": "2.0.0",
     "npm:hono@^4.6.2": "4.6.2",
     "npm:lint-staged@*": "15.2.10",
@@ -492,6 +500,9 @@
         "proxy-from-env"
       ]
     },
+    "bignumber.js@9.1.2": {
+      "integrity": "sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug=="
+    },
     "braces@3.0.3": {
       "integrity": "sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==",
       "dependencies": [
@@ -599,6 +610,9 @@
         "shebang-command",
         "which"
       ]
+    },
+    "dayjs@1.11.13": {
+      "integrity": "sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg=="
     },
     "debug@4.3.7": {
       "integrity": "sha512-Er2nc/H7RrMXZBFCEim6TCmMk02Z8vLC2Rbi1KEBggpo0fS6l0S1nnapwmIi3yW/+GOJap1Krg4w0Hg80oCqgQ==",
@@ -1556,6 +1570,7 @@
       "npm:@types/mdast@^4.0.4",
       "npm:@types/yargs@^17.0.33",
       "npm:apache-arrow@17",
+      "npm:dayjs@^1.11.13",
       "npm:esbuild@0.24",
       "npm:form-data@4",
       "npm:github-slugger@2",

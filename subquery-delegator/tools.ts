@@ -1,3 +1,4 @@
+#!/usr/bin/env -S deno run --allow-env --allow-net --allow-sys --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options --no-prompt
 import {
   type AbstractProvider,
   Contract,
@@ -21,8 +22,7 @@ export class TotalDelegation extends FunctionTool {
   }
 
   // name = 'total-delegation-amount';
-  description =
-    `This tool gets the total delegation amount of SQT for the given user address.
+  description = `This tool gets the total delegation amount of SQT for the given user address.
   If no delegation is found it will return null.
   `;
   parameters = {
@@ -39,15 +39,15 @@ export class TotalDelegation extends FunctionTool {
 
   async call({ account }: { account: string }): Promise<string | null> {
     try {
-      const res = await grahqlRequest<
-        { delegator: null | { totalDelegations: Amount } }
-      >(
+      const res = await grahqlRequest<{
+        delegator: null | { totalDelegations: Amount };
+      }>(
         this.endpoint,
         `{
         delegator(id: "${account}") {
           totalDelegations
         }
-      }`,
+      }`
       );
 
       if (!res.delegator) {
@@ -67,8 +67,7 @@ export class DelegatedIndexers extends FunctionTool {
   }
 
   // name = 'delegated-indexers';
-  description =
-    `This tool gets the addresses of indexers that the given account has delegated to.
+  description = `This tool gets the addresses of indexers that the given account has delegated to.
   Returns a json array with each item containing the indexer id, the amount delegated and whether the indexer is active.
   If an indexer is not active the user should be warned and told to change delegators.
   `;
@@ -86,17 +85,15 @@ export class DelegatedIndexers extends FunctionTool {
 
   async call({ account }: { account: string }): Promise<string | null> {
     try {
-      const res = await grahqlRequest<
-        {
-          delegations: {
-            nodes: {
-              indexerId: string;
-              amount: Amount;
-              indexer: { active: boolean };
-            }[];
-          };
-        }
-      >(
+      const res = await grahqlRequest<{
+        delegations: {
+          nodes: {
+            indexerId: string;
+            amount: Amount;
+            indexer: { active: boolean };
+          }[];
+        };
+      }>(
         this.endpoint,
         `
         query ($capacity: JSON) {
@@ -115,18 +112,18 @@ export class DelegatedIndexers extends FunctionTool {
           }
         }`,
         {
-          "capacity": {
-            "valueAfter": { "value": "0x00" },
+          capacity: {
+            valueAfter: { value: "0x00" },
           },
-        },
+        }
       );
-
-      return JSON.stringify(res.delegations.nodes
-        .map((delegation) => ({
+      return JSON.stringify(
+        res.delegations.nodes.map((delegation) => ({
           indexerId: delegation.indexerId,
           amount: formatEther(delegation.amount.valueAfter.value),
           active: delegation.indexer.active,
-        })));
+        }))
+      );
     } catch (error) {
       return `${error}`;
     }
@@ -139,8 +136,7 @@ export class UnclaimedDelegatorRewards extends FunctionTool {
   }
 
   // name = 'unclaimed-delegator-rewards';
-  description =
-    `This tool gets the amount of unclaimed rewards and the indexers that those rewards are from for a given account.
+  description = `This tool gets the amount of unclaimed rewards and the indexers that those rewards are from for a given account.
     If there are no results you should tell the user there are "No unclaimed rewards".
     Returns a json array with each item containing the indexer id and the amount of the reward.
   `;
@@ -158,13 +154,11 @@ export class UnclaimedDelegatorRewards extends FunctionTool {
 
   async call({ account }: { account: string }): Promise<string | null> {
     try {
-      const res = await grahqlRequest<
-        {
-          unclaimedRewards: {
-            nodes: { indexerAddress: string; amount: string }[];
-          };
-        }
-      >(
+      const res = await grahqlRequest<{
+        unclaimedRewards: {
+          nodes: { indexerAddress: string; amount: string }[];
+        };
+      }>(
         this.endpoint,
         `{
         unclaimedRewards(filter: { delegatorId: { equalTo: "${account}"}}) {
@@ -174,7 +168,7 @@ export class UnclaimedDelegatorRewards extends FunctionTool {
 
           }
         }
-      }`,
+      }`
       );
 
       return JSON.stringify(
@@ -183,7 +177,7 @@ export class UnclaimedDelegatorRewards extends FunctionTool {
           .map((reward) => ({
             indexerId: reward.indexerAddress,
             amount: formatEther(reward.amount),
-          })),
+          }))
       );
     } catch (error) {
       return `${error}`;
@@ -194,14 +188,13 @@ export class UnclaimedDelegatorRewards extends FunctionTool {
 export class TokenBalance extends FunctionTool {
   constructor(
     readonly provider: AbstractProvider,
-    readonly tokenAddress: string,
+    readonly tokenAddress: string
   ) {
     super();
   }
 
   // name = 'token-balance';
-  description =
-    `This tool gets the current on chain SQT balance for the given address`;
+  description = `This tool gets the current on chain SQT balance for the given address`;
   parameters = {
     type: "object",
     required: ["account"],
@@ -224,13 +217,13 @@ export class TokenBalance extends FunctionTool {
       const erc20Contract = new Contract(
         this.tokenAddress,
         erc20Abi,
-        this.provider,
+        this.provider
       );
 
       const balance = await erc20Contract.balanceOf(account);
-
       return formatEther(balance);
     } catch (error) {
+      console.warn(error);
       return `${error}`;
     }
   }
@@ -242,8 +235,7 @@ export class CurrentDelegatorApy extends FunctionTool {
   }
 
   // name = 'current-delegator-apy';
-  description =
-    `This gets the current combined delegator APY of a users delegations.`;
+  description = `This gets the current combined delegator APY of a users delegations.`;
   parameters = {
     type: "object",
     required: ["account"],
@@ -267,9 +259,9 @@ export class CurrentDelegatorApy extends FunctionTool {
   }
 
   async rawApy(account: string): Promise<string> {
-    const res = await grahqlRequest<
-      { eraDelegatorApies: { nodes: { apy: string; eraIdx: number }[] } }
-    >(
+    const res = await grahqlRequest<{
+      eraDelegatorApies: { nodes: { apy: string; eraIdx: number }[] };
+    }>(
       this.endpoint,
       `{
       eraDelegatorApies(
@@ -283,7 +275,7 @@ export class CurrentDelegatorApy extends FunctionTool {
           eraIdx
         }
       }
-    }`,
+    }`
     );
 
     const apy = res.eraDelegatorApies.nodes[0]?.apy;
@@ -336,7 +328,7 @@ export class BetterIndexerApy extends FunctionTool {
 
       const topAvalableDelegators = await this.getTopAvailableDelegators(
         currentApy,
-        latestEra,
+        latestEra
       );
 
       return JSON.stringify(topAvalableDelegators);
@@ -354,7 +346,7 @@ export class BetterIndexerApy extends FunctionTool {
           id
         }
       }
-    }`,
+    }`
     );
 
     return parseInt(toBigInt(res.eras.nodes[0].id).toString(), 10);
@@ -362,15 +354,13 @@ export class BetterIndexerApy extends FunctionTool {
 
   private async getTopAvailableDelegators(
     currentApy: string = "0",
-    era = 28,
+    era = 28
   ): Promise<Record<string, string>> {
-    const res = await grahqlRequest<
-      {
-        eraIndexerApies: {
-          nodes: { delegatorApy: string; indexerId: string }[];
-        };
-      }
-    >(
+    const res = await grahqlRequest<{
+      eraIndexerApies: {
+        nodes: { delegatorApy: string; indexerId: string }[];
+      };
+    }>(
       this.endpoint,
       `query($capacity: JSON){
       eraIndexerApies(
@@ -388,10 +378,10 @@ export class BetterIndexerApy extends FunctionTool {
       }
     }`,
       {
-        "capacity": {
-          "valueAfter": { "value": "0x00" },
+        capacity: {
+          valueAfter: { value: "0x00" },
         },
-      },
+      }
     );
 
     return res.eraIndexerApies.nodes.reduce((acc, node) => {
@@ -402,8 +392,7 @@ export class BetterIndexerApy extends FunctionTool {
 }
 
 export class SubqueryDocs extends FunctionTool {
-  description =
-    `This tool gets relevant information from the Subquery Docs. It returns a list of results separated by newlines.`;
+  description = `This tool gets relevant information from the Subquery Docs. It returns a list of results separated by newlines.`;
 
   parameters = {
     type: "object",
@@ -420,7 +409,8 @@ export class SubqueryDocs extends FunctionTool {
     const vector = await ctx.computeQueryEmbedding(query);
     const raw = await ctx.vectorSearch("subql-docs", vector);
 
-    const res = raw.map((r) => r.content)
+    const res = raw
+      .map((r) => r.content)
       .filter((c) => !!c)
       .join("\n");
 

@@ -43,7 +43,7 @@ const LOCAL_PERMISSIONS: Deno.PermissionOptionsObject = {
 
 function getPermisionsForSource(
   source: Source,
-  projectDir: string,
+  projectDir: string
 ): Deno.PermissionOptionsObject {
   switch (source) {
     case "local":
@@ -52,7 +52,7 @@ function getPermisionsForSource(
       return IPFS_PERMISSIONS(projectDir);
     default:
       throw new Error(
-        `Unable to set permissions for unknown source: ${source}`,
+        `Unable to set permissions for unknown source: ${source}`
       );
   }
 }
@@ -62,9 +62,7 @@ export class WebWorkerSandbox implements ISandbox {
 
   #tools: Tool[];
 
-  public static async create(
-    loader: Loader,
-  ): Promise<WebWorkerSandbox> {
+  public static async create(loader: Loader): Promise<WebWorkerSandbox> {
     const [manifestPath, manifest, source] = await loader.getManifest();
     const config = loadRawConfigFromEnv(manifest.config);
 
@@ -78,26 +76,23 @@ export class WebWorkerSandbox implements ISandbox {
       ]),
     ];
 
-    const w = new Worker(
-      import.meta.resolve("./webWorker.ts"),
-      {
-        type: "module",
-        deno: {
-          permissions: {
-            ...permissions,
-            env: false, // Should be passed through in loadRawConfigFromEnv
-            net: hostnames,
-            run: false,
-            write: false,
-          },
+    const w = new Worker(import.meta.resolve("./webWorker.ts"), {
+      type: "module",
+      deno: {
+        permissions: {
+          ...permissions,
+          env: false, // Should be passed through in loadRawConfigFromEnv
+          net: [...hostnames, "chs.subquery.network"],
+          run: false,
+          write: false,
         },
       },
-    );
+    });
 
     // Setup a JSON RPC for interaction to the worker
     const conn = rpc.createMessageConnection(
       new BrowserMessageReader(w),
-      new BrowserMessageWriter(w),
+      new BrowserMessageWriter(w)
     );
 
     conn.listen();
@@ -108,22 +103,17 @@ export class WebWorkerSandbox implements ISandbox {
     const { tools, systemPrompt } = await conn.sendRequest(
       Init,
       manifest,
-      config,
+      config
     );
 
-    return new WebWorkerSandbox(
-      conn,
-      manifest,
-      systemPrompt,
-      tools,
-    );
+    return new WebWorkerSandbox(conn, manifest, systemPrompt, tools);
   }
 
   private constructor(
     connection: rpc.MessageConnection,
     readonly manifest: ProjectManifest,
     readonly systemPrompt: string,
-    tools: Tool[],
+    tools: Tool[]
   ) {
     this.#tools = tools;
     this.#connection = connection;

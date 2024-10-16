@@ -9,7 +9,9 @@ import { Value } from "@sinclair/typebox/value";
 import { Memoize, SpinnerLog } from "./decorators.ts";
 
 export const getOSTempDir = () =>
-  Deno.env.get("TMPDIR") || Deno.env.get("TMP") || Deno.env.get("TEMP") ||
+  Deno.env.get("TMPDIR") ||
+  Deno.env.get("TMP") ||
+  Deno.env.get("TEMP") ||
   "/tmp";
 
 async function loadJson(path: string): Promise<unknown> {
@@ -56,7 +58,7 @@ export async function pullContent(
   fileName: string,
   tmpDir?: string,
   force?: boolean,
-  workingPath?: string,
+  workingPath?: string
 ): Promise<[string, Source]> {
   if (CIDReg.test(path)) {
     const cid = path.replace("ipfs://", "");
@@ -70,10 +72,9 @@ export async function pullContent(
         return [tmp, "ipfs"];
       }
 
-      for await (
-        const entry of readStream.pipeThrough(new DecompressionStream("gzip"))
-          .pipeThrough(new UntarStream())
-      ) {
+      for await (const entry of readStream
+        .pipeThrough(new DecompressionStream("gzip"))
+        .pipeThrough(new UntarStream())) {
         const path = resolve(tmp, entry.path);
         await ensureDir(dirname(path));
         await entry.readable?.pipeTo((await Deno.create(path)).writable);
@@ -115,7 +116,7 @@ export class Loader {
     readonly projectPath: string,
     ipfs: IPFSClient,
     readonly tmpDir?: string,
-    force?: boolean,
+    force?: boolean
   ) {
     this.#ipfs = ipfs;
     this.#force = force ?? false;
@@ -125,7 +126,7 @@ export class Loader {
     path: string,
     fileName: string,
     tmpDir = this.tmpDir,
-    workingPath?: string,
+    workingPath?: string
   ): Promise<[string, Source]> {
     return await pullContent(
       path,
@@ -133,7 +134,7 @@ export class Loader {
       fileName,
       tmpDir,
       this.#force,
-      workingPath,
+      workingPath
     );
   }
 
@@ -146,7 +147,7 @@ export class Loader {
   async getManifest(): Promise<[string, ProjectManifest, Source]> {
     const [manifestPath, source] = await this.pullContent(
       this.projectPath,
-      "manifest.json",
+      "manifest.json"
     );
 
     const manifest = await loadManfiest(manifestPath);
@@ -164,7 +165,7 @@ export class Loader {
       manifest.entry,
       "project.ts",
       dirname(manifestPath),
-      manifestSource == "local" ? dirname(this.projectPath) : undefined,
+      manifestSource == "local" ? dirname(this.projectPath) : undefined
     );
     return [projectPath, source];
   }
@@ -184,7 +185,7 @@ export class Loader {
       manifest.vectorStorage.path,
       "db.gz",
       dirname(manifestPath),
-      manifestSource == "local" ? dirname(this.projectPath) : undefined,
+      manifestSource == "local" ? dirname(this.projectPath) : undefined
     );
     return res;
   }

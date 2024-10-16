@@ -1,7 +1,7 @@
 export async function grahqlRequest<T = unknown>(
   endpoint: string,
   query: string,
-  variables?: unknown,
+  variables?: unknown
 ): Promise<T> {
   const response = await fetch(endpoint, {
     method: "POST",
@@ -20,7 +20,7 @@ export async function grahqlRequest<T = unknown>(
     console.log(`Request failed\n${query}`);
 
     throw new Error(
-      res.errors.map((e: { message: string }) => e.message).join("\n"),
+      res.errors.map((e: { message: string }) => e.message).join("\n")
     );
   }
 

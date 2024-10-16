@@ -1,6 +1,7 @@
 import { type Static, Type } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { HTTPException } from "hono/http-exception";
 import type { RunnerHost } from "./runnerHost.ts";
@@ -71,13 +72,13 @@ export type ChatChunkResponse = Static<typeof ChatChunkResponse>;
 export function http(
   runnerHost: RunnerHost,
   port: number,
-  onReady?: Promise<unknown>,
+  onReady?: Promise<unknown>
 ): Deno.HttpServer<Deno.NetAddr> {
   const app = new Hono();
-
+  app.use("/*", cors());
   // The ready status should change once the project is fully loaded, including the vector DB
   let ready = false;
-  onReady?.then(() => ready = true);
+  onReady?.then(() => (ready = true));
 
   app.get("/health", (c) => {
     return c.text("ok");
@@ -124,7 +125,7 @@ export function http(
               part,
               chatRes.model,
               chatRes.created_at,
-              last ? "stop" : null,
+              last ? "stop" : null
             );
             await stream.writeSSE({ data: JSON.stringify(res) });
             await stream.sleep(20);
@@ -134,7 +135,7 @@ export function http(
               const res_space = createChatChunkResponse(
                 " ",
                 chatRes.model,
-                chatRes.created_at,
+                chatRes.created_at
               );
               await stream.writeSSE({ data: JSON.stringify(res_space) });
               await stream.sleep(20);
@@ -146,15 +147,17 @@ export function http(
       const response: ChatResponse = {
         id: "0",
         model: chatRes.model,
-        choices: [{
-          index: 0,
-          message: {
-            content: chatRes.message.content,
-            role: "assistant",
+        choices: [
+          {
+            index: 0,
+            message: {
+              content: chatRes.message.content,
+              role: "assistant",
+            },
+            logprobs: null,
+            finish_reason: chatRes.done_reason,
           },
-          logprobs: null,
-          finish_reason: chatRes.done_reason,
-        }],
+        ],
         created: new Date(chatRes.created_at).getTime() / 1000,
         object: "chat.completion",
         usage: {
@@ -186,19 +189,21 @@ function createChatChunkResponse(
   message: string,
   model: string,
   createdAt: Date,
-  finish_reason: string | null = null,
+  finish_reason: string | null = null
 ): ChatChunkResponse {
   const res: ChatChunkResponse = {
     id: "0",
     object: "chat.completion.chunk",
     model,
     created: new Date(createdAt).getTime() / 1000,
-    choices: [{
-      index: 0,
-      delta: { role: "assistant", content: message },
-      logprobs: null,
-      finish_reason,
-    }],
+    choices: [
+      {
+        index: 0,
+        delta: { role: "assistant", content: message },
+        logprobs: null,
+        finish_reason,
+      },
+    ],
   };
   Value.Assert(ChatChunkResponse, res);
   return res;

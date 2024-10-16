@@ -27,28 +27,19 @@ export async function runApp(config: {
     config.projectPath,
     config.ipfs,
     undefined,
-    config.forceReload,
+    config.forceReload
   );
 
   const sandbox = await getDefaultSandbox(loader);
-
-  const ctx = await makeContext(
-    sandbox,
-    model,
-    loader,
-  );
+  console.warn(config.projectPath);
+  const ctx = await makeContext(sandbox, model, loader);
 
   const runnerHost = new RunnerHost(() => {
     const chatStorage = new MemoryChatStorage();
 
     chatStorage.append([{ role: "system", content: sandbox.systemPrompt }]);
 
-    return new Runner(
-      sandbox,
-      chatStorage,
-      model,
-      ctx,
-    );
+    return new Runner(sandbox, chatStorage, model, ctx);
   });
 
   switch (config.interface) {
@@ -64,7 +55,7 @@ export async function runApp(config: {
 async function makeContext(
   sandbox: ISandbox,
   model: Ollama,
-  loader: Loader,
+  loader: Loader
 ): Promise<IContext> {
   if (!sandbox.manifest.vectorStorage) {
     return new Context(model);
