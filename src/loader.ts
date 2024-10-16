@@ -36,7 +36,11 @@ export async function loadManfiest(path: string): Promise<ProjectManifest> {
     manifest = await loadScript(path);
   }
 
-  Value.Assert(ProjectManifest, manifest);
+  try {
+    Value.Assert(ProjectManifest, manifest);
+  } catch (e) {
+    throw new Error(`${path} is not a valid project manifest`, { cause: e });
+  }
 
   return manifest;
 }
