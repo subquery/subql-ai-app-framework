@@ -72,10 +72,10 @@ export class WebWorkerSandbox implements ISandbox {
 
     // Add any project host names as well as any configured host names
     const hostnames = [
-      ...new Set(
+      ...new Set([
         ...(manifest.endpoints ?? []),
         ...extractConfigHostNames(config as Record<string, string>),
-      ),
+      ]),
     ];
 
     const w = new Worker(
