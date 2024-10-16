@@ -28,7 +28,8 @@ export function setSpinner(ora: Ora) {
 export function getPrompt(): string | null {
   const response = prompt(brightBlue(`Enter a message: `));
 
-  if (response === "/bye") {
+  // null occurs with ctrl+c
+  if (response === "/bye" || response === null) {
     Deno.exit(0);
   }
 
