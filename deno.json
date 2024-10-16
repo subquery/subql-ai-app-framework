@@ -27,6 +27,7 @@
     "apache-arrow": "npm:apache-arrow@^17.0.0",
     "dayjs": "npm:dayjs@^1.11.13",
     "esbuild": "npm:esbuild@^0.24.0",
+    "ethereum-checksum-address": "npm:ethereum-checksum-address@^0.0.8",
     "form-data": "npm:form-data@^4.0.0",
     "github-slugger": "npm:github-slugger@^2.0.0",
     "hono": "npm:hono@^4.6.2",

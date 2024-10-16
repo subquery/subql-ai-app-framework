@@ -5,6 +5,7 @@ import {
   getAllDeployment,
   getDeploymentCount,
   getEraInfo,
+  getOperatorDeployment,
 } from "./utils.ts";
 import { BigNumber as BigNumberJs } from "npm:bignumber.js";
 import dayjs from "npm:dayjs";
@@ -59,6 +60,18 @@ export class ProjectsRewardsSummary extends FunctionTool {
     rewardsType?: "allocation" | "query" | "all";
   }): Promise<string | null> {
     const eraInfo = await getEraInfo(this.endpoint);
+
+    // if (account && account.startsWith("0x")) {
+    //   const operatorDeployment = await getOperatorDeployment(
+    //     this.endpoint,
+    //     account,
+    //     eraInfo.lastEra
+    //   );
+    //   if (operatorDeployment.length >= 5) {
+    //     return JSON.stringify(operatorDeployment.slice(0, 5));
+    //   }
+    // }
+
     const {
       deployments: allDeployments,
       deploymentsInfo: allDeploymentsInfomations,
