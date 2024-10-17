@@ -398,7 +398,6 @@ export const getDeploymentCount = async (params: {
   start_date: string;
   end_date?: string;
 }) => {
-  // TODO: make it to .env
   const res = await fetch("https://chs.subquery.network/statistic-queries", {
     method: "POST",
     headers: {
@@ -410,6 +409,52 @@ export const getDeploymentCount = async (params: {
   const json: IGetStatisticQueries = await res.json();
 
   return json;
+};
+
+export const getCommission = async (endpoint: string, address: string) => {
+  const allCommission = await grahqlRequest<{
+    indexers: {
+      nodes: {
+        commission: {
+          era: number;
+          value: { value: string };
+          valueAfter: { value: string };
+        };
+      }[];
+      totalCount: number;
+    };
+    indexer: {
+      commission: {
+        era: number;
+        value: { value: string };
+        valueAfter: { value: string };
+      };
+      totalStake: {
+        era: number;
+        value: { value: string };
+        valueAfter: { value: string };
+      };
+    };
+  }>(
+    endpoint,
+    `
+      query GetCommssion{
+        indexers {
+          nodes {
+            commission
+          }
+          totalCount
+        }
+
+        indexer(id: "${address}") {
+          commission
+          totalStake
+        }
+      }
+    `
+  );
+
+  return allCommission;
 };
 
 export interface IGetStatisticQueries {
