@@ -5,7 +5,9 @@ import {
   getAllDeployment,
   getCommission,
   getDeploymentCount,
+  getDeploymentInfo,
   getEraInfo,
+  getFlexPlanPrice,
   getOperatorDeployment,
 } from "./utils.ts";
 import { BigNumber as BigNumberJs } from "npm:bignumber.js";
@@ -401,6 +403,67 @@ export class CommssionSummary extends FunctionTool {
       medianCommission: medianCommission,
       myCommission: myCommission,
       myTotalDelegation: myTotalDelegation,
+    });
+  }
+}
+
+export class FlexPlanPrice extends FunctionTool {
+  constructor(readonly endpoint: string) {
+    super();
+  }
+
+  description = `
+  This tool is designed to help set prices for a flex plan. 
+  If no deploymentId is provided, it will default to recommending a price of 5.
+  It returns the average of already set prices and the request volume for each price. 
+
+  details: The details of the price and volume for each price.
+  averagePrice: The average price of the flex plan.
+  `;
+
+  parameters = {
+    type: "object",
+    required: [],
+    properties: {
+      deploymentId: {
+        type: "string",
+        description: "The id of the deployment to get the flex plan price for",
+      },
+    },
+  };
+
+  async call({
+    deploymentId,
+  }: {
+    deploymentId: string;
+  }): Promise<string | null> {
+    console.warn("call flex plan price");
+    if (!deploymentId.startsWith("Qm"))
+      return '{ averagePrice: 5, details: [{ "price": 5, }] }';
+    // const deploymentInfo = await getDeploymentInfo(this.endpoint, deploymentId);
+    const eraInfo = await getEraInfo(this.endpoint);
+
+    const res = await getFlexPlanPrice({
+      deployment: [deploymentId],
+      start_date: dayjs(eraInfo.eras.at(1)?.startTime).format("YYYY-MM-DD"),
+      end_date: dayjs(eraInfo.eras.at(1)?.startTime).format("YYYY-MM-DD"),
+    });
+
+    const details = res.map((i) => {
+      return {
+        price: BigNumberJs(formatSQT(i.price || "0"))
+          .multipliedBy(1000)
+          .toString(),
+        volumn: Math.floor(i.count || 0),
+      };
+    });
+
+    return JSON.stringify({
+      details,
+      averagePrice: details
+        .reduce((a, b) => BigNumberJs(a).plus(b.price), BigNumberJs(0))
+        .div(details.length)
+        .toString(),
     });
   }
 }

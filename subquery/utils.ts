@@ -457,6 +457,54 @@ export const getCommission = async (endpoint: string, address: string) => {
   return allCommission;
 };
 
+export const getDeploymentInfo = async (
+  endpoint: string,
+  deploymentId: string
+) => {
+  const res = await grahqlRequest<{
+    deployment: {
+      id: string;
+      projectId: string;
+    };
+  }>(
+    endpoint,
+    `
+    query GetDeploymentInfo($deploymentId: String!) {
+      deployment(id: $deploymentId) {
+        id
+        projectId
+      }
+    }
+  `,
+    {
+      deploymentId,
+    }
+  );
+
+  return res;
+};
+
+export const getFlexPlanPrice = async (params: {
+  deployment: string[];
+  start_date: string;
+  end_date?: string;
+}) => {
+  const res = await fetch(
+    `https://chs.subquery.network/deployment-price-count`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(params),
+    }
+  );
+
+  const json: IGetStatisticQueriesByPrice = await res.json();
+
+  return json;
+};
+
 export interface IGetStatisticQueries {
   total: string;
   list: {
@@ -471,3 +519,8 @@ export interface IGetStatisticQueries {
     queries?: string;
   }[];
 }
+
+export type IGetStatisticQueriesByPrice = {
+  count?: number;
+  price?: string; // per request price
+}[];

@@ -1,5 +1,6 @@
 import {
   CommssionSummary,
+  FlexPlanPrice,
   MyProjectSummary,
   ProjectsRewardsSummary,
 } from "./tools.ts";
@@ -44,6 +45,7 @@ If the user identifies as a Consumer or Delegator, simply respond with: 'I don't
 const entrypoint: ProjectEntry = async (config: Config): Promise<Project> => {
   return {
     tools: [
+      new FlexPlanPrice(config.GRAPHQL_ENDPOINT),
       new CommssionSummary(config.GRAPHQL_ENDPOINT),
       new MyProjectSummary(config.GRAPHQL_ENDPOINT),
       new ProjectsRewardsSummary(config.GRAPHQL_ENDPOINT),
@@ -60,4 +62,6 @@ const testMessage = [
   "Which projects should I select to gain query rewards?",
   "I want to improve my query rewards, how can I do that? This is my address: 0x2fd781561631df6Ae95B8f590b38ea8f1267d690",
   "What commission should I set?",
+  "What flex plan price I should set for QmNa36oZ4zRS1i2wQhiFznU5DjEuNP3wopV6U3VcUWMUKu?",
+  "What flex plan price I should set?",
 ];
