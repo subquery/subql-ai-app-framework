@@ -1,8 +1,8 @@
 import ora from "ora";
 import type { Message } from "ollama";
 import { brightMagenta, brightRed } from "@std/fmt/colors";
-import type { ChatResponse } from "./http.ts";
-import { getPrompt } from "./util.ts";
+import type { ChatResponse } from "../http.ts";
+import { getPrompt } from "../util.ts";
 
 export async function httpCli(host: string): Promise<void> {
   const messages: Message[] = [];

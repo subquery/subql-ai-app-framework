@@ -20,6 +20,7 @@ export async function runApp(config: {
   port: number;
   ipfs: IPFSClient;
   forceReload?: boolean;
+  toolTimeout: number;
 }): Promise<void> {
   const model = new Ollama({ host: config.host });
 
@@ -30,7 +31,7 @@ export async function runApp(config: {
     config.forceReload,
   );
 
-  const sandbox = await getDefaultSandbox(loader);
+  const sandbox = await getDefaultSandbox(loader, config.toolTimeout);
 
   const ctx = await makeContext(
     sandbox,
@@ -79,7 +80,7 @@ async function makeContext(
   if (!loadRes) throw new Error("Failed to load vector db");
   const connection = await lancedb.connect(loadRes[0]);
 
-  return new Context(model, connection);
+  return new Context(model, connection, sandbox.manifest.embeddingsModel);
 }
 
 async function cli(runnerHost: RunnerHost): Promise<void> {

@@ -25,10 +25,14 @@ export function setSpinner(ora: Ora) {
   spinner = ora;
 }
 
-export function getPrompt(): string | null {
-  const response = prompt(brightBlue(`Enter a message: `));
+export function getPrompt(
+  message = "Enter a message: ",
+  defaultValue?: string,
+): string {
+  const response = prompt(brightBlue(message), defaultValue);
 
-  if (response === "/bye") {
+  // null occurs with ctrl+c
+  if (response === "/bye" || response === null) {
     Deno.exit(0);
   }
 
@@ -74,4 +78,10 @@ export function extractConfigHostNames(
 
   // Make unique
   return [...new Set(hosts)];
+}
+
+export function timeout(ms: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    setTimeout(() => resolve(), ms);
+  });
 }

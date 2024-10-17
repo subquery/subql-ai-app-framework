@@ -61,13 +61,17 @@ export class Runner {
       // Run tools and use their responses
       const toolResponses = await Promise.all(
         (res.message.tool_calls ?? []).map(async (toolCall) => {
-          const res = await this.sandbox.runTool(
-            toolCall.function.name,
-            toolCall.function.arguments,
-            this.#context,
-          );
-
-          return res;
+          try {
+            return await this.sandbox.runTool(
+              toolCall.function.name,
+              toolCall.function.arguments,
+              this.#context,
+            );
+          } catch (e: unknown) {
+            console.error(`Tool call failed: ${e}`);
+            // Don't throw the error this will exit the application, instead pass the message back to the LLM
+            return (e as Error).message;
+          }
         }),
       );
 

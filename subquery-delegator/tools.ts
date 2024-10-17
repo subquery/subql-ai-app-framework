@@ -5,9 +5,9 @@ import {
   formatUnits,
   toBigInt,
 } from "npm:ethers";
-import { FunctionTool } from "../src/tool.ts";
+import { FunctionTool } from "../src/tools/tool.ts";
 import { grahqlRequest } from "./utils.ts";
-import type { IContext } from "../src/context/context.ts";
+import { RagTool } from "../src/tools/ragTool.ts";
 
 type Amount = {
   era: number;
@@ -401,29 +401,8 @@ export class BetterIndexerApy extends FunctionTool {
   }
 }
 
-export class SubqueryDocs extends FunctionTool {
-  description =
-    `This tool gets relevant information from the Subquery Docs. It returns a list of results separated by newlines.`;
-
-  parameters = {
-    type: "object",
-    required: ["query"],
-    properties: {
-      account: {
-        type: "string",
-        description: "A search string, generally the users prompt",
-      },
-    },
-  };
-
-  async call({ query }: { query: string }, ctx: IContext): Promise<string> {
-    const vector = await ctx.computeQueryEmbedding(query);
-    const raw = await ctx.vectorSearch("subql-docs", vector);
-
-    const res = raw.map((r) => r.content)
-      .filter((c) => !!c)
-      .join("\n");
-
-    return res;
+export class SubqueryDocs extends RagTool {
+  constructor() {
+    super("subql-docs", "content");
   }
 }
