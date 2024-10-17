@@ -54,6 +54,7 @@ export const ProjectEntry = Type.Function(
   Type.Union([Project, Type.Promise(Project)]),
 );
 
+export type FunctionToolType = Static<typeof FunctionToolType>;
 export type ProjectManifest = Static<typeof ProjectManifest>;
 export type Project = Static<typeof Project>;
 export type ProjectEntry = Static<typeof ProjectEntry>;

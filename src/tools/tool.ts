@@ -1,6 +1,6 @@
 import type { Tool } from "ollama";
-import type { IFunctionTool } from "./project/project.ts";
-import type { IContext } from "./context/context.ts";
+import type { FunctionToolType } from "../project/project.ts";
+import type { IContext } from "../context/context.ts";
 
 type Parameters = Tool["function"]["parameters"];
 
@@ -31,7 +31,7 @@ type OptionalParams<P extends Parameters> = {
   ]?: ExtractParameters<P>[K];
 };
 
-export type ITool<P extends Parameters = Parameters> = IFunctionTool & {
+export type ITool<P extends Parameters = Parameters> = FunctionToolType & {
   parameters: P;
 };
 
