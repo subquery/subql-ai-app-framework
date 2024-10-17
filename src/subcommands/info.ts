@@ -1,8 +1,8 @@
 import { brightBlue, brightMagenta } from "@std/fmt/colors";
-import { getDefaultSandbox } from "./sandbox/index.ts";
-import type { ProjectManifest } from "./project/project.ts";
-import type { IPFSClient } from "./ipfs.ts";
-import { Loader } from "./loader.ts";
+import { getDefaultSandbox } from "../sandbox/index.ts";
+import type { ProjectManifest } from "../project/project.ts";
+import type { IPFSClient } from "../ipfs.ts";
+import { Loader } from "../loader.ts";
 
 type StaticProject = ProjectManifest & {
   tools?: string[];
@@ -15,7 +15,7 @@ export async function getProjectJson(
   sandboxFactory = getDefaultSandbox,
 ): Promise<StaticProject> {
   try {
-    const sandbox = await sandboxFactory(loader);
+    const sandbox = await sandboxFactory(loader, 10_000);
 
     return {
       ...sandbox.manifest,
