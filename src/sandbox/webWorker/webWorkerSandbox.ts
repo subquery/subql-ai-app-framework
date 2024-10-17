@@ -10,12 +10,14 @@ import {
   CtxComputeQueryEmbedding,
   CtxVectorSearch,
   Init,
+  type IProjectJson,
   Load,
 } from "./messages.ts";
 import {
   extractConfigHostNames,
   loadRawConfigFromEnv,
   type Source,
+  timeout,
 } from "../../util.ts";
 import type { IContext } from "../../context/context.ts";
 import type { ProjectManifest } from "../../project/project.ts";
@@ -57,13 +59,54 @@ function getPermisionsForSource(
   }
 }
 
+async function workerFactory(
+  manifest: ProjectManifest,
+  entryPath: string,
+  config: Record<string, string>,
+  permissions: Deno.PermissionOptionsObject,
+): Promise<[Worker, rpc.MessageConnection, IProjectJson]> {
+  const w = new Worker(
+    import.meta.resolve("./webWorker.ts"),
+    {
+      type: "module",
+      deno: {
+        permissions: permissions,
+      },
+    },
+  );
+
+  // Setup a JSON RPC for interaction to the worker
+  const conn = rpc.createMessageConnection(
+    new BrowserMessageReader(w),
+    new BrowserMessageWriter(w),
+  );
+
+  conn.listen();
+
+  await conn.sendRequest(Load, entryPath);
+
+  const pJson = await conn.sendRequest(
+    Init,
+    manifest,
+    config,
+  );
+
+  return [w, conn, pJson];
+}
+
 export class WebWorkerSandbox implements ISandbox {
-  #connection: rpc.MessageConnection;
-
   #tools: Tool[];
+  #initWorker: () => ReturnType<typeof workerFactory>;
 
+  /**
+   * Create a new WebWorkerSandbox
+   * @param loader The loader for loading any project resources
+   * @param timeout Tool call timeout in MS
+   * @returns A sandbox instance
+   */
   public static async create(
     loader: Loader,
+    timeout: number,
   ): Promise<WebWorkerSandbox> {
     const [manifestPath, manifest, source] = await loader.getManifest();
     const config = loadRawConfigFromEnv(manifest.config);
@@ -78,55 +121,42 @@ export class WebWorkerSandbox implements ISandbox {
       ]),
     ];
 
-    const w = new Worker(
-      import.meta.resolve("./webWorker.ts"),
-      {
-        type: "module",
-        deno: {
-          permissions: {
-            ...permissions,
-            env: false, // Should be passed through in loadRawConfigFromEnv
-            net: hostnames,
-            run: false,
-            write: false,
-          },
-        },
-      },
-    );
-
-    // Setup a JSON RPC for interaction to the worker
-    const conn = rpc.createMessageConnection(
-      new BrowserMessageReader(w),
-      new BrowserMessageWriter(w),
-    );
-
-    conn.listen();
-
     const [entryPath] = await loader.getProject();
-    await conn.sendRequest(Load, entryPath);
 
-    const { tools, systemPrompt } = await conn.sendRequest(
-      Init,
-      manifest,
-      config,
-    );
+    const initProjectWorker = () =>
+      workerFactory(
+        manifest,
+        entryPath,
+        config as Record<string, string>,
+        {
+          ...permissions,
+          env: false,
+          net: hostnames,
+          run: false,
+          write: false,
+        },
+      );
+
+    const [_worker, _conn, { tools, systemPrompt }] = await initProjectWorker();
 
     return new WebWorkerSandbox(
-      conn,
       manifest,
       systemPrompt,
       tools,
+      initProjectWorker,
+      timeout,
     );
   }
 
   private constructor(
-    connection: rpc.MessageConnection,
     readonly manifest: ProjectManifest,
     readonly systemPrompt: string,
     tools: Tool[],
+    initWorker: () => ReturnType<typeof workerFactory>,
+    readonly timeout: number = 100,
   ) {
     this.#tools = tools;
-    this.#connection = connection;
+    this.#initWorker = initWorker;
   }
 
   // deno-lint-ignore require-await
@@ -134,19 +164,35 @@ export class WebWorkerSandbox implements ISandbox {
     return this.#tools;
   }
 
-  runTool(toolName: string, args: unknown, ctx: IContext): Promise<string> {
+  async runTool(
+    toolName: string,
+    args: unknown,
+    ctx: IContext,
+  ): Promise<string> {
+    // Create a worker just for the tool call, this is so we can terminate if it exceeds the timeout.
+    const [worker, conn] = await this.#initWorker();
+
     // Connect up context so sandbox can call application
-    this.#connection.onRequest(CtxVectorSearch, async (tableName, vector) => {
+    conn.onRequest(CtxVectorSearch, async (tableName, vector) => {
       const res = await ctx.vectorSearch(tableName, vector);
 
       // lancedb returns classes (Apache Arrow - Struct Row). It needs to be made serializable
       // This is done here as its specific to the webworker sandbox
       return res.map((r) => JSON.parse(JSON.stringify(r)));
     });
-    this.#connection.onRequest(CtxComputeQueryEmbedding, async (query) => {
+    conn.onRequest(CtxComputeQueryEmbedding, async (query) => {
       return await ctx.computeQueryEmbedding(query);
     });
 
-    return this.#connection.sendRequest(CallTool, toolName, args);
+    // Add timeout to the tool call, then clean up the worker.
+    return Promise.race([
+      timeout(this.timeout).then(() => {
+        throw new Error(`Timeout calling tool ${toolName}`);
+      }),
+      conn.sendRequest(CallTool, toolName, args),
+    ]).finally(() => {
+      // Dispose of the worker, a new one will be created for each tool call
+      worker.terminate();
+    });
   }
 }

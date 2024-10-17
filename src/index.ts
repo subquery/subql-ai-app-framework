@@ -80,6 +80,12 @@ yargs(Deno.args)
         type: "boolean",
         default: false,
       },
+      toolTimeout: {
+        description:
+          "Set a limit for how long a tool can take to run, unit is MS",
+        type: "number",
+        default: 10_000, // 10s
+      },
     },
     async (argv) => {
       try {
@@ -91,6 +97,7 @@ yargs(Deno.args)
           port: argv.port,
           ipfs: ipfsFromArgs(argv),
           forceReload: argv.forceReload,
+          toolTimeout: argv.toolTimeout,
         });
       } catch (e) {
         console.log(e);

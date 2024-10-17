@@ -20,6 +20,7 @@ export async function runApp(config: {
   port: number;
   ipfs: IPFSClient;
   forceReload?: boolean;
+  toolTimeout: number;
 }): Promise<void> {
   const model = new Ollama({ host: config.host });
 
@@ -30,7 +31,7 @@ export async function runApp(config: {
     config.forceReload,
   );
 
-  const sandbox = await getDefaultSandbox(loader);
+  const sandbox = await getDefaultSandbox(loader, config.toolTimeout);
 
   const ctx = await makeContext(
     sandbox,
