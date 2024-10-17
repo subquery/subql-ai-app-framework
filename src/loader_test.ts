@@ -2,7 +2,7 @@ import { expect } from "@std/expect/expect";
 import { getOSTempDir, pullContent } from "./loader.ts";
 import { resolve } from "@std/path/resolve";
 import { IPFSClient } from "./ipfs.ts";
-import { tarDir } from "./bundle.ts";
+import { tarDir } from "./subcommands/bundle.ts";
 
 const ipfs = new IPFSClient(
   Deno.env.get("IPFS_ENDPOINT") ??
