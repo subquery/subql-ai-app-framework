@@ -15,7 +15,7 @@ export async function getProjectJson(
   sandboxFactory = getDefaultSandbox,
 ): Promise<StaticProject> {
   try {
-    const sandbox = await sandboxFactory(loader);
+    const sandbox = await sandboxFactory(loader, 10_000);
 
     return {
       ...sandbox.manifest,
