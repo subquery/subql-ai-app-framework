@@ -79,7 +79,7 @@ async function makeContext(
   if (!loadRes) throw new Error("Failed to load vector db");
   const connection = await lancedb.connect(loadRes[0]);
 
-  return new Context(model, connection);
+  return new Context(model, connection, sandbox.manifest.embeddingsModel);
 }
 
 async function cli(runnerHost: RunnerHost): Promise<void> {
