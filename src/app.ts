@@ -42,7 +42,6 @@ export async function runApp(config: {
 
     return new Runner(sandbox, chatStorage, model, ctx);
   });
-
   switch (config.interface) {
     case "cli":
       await cli(runnerHost);

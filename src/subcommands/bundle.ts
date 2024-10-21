@@ -15,7 +15,7 @@ import { Loader } from "../loader.ts";
 
 export async function publishProject(
   projectPath: string,
-  ipfs: IPFSClient,
+  ipfs: IPFSClient
 ): Promise<string> {
   const loader = new Loader(projectPath, ipfs);
 
@@ -109,7 +109,7 @@ export async function generateBundle(projectPath: string): Promise<string> {
  * @returns
  */
 export async function tarDir(
-  dirPath: string,
+  dirPath: string
 ): Promise<ReadableStream<Uint8Array>> {
   const tar = new Tar();
 
@@ -125,7 +125,7 @@ export async function tarDir(
   }
 
   return toReadableStream(tar.getReader()).pipeThrough(
-    new CompressionStream("gzip"),
+    new CompressionStream("gzip")
   );
 }
 

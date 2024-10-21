@@ -1,5 +1,5 @@
-import dayjs from "dayjs";
-import { toChecksumAddress } from "ethereum-checksum-address";
+import dayjs from "npm:dayjs";
+import { getAddress } from "npm:ethers";
 import { BigNumber as BigNumberJs } from "npm:bignumber.js";
 
 // dayjs.extend(utc);
@@ -127,7 +127,7 @@ export const getOperatorDeployment = async (
       }
     `,
     {
-      indexerAddress: toChecksumAddress(address),
+      indexerAddress: getAddress(address),
     }
   );
 
@@ -169,7 +169,7 @@ export const getOperatorDeployment = async (
       }
     `,
     {
-      indexerId: toChecksumAddress(address),
+      indexerId: getAddress(address),
       eraIdx: lastEra,
     }
   );
@@ -224,7 +224,7 @@ export const getOperatorDeployment = async (
       }
     `,
     {
-      indexerId: toChecksumAddress(address),
+      indexerId: getAddress(address),
       deploymentId: res?.indexerDeployments.nodes.map(
         (d: { deployment: { id: string } }) => d.deployment.id
       ),
@@ -250,7 +250,7 @@ export const getOperatorDeployment = async (
         apy: BigNumberJs(
           formatSQT(
             lastEraAllocationInfo.eraIndexerApies.nodes.find(
-              (i) => i.indexerId === toChecksumAddress(address)
+              (i) => i.indexerId === getAddress(address)
             )?.indexerApy || "0"
           )
         )

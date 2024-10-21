@@ -18,7 +18,8 @@ export class ProjectsRewardsSummary extends FunctionTool {
     super();
   }
 
-  description = `This tool for return projects summaries, give user a guide to select suitable projects to maximize allocation rewards and improve query rewards.
+  description = `This tool for operator.
+  This tool for return projects summaries, give user a guide to select suitable projects to maximize allocation rewards and improve query rewards.
   All the data provided is based on the last era.
   There are five factors that influence allocation rewards:
     1. totalStake
@@ -194,7 +195,7 @@ export class MyProjectSummary extends FunctionTool {
     super();
   }
 
-  description = `This tool returns information about the projects the user is currently running. 
+  description = `This tool for operator.This tool returns information about the projects the user is currently running. 
     It can be combined with other tools to provide users with an analysis on how to allocate their resources effectively for optimal allocation rewards.
 
     Returns the top 5 projects the user is running based on the last era(projects filed).
@@ -342,7 +343,8 @@ export class CommssionSummary extends FunctionTool {
     super();
   }
 
-  description = `This tool returns the average commission rate across all users, 
+  description = `This tool for operator.
+  This tool returns the average commission rate across all users, 
   the median commission rate, as well as the user's own commission rate and total delegation. 
   Lower commission rates help increase total delegation, with a minimum commission rate of 20%.
 
@@ -412,7 +414,7 @@ export class FlexPlanPrice extends FunctionTool {
     super();
   }
 
-  description = `
+  description = `This tool for operator.
   This tool is designed to help set prices for a flex plan. 
   If no deploymentId is provided, it will default to recommending a price of 5.
   It returns the average of already set prices and the request volume for each price. 
@@ -439,7 +441,7 @@ export class FlexPlanPrice extends FunctionTool {
   }): Promise<string | null> {
     console.warn("call flex plan price");
     if (!deploymentId.startsWith("Qm"))
-      return '{ averagePrice: 5, details: [{ "price": 5, }] }';
+      return '{ averagePrice: 5, details: [{ "price": 5 }] }';
     // const deploymentInfo = await getDeploymentInfo(this.endpoint, deploymentId);
     const eraInfo = await getEraInfo(this.endpoint);
 

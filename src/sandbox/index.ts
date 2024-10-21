@@ -9,10 +9,9 @@ export * from "./unsafeSandbox.ts";
 
 export function getDefaultSandbox(
   loader: Loader,
-  timeout: number,
+  timeout: number
 ): Promise<ISandbox> {
   // return UnsafeSandbox.create(loader);
-
   return WebWorkerSandbox.create(loader, timeout);
 }
 

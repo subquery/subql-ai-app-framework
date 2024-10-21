@@ -19,7 +19,7 @@ import { loadProject } from "../../project/project.ts";
 
 const conn = rpc.createMessageConnection(
   new BrowserMessageReader(self),
-  new BrowserMessageWriter(self),
+  new BrowserMessageWriter(self)
 );
 
 let entrypoint: unknown;
@@ -51,7 +51,6 @@ conn.onRequest(Init, async (manifest, config) => {
 
   try {
     project ??= await loadProject(manifest, entrypoint, config);
-
     return toJsonProject();
   } catch (e: unknown) {
     if (e instanceof Error) {

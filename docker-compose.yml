@@ -12,7 +12,7 @@ services:
     command:
       - ${SUB_COMMAND:-} # set SUB_COMMAND env variable to "test" to run tests
       # - -p=/app/index.ts # TODO this doesn't work because dependencies are not copied
-      - -p=ipfs://QmNaNBhXJoFpRJeNQcnTH8Yh6Rf4pzJy6VSnfnQSZHysdZ
+      - -p=ipfs://QmRUryPFBzsozSCTLz8P5JDpPUm2zztetqi7v6Lv8j916k
       - -h=http://host.docker.internal:11434
     healthcheck:
       test: ["CMD", "curl", "-f", "http://subql-ai:7827/ready"]

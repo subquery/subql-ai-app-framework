@@ -39,6 +39,8 @@
     "jsr:@std/path@~0.218.2": "0.218.2",
     "jsr:@std/streams@^1.0.5": "1.0.6",
     "jsr:@std/tar@~0.1.1": "0.1.1",
+    "npm:@hyrious/esbuild-plugin-commonjs@0.2.4": "0.2.4_esbuild@0.24.0",
+    "npm:@hyrious/esbuild-plugin-commonjs@~0.2.4": "0.2.4_esbuild@0.24.0",
     "npm:@lancedb/lancedb@0.10": "0.10.0_apache-arrow@17.0.0",
     "npm:@sinclair/typebox@*": "0.33.11",
     "npm:@sinclair/typebox@~0.33.11": "0.33.11",
@@ -55,6 +57,7 @@
     "npm:dayjs@*": "1.11.13",
     "npm:dayjs@^1.11.13": "1.11.13",
     "npm:esbuild@0.24": "0.24.0",
+    "npm:ethereum-checksum-address@*": "0.0.8",
     "npm:ethereum-checksum-address@^0.0.8": "0.0.8",
     "npm:ethers@*": "6.13.3",
     "npm:form-data@4": "4.0.0",
@@ -337,6 +340,12 @@
     },
     "@esbuild/win32-x64@0.24.0": {
       "integrity": "sha512-7IAFPrjSQIJrGsK6flwg7NFmwBoSTyF3rl7If0hNUFQU4ilTsEPL6GuMuU9BfIWVVGuRnuIidkSMC+c0Otu8IA=="
+    },
+    "@hyrious/esbuild-plugin-commonjs@0.2.4_esbuild@0.24.0": {
+      "integrity": "sha512-NKR8bsDbNP7EpM//cjoo8Bpihmc97gPpnwrggG+18iSGow6oaJpfmy3Bv+oBgPkPlxcGzC9SXh+6szoCoKFvCw==",
+      "dependencies": [
+        "esbuild"
+      ]
     },
     "@lancedb/lancedb-darwin-arm64@0.10.0": {
       "integrity": "sha512-ywlSfQ/mRVTFavTophKn+kaqzY5ylDZBAzAu6u+VGATd3joUot5PurCXjNfJ/Z7LQDQ/80SRdJgia7e4ZV2MmQ=="
@@ -1915,6 +1924,7 @@
       "jsr:@std/io@~0.224.8",
       "jsr:@std/path@^1.0.6",
       "jsr:@std/tar@~0.1.1",
+      "npm:@hyrious/esbuild-plugin-commonjs@~0.2.4",
       "npm:@lancedb/lancedb@0.10",
       "npm:@sinclair/typebox@~0.33.11",
       "npm:@types/estree@^1.0.5",
