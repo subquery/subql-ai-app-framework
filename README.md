@@ -25,4 +25,4 @@ Running tests: `deno test`
 
 To install
 
-`deno install -g -f --allow-env --allow-net --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options -n subql-ai ./src/index.ts`
+`deno install -g -f --allow-env --allow-net --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options -n subql-ai jsr:@subql/ai-app-framework`

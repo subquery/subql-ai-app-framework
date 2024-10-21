@@ -50,5 +50,10 @@
     "Dockerfile",
     "RESEARCH.md",
     "subquery-delegator"
-  ]
+  ],
+  "lint": {
+    "rules": {
+      "exclude": ["no-slow-types"]
+    }
+  }
 }

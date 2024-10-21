@@ -21,6 +21,22 @@ import ora from "ora";
 import { getPrompt, setSpinner } from "./util.ts";
 const DEFAULT_PORT = 7827;
 
+import { FunctionTool } from "./tools/tool.ts";
+import { RagTool } from "./tools/ragTool.ts";
+import type {
+  Project,
+  ProjectEntry,
+  ProjectManifest,
+} from "./project/project.ts";
+
+export {
+  FunctionTool,
+  type Project,
+  type ProjectEntry,
+  type ProjectManifest,
+  RagTool,
+};
+
 const sharedArgs = {
   project: {
     alias: "p",
