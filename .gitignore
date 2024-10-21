@@ -32,6 +32,13 @@ project.yaml
 # JetBrains IDE
 .idea/
 
+# Sublime text
+*.sublime-project
+*.sublime-workspace
+
+# VS Code
+.vscode/
+
 # Unit test reports
 TEST*.xml
 
