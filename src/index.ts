@@ -9,7 +9,7 @@
 
 import "@std/dotenv/load"; // Automatically load .env
 import { resolve } from "@std/path/resolve";
-// @ts-types="npm:@types/yargs"
+// @ts-types="npm:@types/yargs@17.0.33"
 import yargs, {
   type ArgumentsCamelCase,
   type InferredOptionTypes,
