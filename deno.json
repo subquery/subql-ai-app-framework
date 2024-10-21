@@ -41,5 +41,14 @@
     "unist-util-filter": "npm:unist-util-filter@^5.0.1",
     "vscode-jsonrpc": "npm:vscode-jsonrpc@^8.2.1",
     "yargs": "npm:yargs@^17.7.2"
-  }
+  },
+  "exclude": [
+    ".github",
+    ".hooks",
+    ".lintstagedrc",
+    ".db",
+    "Dockerfile",
+    "RESEARCH.md",
+    "subquery-delegator"
+  ]
 }
