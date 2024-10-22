@@ -7,6 +7,9 @@ import type { Source } from "./util.ts";
 import { ProjectManifest } from "./project/project.ts";
 import { Value } from "@sinclair/typebox/value";
 import { Memoize, SpinnerLog } from "./decorators.ts";
+import { getLogger } from "./logger.ts";
+
+const logger = await getLogger("loader");
 
 export const getOSTempDir = () =>
   Deno.env.get("TMPDIR") || Deno.env.get("TMP") || Deno.env.get("TEMP") ||
@@ -154,6 +157,7 @@ export class Loader {
     );
 
     const manifest = await loadManfiest(manifestPath);
+    logger.debug(`getManifest [${source}] ${manifestPath}`);
     return [manifestPath, manifest, source];
   }
 
@@ -170,6 +174,7 @@ export class Loader {
       dirname(manifestPath),
       manifestSource == "local" ? dirname(this.projectPath) : undefined,
     );
+    logger.debug(`getProject [${source}] ${projectPath}`);
     return [projectPath, source];
   }
 

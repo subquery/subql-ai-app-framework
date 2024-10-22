@@ -2,6 +2,10 @@ import type { ChatResponse, Message, Ollama } from "ollama";
 import type { IChatStorage } from "./chatStorage/index.ts";
 import type { ISandbox } from "./sandbox/index.ts";
 import type { IContext } from "./context/context.ts";
+import { getLogger } from "./logger.ts";
+import { LogPerformance } from "./decorators.ts";
+
+const logger = await getLogger("runner");
 
 export class Runner {
   #ollama: Ollama;
@@ -17,6 +21,7 @@ export class Runner {
     this.#context = context;
   }
 
+  @LogPerformance(logger)
   private async runChat(messages: Message[]): Promise<ChatResponse> {
     const res = await this.#ollama.chat({
       model: this.sandbox.manifest.model,
@@ -62,13 +67,18 @@ export class Runner {
       const toolResponses = await Promise.all(
         (res.message.tool_calls ?? []).map(async (toolCall) => {
           try {
+            logger.debug(
+              `Calling tool: "${toolCall.function.name}" args: "${
+                JSON.stringify(toolCall.function.arguments)
+              }`,
+            );
             return await this.sandbox.runTool(
               toolCall.function.name,
               toolCall.function.arguments,
               this.#context,
             );
           } catch (e: unknown) {
-            console.error(`Tool call failed: ${e}`);
+            logger.error(`Tool call failed: ${e}`);
             // Don't throw the error this will exit the application, instead pass the message back to the LLM
             return (e as Error).message;
           }
