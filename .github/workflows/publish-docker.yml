@@ -49,7 +49,7 @@ jobs:
           push: true
           platforms: arm64,amd64
           file: ./Dockerfile
-          tags: subquerynetwork/subql-ai-app
+          tags: subquerynetwork/subql-ai-app:v${{ env.AI_APP_VERSION }}
           build-args: RELEASE_VERSION=${{ env.AI_APP_VERSION }}
 
       - name: Build and push
