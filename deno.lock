@@ -45,6 +45,7 @@
     "npm:@types/mdast@*": "4.0.4",
     "npm:@types/node@*": "22.5.4",
     "npm:@types/yargs@*": "17.0.33",
+    "npm:@types/yargs@17.0.33": "17.0.33",
     "npm:apache-arrow@17": "17.0.0",
     "npm:chalk@^5.3.0": "5.3.0",
     "npm:esbuild@0.24": "0.24.0",
