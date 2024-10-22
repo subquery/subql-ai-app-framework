@@ -38,6 +38,7 @@
     "jsr:@std/path@~0.218.2": "0.218.2",
     "jsr:@std/streams@^1.0.5": "1.0.6",
     "jsr:@std/tar@~0.1.1": "0.1.1",
+    "jsr:@subql/ai-app-framework@1.0.0-1": "1.0.0-1",
     "npm:@lancedb/lancedb@0.10": "0.10.0_apache-arrow@17.0.0",
     "npm:@sinclair/typebox@*": "0.33.11",
     "npm:@sinclair/typebox@~0.33.11": "0.33.11",
@@ -232,6 +233,37 @@
       "integrity": "ae7dbe0765ba67f2f8335338d86293bd3605a54f037357b1969d86714f4a9ee9",
       "dependencies": [
         "jsr:@std/streams"
+      ]
+    },
+    "@subql/ai-app-framework@1.0.0-1": {
+      "integrity": "07defaaf201fd4b9f2e39b5865330287a1541e6e1d1605ffca8f0c3897d4ee98",
+      "dependencies": [
+        "jsr:@luca/esbuild-deno-loader",
+        "jsr:@std/archive@~0.225.4",
+        "jsr:@std/dotenv",
+        "jsr:@std/fmt@^1.0.2",
+        "jsr:@std/fs@^1.0.3",
+        "jsr:@std/io@~0.224.8",
+        "jsr:@std/path@^1.0.6",
+        "jsr:@std/tar",
+        "npm:@lancedb/lancedb",
+        "npm:@sinclair/typebox@~0.33.11",
+        "npm:@types/yargs@17.0.33",
+        "npm:apache-arrow",
+        "npm:esbuild",
+        "npm:github-slugger",
+        "npm:hono",
+        "npm:mdast-util-from-markdown",
+        "npm:mdast-util-mdx",
+        "npm:mdast-util-to-markdown",
+        "npm:mdast-util-to-string",
+        "npm:micromark-extension-mdxjs",
+        "npm:ollama",
+        "npm:ora",
+        "npm:unist-builder",
+        "npm:unist-util-filter",
+        "npm:vscode-jsonrpc",
+        "npm:yargs"
       ]
     }
   },
