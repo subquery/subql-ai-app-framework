@@ -2,7 +2,7 @@
 // TODO limit --allow-ffi to just lancedb
 // TODO limit --deny-net on localhost except ollama/db
 // TODO limit --allow-run needed for Deno.exit
-// Allow sys is for docker
+// Allow sys is for docker, pino
 // Allow run is for esbuild
 // Allow write is for tmp directory access
 // Allow read is for reading form tmp and projects
