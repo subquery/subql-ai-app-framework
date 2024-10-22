@@ -87,6 +87,7 @@ export async function generateBundle(projectPath: string): Promise<string> {
       format: "esm",
       treeShaking: true,
       minify: true,
+      keepNames: true, // Stop minify scrambling tool names based on classes
     });
 
     // Not sure why this is required

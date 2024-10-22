@@ -19,6 +19,8 @@ import yargs, {
 import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
 import { getPrompt, setSpinner } from "./util.ts";
+import denoCfg from "../deno.json" with { type: "json" };
+
 const DEFAULT_PORT = 7827;
 
 const sharedArgs = {
@@ -50,9 +52,11 @@ function ipfsFromArgs(
 
 yargs(Deno.args)
   .env("SUBQL_AI")
+  .scriptName("subql-ai")
+  .version(denoCfg.version)
   .command(
     "$0",
-    "Run an AI app",
+    "Run a SubQuery AI app",
     {
       ...sharedArgs,
       host: {

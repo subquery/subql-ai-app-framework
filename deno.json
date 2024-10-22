@@ -1,6 +1,6 @@
 {
   "name": "@subql/ai-app-framework",
-  "version": "1.0.0-2",
+  "version": "1.0.0-3",
   "exports": {
     "./cli": "./src/index.ts",
     ".": "./src/mod.ts"
@@ -57,7 +57,6 @@
   },
   "lint": {
     "rules": {
-      // Typebox types produce slow types https://github.com/subquery/subql-ai-app-framework/issues/9
       "exclude": ["no-slow-types"]
     }
   }
