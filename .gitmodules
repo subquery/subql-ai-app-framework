@@ -1,0 +1,3 @@
+[submodule "subquery-delegator"]
+	path = subquery-delegator
+	url = git@github.com:subquery/ai-app-example.git

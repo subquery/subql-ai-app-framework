@@ -85,6 +85,8 @@ export async function generateBundle(projectPath: string): Promise<string> {
       bundle: true,
       write: false,
       format: "esm",
+      treeShaking: true,
+      minify: true,
     });
 
     // Not sure why this is required

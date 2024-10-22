@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-env --allow-net --allow-sys --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options --no-prompt
+#!/usr/bin/env -S deno run --allow-env --allow-net --allow-sys --allow-read --allow-write --allow-ffi --allow-run --allow-import --unstable-worker-options --no-prompt
 // TODO limit --allow-ffi to just lancedb
 // TODO limit --deny-net on localhost except ollama/db
 // TODO limit --allow-run needed for Deno.exit
@@ -20,22 +20,6 @@ import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
 import { getPrompt, setSpinner } from "./util.ts";
 const DEFAULT_PORT = 7827;
-
-import { FunctionTool } from "./tools/tool.ts";
-import { RagTool } from "./tools/ragTool.ts";
-import type {
-  Project,
-  ProjectEntry,
-  ProjectManifest,
-} from "./project/project.ts";
-
-export {
-  FunctionTool,
-  type Project,
-  type ProjectEntry,
-  type ProjectManifest,
-  RagTool,
-};
 
 const sharedArgs = {
   project: {

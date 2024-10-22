@@ -1,7 +1,10 @@
 {
   "name": "@subql/ai-app-framework",
   "version": "1.0.0-1",
-  "exports": "./src/index.ts",
+  "exports": {
+    "./cli": "./src/index.ts",
+    ".": "./src/mod.ts"
+  },
   "tasks": {
     "dev": "deno run --watch src/index.ts",
     "check-ts": "deno check src/index.ts",
@@ -42,17 +45,19 @@
     "vscode-jsonrpc": "npm:vscode-jsonrpc@^8.2.1",
     "yargs": "npm:yargs@^17.7.2"
   },
-  "exclude": [
-    ".github",
-    ".hooks",
-    ".lintstagedrc",
-    ".db",
-    "Dockerfile",
-    "RESEARCH.md",
-    "subquery-delegator"
-  ],
+  "publish": {
+    "exclude": [
+      ".github",
+      ".hooks",
+      ".lintstagedrc",
+      "Dockerfile",
+      "RESEARCH.md",
+      "subquery-delegator"
+    ]
+  },
   "lint": {
     "rules": {
+      // Typebox types produce slow types https://github.com/subquery/subql-ai-app-framework/issues/9
       "exclude": ["no-slow-types"]
     }
   }
