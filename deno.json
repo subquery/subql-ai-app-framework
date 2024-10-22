@@ -1,6 +1,6 @@
 {
   "name": "@subql/ai-app-framework",
-  "version": "1.0.0-3",
+  "version": "1.0.0-4",
   "exports": {
     "./cli": "./src/index.ts",
     ".": "./src/mod.ts"
@@ -8,7 +8,7 @@
   "tasks": {
     "dev": "deno run --watch src/index.ts",
     "check-ts": "deno check src/index.ts",
-    "test": "deno test --allow-env --allow-net --allow-read --allow-run --allow-write --unstable-worker-options",
+    "test": "deno test --allow-env --allow-net --allow-read --allow-run --allow-write --allow-sys --unstable-worker-options",
     "hook": "deno run --allow-read --allow-run --allow-write https://deno.land/x/deno_hooks@0.1.1/mod.ts"
   },
   "imports": {
@@ -40,6 +40,8 @@
     "micromark-extension-mdxjs": "npm:micromark-extension-mdxjs@^3.0.0",
     "ollama": "npm:ollama@^0.5.9",
     "ora": "npm:ora@^8.1.0",
+    "pino": "npm:pino@^9.5.0",
+    "pino-pretty": "npm:pino-pretty@^11.3.0",
     "unist-builder": "npm:unist-builder@^4.0.0",
     "unist-util-filter": "npm:unist-util-filter@^5.0.1",
     "vscode-jsonrpc": "npm:vscode-jsonrpc@^8.2.1",

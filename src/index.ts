@@ -2,7 +2,7 @@
 // TODO limit --allow-ffi to just lancedb
 // TODO limit --deny-net on localhost except ollama/db
 // TODO limit --allow-run needed for Deno.exit
-// Allow sys is for docker
+// Allow sys is for docker, pino
 // Allow run is for esbuild
 // Allow write is for tmp directory access
 // Allow read is for reading form tmp and projects
@@ -20,6 +20,7 @@ import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
 import { getPrompt, setSpinner } from "./util.ts";
 import denoCfg from "../deno.json" with { type: "json" };
+import { initLogger } from "./logger.ts";
 
 const DEFAULT_PORT = 7827;
 
@@ -90,10 +91,27 @@ yargs(Deno.args)
         type: "number",
         default: 10_000, // 10s
       },
+      debug: {
+        description: "Enable debug logging",
+        type: "boolean",
+        default: false,
+      },
+      logFmt: {
+        description: "Set the logger format",
+        type: "string",
+        choices: ["json", "pretty"],
+        default: "pretty",
+      },
     },
     async (argv) => {
       try {
+        await initLogger(
+          argv.logFmt as "json" | "pretty",
+          argv.debug ? "debug" : undefined,
+        );
+
         const { runApp } = await import("./app.ts");
+
         return await runApp({
           projectPath: argv.project,
           host: argv.host,

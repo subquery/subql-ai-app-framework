@@ -1,6 +1,7 @@
 import { type Static, Type } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
 import { HTTPException } from "hono/http-exception";
 import type { RunnerHost } from "./runnerHost.ts";
@@ -78,6 +79,8 @@ export function http(
   // The ready status should change once the project is fully loaded, including the vector DB
   let ready = false;
   onReady?.then(() => ready = true);
+
+  app.use("*", cors());
 
   app.get("/health", (c) => {
     return c.text("ok");
