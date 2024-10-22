@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-env --allow-net --allow-sys --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options --no-prompt
+#!/usr/bin/env -S deno run --allow-env --allow-net --allow-sys --allow-read --allow-write --allow-ffi --allow-run --allow-import --unstable-worker-options --no-prompt
 // TODO limit --allow-ffi to just lancedb
 // TODO limit --deny-net on localhost except ollama/db
 // TODO limit --allow-run needed for Deno.exit
@@ -19,6 +19,8 @@ import yargs, {
 import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
 import { getPrompt, setSpinner } from "./util.ts";
+import denoCfg from "../deno.json" with { type: "json" };
+
 const DEFAULT_PORT = 7827;
 
 const sharedArgs = {
@@ -50,9 +52,11 @@ function ipfsFromArgs(
 
 yargs(Deno.args)
   .env("SUBQL_AI")
+  .scriptName("subql-ai")
+  .version(denoCfg.version)
   .command(
     "$0",
-    "Run an AI app",
+    "Run a SubQuery AI app",
     {
       ...sharedArgs,
       host: {

@@ -1,28 +1,29 @@
-## AI Framework
+## Subquery AI App Framework
 
-### Usage
+[![JSR](https://jsr.io/badges/@subql/ai-app-framework)](https://jsr.io/@subql/ai-app-framework)
 
-To run the sample project run the following command:
+## Documentation
 
-`./src/index.ts -p ./subquery-delegator/index.ts`
+Detailed documentation is
+[here](https://academy.subquery.network/ai/welcome.html)
 
-### Generating embedded data
+## Installing CLI
 
-MD(X) data can be stored in a Lance DB for RAG data. To generate this db you can
-run a command like so:
+Install the latest:
 
-`./src/index.ts embed-mdx -i /Users/scotttwiname/Projects/subql-docs/docs -o ./.db -t subql-docs`
+`deno install -g -f --allow-env --allow-net --allow-import --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options --no-prompt -n subql-ai jsr:@subql/ai-app-framework/cli`
 
-### Get info on a project
+Install a specific version:
 
-`./src/index.ts info -p ./subquery-delegator/index.ts`
+`deno install -g -f --allow-env --allow-net --allow-import --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options --no-prompt -n subql-ai jsr:@subql/ai-app-framework@<version>/cli`
 
-## Tests
+`NOTE: These permissions can change, for the most upto date permissions see the top of ./src/index.ts`
 
-Running tests: `deno test`
+## Development
 
-### Installing
+The framework is build using [Deno](https://deno.land), please make sure that is
+available in your environment.
 
-To install
+### Tests
 
-`deno install -g -f --allow-env --allow-net --allow-read --allow-write --allow-ffi --allow-run --unstable-worker-options -n subql-ai ./src/index.ts`
+Running tests: `deno run test`

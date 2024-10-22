@@ -1,7 +1,10 @@
 {
   "name": "@subql/ai-app-framework",
-  "version": "1.0.0-0",
-  "exports": "./src/index.ts",
+  "version": "1.0.0-3",
+  "exports": {
+    "./cli": "./src/index.ts",
+    ".": "./src/mod.ts"
+  },
   "tasks": {
     "dev": "deno run --watch src/index.ts",
     "check-ts": "deno check src/index.ts",
@@ -42,13 +45,19 @@
     "vscode-jsonrpc": "npm:vscode-jsonrpc@^8.2.1",
     "yargs": "npm:yargs@^17.7.2"
   },
-  "exclude": [
-    ".github",
-    ".hooks",
-    ".lintstagedrc",
-    ".db",
-    "Dockerfile",
-    "RESEARCH.md",
-    "subquery-delegator"
-  ]
+  "publish": {
+    "exclude": [
+      ".github",
+      ".hooks",
+      ".lintstagedrc",
+      "Dockerfile",
+      "RESEARCH.md",
+      "subquery-delegator"
+    ]
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-slow-types"]
+    }
+  }
 }

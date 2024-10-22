@@ -158,9 +158,9 @@ export class Loader {
   }
 
   @SpinnerLog({
-    start: "Loading project",
-    success: "Loaded project",
-    fail: "Failed to load project",
+    start: "Loading project source",
+    success: "Loaded project source",
+    fail: "Failed to load project source",
   })
   async getProject(): Promise<[string, Source]> {
     const [manifestPath, manifest, manifestSource] = await this.getManifest();
