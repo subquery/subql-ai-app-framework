@@ -14,7 +14,6 @@ export async function httpCli(host: string): Promise<void> {
     }
 
     messages.push({ content: response, role: "user" });
-
     const spinner = ora({
       text: "",
       color: "yellow",
@@ -22,32 +21,37 @@ export async function httpCli(host: string): Promise<void> {
       discardStdin: false,
     }).start();
 
-    const r = await fetch(`${host}/v1/chat/completions`, {
-      method: "POST",
-      body: JSON.stringify({
-        messages,
-        n: 1,
-        stream: false,
-      }),
-    });
+    try {
+      const r = await fetch(`${host}/v1/chat/completions`, {
+        method: "POST",
+        body: JSON.stringify({
+          messages,
+          n: 1,
+          stream: false,
+        }),
+      });
 
-    if (!r.ok) {
-      console.error("Response error", r.status, await r.text());
-      throw new Error("Bad response");
+      if (!r.ok) {
+        console.error("Response error", r.status, await r.text());
+        throw new Error("Bad response");
+      }
+
+      const resBody: ChatResponse = await r.json();
+
+      const res = resBody.choices[0]?.message;
+      if (!res) {
+        throw new Error("Received invalid response message");
+        // spinner.fail(brightRed("Received invalid response message"));
+        // continue;
+      }
+
+      messages.push(res);
+
+      spinner.stopAndPersist({
+        text: `${brightMagenta(res.content)}`,
+      });
+    } catch (e) {
+      spinner.fail(brightRed((e as Error).message));
     }
-
-    const resBody: ChatResponse = await r.json();
-
-    const res = resBody.choices[0]?.message;
-    if (!res) {
-      spinner.fail(brightRed("Received invalid response message"));
-      continue;
-    }
-
-    messages.push(res);
-
-    spinner.stopAndPersist({
-      text: `${brightMagenta(res.content)}`,
-    });
   }
 }
