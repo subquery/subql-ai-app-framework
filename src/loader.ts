@@ -1,6 +1,8 @@
 import { dirname } from "@std/path/dirname";
-import { CIDReg, type IPFSClient } from "./ipfs.ts";
 import { resolve } from "@std/path/resolve";
+import { fromFileUrl } from "@std/path/from-file-url";
+import { CIDReg, type IPFSClient } from "./ipfs.ts";
+
 import { UntarStream } from "@std/tar";
 import { ensureDir, exists } from "@std/fs";
 import type { Source } from "./util.ts";
@@ -31,7 +33,7 @@ async function loadScript(path: string): Promise<unknown> {
 /**
  * Loads a local manifest file (either json, ts or js)
  */
-export async function loadManfiest(path: string): Promise<ProjectManifest> {
+async function loadManfiest(path: string): Promise<ProjectManifest> {
   let manifest: unknown;
   try {
     manifest = await loadJson(path);
@@ -104,7 +106,11 @@ export async function pullContent(
 
   try {
     // This should throw if the project is not a valid URL. This allows loading lancedb from gcs/s3
-    new URL(path);
+    const url = new URL(path);
+
+    if (url.protocol === "file:") {
+      return [fromFileUrl(path), "local"];
+    }
 
     return [path, "remote"];
   } catch (_e) {
@@ -118,12 +124,18 @@ export class Loader {
   #ipfs: IPFSClient;
   #force: boolean;
 
+  readonly projectPath: string;
+
   constructor(
-    readonly projectPath: string,
+    projectPath: string,
     ipfs: IPFSClient,
     readonly tmpDir?: string,
     force?: boolean,
   ) {
+    this.projectPath = projectPath.startsWith("file://")
+      ? fromFileUrl(projectPath)
+      : projectPath;
+
     this.#ipfs = ipfs;
     this.#force = force ?? false;
   }
@@ -154,10 +166,13 @@ export class Loader {
     const [manifestPath, source] = await this.pullContent(
       this.projectPath,
       "manifest.json",
+      undefined,
+      Deno.cwd(),
     );
 
-    const manifest = await loadManfiest(manifestPath);
     logger.debug(`getManifest [${source}] ${manifestPath}`);
+    const manifest = await loadManfiest(manifestPath);
+
     return [manifestPath, manifest, source];
   }
 

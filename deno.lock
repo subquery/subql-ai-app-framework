@@ -40,6 +40,7 @@
     "jsr:@std/streams@^1.0.5": "1.0.6",
     "jsr:@std/tar@~0.1.1": "0.1.1",
     "jsr:@subql/ai-app-framework@1.0.0-1": "1.0.0-1",
+    "jsr:@subql/ai-app-framework@1.0.0-3": "1.0.0-3",
     "npm:@lancedb/lancedb@0.10": "0.10.0_apache-arrow@17.0.0",
     "npm:@sinclair/typebox@*": "0.33.11",
     "npm:@sinclair/typebox@~0.33.11": "0.33.11",
@@ -272,6 +273,9 @@
         "npm:vscode-jsonrpc",
         "npm:yargs"
       ]
+    },
+    "@subql/ai-app-framework@1.0.0-3": {
+      "integrity": "e3754a07ab39b02a4fd7d875d6af800659a5c773a64d0c77a1ef57d320d9fd81"
     }
   },
   "npm": {
