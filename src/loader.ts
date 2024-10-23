@@ -158,8 +158,9 @@ export class Loader {
       Deno.cwd(),
     );
 
-    const manifest = await loadManfiest(manifestPath);
     logger.debug(`getManifest [${source}] ${manifestPath}`);
+    const manifest = await loadManfiest(manifestPath);
+
     return [manifestPath, manifest, source];
   }
 
