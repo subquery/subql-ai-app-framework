@@ -159,7 +159,7 @@ export class Loader {
     );
 
     logger.debug(`getManifest [${source}] ${manifestPath}`);
-    const manifest = await loadManfiest(manifestPath);
+    const manifest = await loadManfiest("file://" + manifestPath);
 
     return [manifestPath, manifest, source];
   }
