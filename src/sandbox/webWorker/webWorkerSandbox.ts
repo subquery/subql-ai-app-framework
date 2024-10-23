@@ -14,7 +14,7 @@ import {
   Load,
 } from "./messages.ts";
 import {
-  extractConfigHostNames,
+  // extractConfigHostNames,
   loadRawConfigFromEnv,
   type Source,
   timeout,
@@ -114,12 +114,12 @@ export class WebWorkerSandbox implements ISandbox {
     const permissions = getPermisionsForSource(source, manifestPath);
 
     // Add any project host names as well as any configured host names
-    const hostnames = [
-      ...new Set([
-        ...(manifest.endpoints ?? []),
-        ...extractConfigHostNames(config as Record<string, string>),
-      ]),
-    ];
+    // const hostnames = [
+    //   ...new Set([
+    //     ...(manifest.endpoints ?? []),
+    //     ...extractConfigHostNames(config as Record<string, string>),
+    //   ]),
+    // ];
 
     const [entryPath] = await loader.getProject();
 
@@ -131,7 +131,7 @@ export class WebWorkerSandbox implements ISandbox {
         {
           ...permissions,
           env: false,
-          net: hostnames,
+          net: "inherit", //hostnames,
           run: false,
           write: false,
         },
