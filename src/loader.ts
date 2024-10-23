@@ -1,6 +1,8 @@
 import { dirname } from "@std/path/dirname";
-import { CIDReg, type IPFSClient } from "./ipfs.ts";
 import { resolve } from "@std/path/resolve";
+import { fromFileUrl } from "@std/path/from-file-url";
+import { CIDReg, type IPFSClient } from "./ipfs.ts";
+
 import { UntarStream } from "@std/tar";
 import { ensureDir, exists } from "@std/fs";
 import type { Source } from "./util.ts";
@@ -104,26 +106,36 @@ export async function pullContent(
 
   try {
     // This should throw if the project is not a valid URL. This allows loading lancedb from gcs/s3
-    new URL(path);
+    const url = new URL(path);
+
+    if (url.protocol === "file:") {
+      return [fromFileUrl(path), "local"];
+    }
 
     return [path, "remote"];
   } catch (_e) {
     // DO nothing
   }
 
-  return ["file://" + resolve(workingPath ?? "", path), "local"];
+  return [resolve(workingPath ?? "", path), "local"];
 }
 
 export class Loader {
   #ipfs: IPFSClient;
   #force: boolean;
 
+  readonly projectPath: string;
+
   constructor(
-    readonly projectPath: string,
+    projectPath: string,
     ipfs: IPFSClient,
     readonly tmpDir?: string,
     force?: boolean,
   ) {
+    this.projectPath = projectPath.startsWith("file://")
+      ? fromFileUrl(projectPath)
+      : projectPath;
+
     this.#ipfs = ipfs;
     this.#force = force ?? false;
   }

@@ -43,6 +43,20 @@ const sharedArgs = {
   },
 } satisfies Record<string, Options>;
 
+const debugArgs = {
+  debug: {
+    description: "Enable debug logging",
+    type: "boolean",
+    default: false,
+  },
+  logFmt: {
+    description: "Set the logger format",
+    type: "string",
+    choices: ["json", "pretty"],
+    default: "pretty",
+  },
+} satisfies Record<string, Options>;
+
 function ipfsFromArgs(
   argv: ArgumentsCamelCase<InferredOptionTypes<typeof sharedArgs>>,
 ): IPFSClient {
@@ -60,6 +74,7 @@ yargs(Deno.args)
     "Run a SubQuery AI app",
     {
       ...sharedArgs,
+      ...debugArgs,
       host: {
         alias: "h",
         description: "The ollama RPC host",
@@ -91,17 +106,6 @@ yargs(Deno.args)
         type: "number",
         default: 10_000, // 10s
       },
-      debug: {
-        description: "Enable debug logging",
-        type: "boolean",
-        default: false,
-      },
-      logFmt: {
-        description: "Set the logger format",
-        type: "string",
-        choices: ["json", "pretty"],
-        default: "pretty",
-      },
     },
     async (argv) => {
       try {
@@ -132,6 +136,7 @@ yargs(Deno.args)
     "Get information on a project",
     {
       ...sharedArgs,
+      ...debugArgs,
       json: {
         description: "Log the project in JSON format",
         default: false,
@@ -140,6 +145,10 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
+        await initLogger(
+          argv.logFmt as "json" | "pretty",
+          argv.debug ? "debug" : undefined,
+        );
         const { projectInfo } = await import("./subcommands/info.ts");
         await projectInfo(argv.project, ipfsFromArgs(argv), argv.json);
         Deno.exit(0);
@@ -214,6 +223,7 @@ yargs(Deno.args)
     "Publishes a project to IPFS so it can be easily distributed",
     {
       ...sharedArgs,
+      ...debugArgs,
       silent: {
         description: "Disable all logging except for the output",
         type: "boolean",
@@ -221,6 +231,13 @@ yargs(Deno.args)
     },
     async (argv) => {
       try {
+        if (!argv.silent) {
+          await initLogger(
+            argv.logFmt as "json" | "pretty",
+            argv.debug ? "debug" : undefined,
+          );
+        }
+
         const { publishProject } = await import("./subcommands/bundle.ts");
         if (argv.silent) {
           setSpinner(ora({ isSilent: true }));
