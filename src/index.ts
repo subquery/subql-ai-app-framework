@@ -106,6 +106,12 @@ yargs(Deno.args)
         type: "number",
         default: 10_000, // 10s
       },
+      streamKeepAlive: {
+        description:
+          "The interval in MS to send empty data in stream responses to keep the connection alive. Only wokrs with http interface. Use 0 to disable.",
+        type: "number",
+        default: 5_000, // 5s
+      },
     },
     async (argv) => {
       try {
@@ -124,6 +130,7 @@ yargs(Deno.args)
           ipfs: ipfsFromArgs(argv),
           forceReload: argv.forceReload,
           toolTimeout: argv.toolTimeout,
+          streamKeepAlive: argv.streamKeepAlive,
         });
       } catch (e) {
         console.log(e);
@@ -212,10 +219,15 @@ yargs(Deno.args)
         type: "string",
         default: `http://localhost:${DEFAULT_PORT}`,
       },
+      stream: {
+        description: "Stream responses",
+        type: "boolean",
+        default: true,
+      },
     },
     async (argv) => {
       const { httpCli } = await import("./subcommands/httpCli.ts");
-      await httpCli(argv.host);
+      await httpCli(argv.host, argv.stream);
     },
   )
   .command(

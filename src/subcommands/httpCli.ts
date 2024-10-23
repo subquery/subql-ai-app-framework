@@ -1,11 +1,16 @@
 import ora from "ora";
 import type { Message } from "ollama";
 import { brightMagenta, brightRed } from "@std/fmt/colors";
-import type { ChatResponse } from "../http.ts";
 import { getPrompt } from "../util.ts";
+import OpenAI from "openai";
+import process from "node:process";
 
-export async function httpCli(host: string): Promise<void> {
+export async function httpCli(host: string, stream = true): Promise<void> {
   const messages: Message[] = [];
+
+  const client = new OpenAI({
+    baseURL: `${host}/v1`,
+  });
 
   while (true) {
     const response = getPrompt();
@@ -22,34 +27,49 @@ export async function httpCli(host: string): Promise<void> {
     }).start();
 
     try {
-      const r = await fetch(`${host}/v1/chat/completions`, {
-        method: "POST",
-        body: JSON.stringify({
-          messages,
-          n: 1,
-          stream: false,
-        }),
-      });
+      if (stream) {
+        const stream = await client.chat.completions.create({
+          messages: messages as OpenAI.ChatCompletionMessageParam[],
+          model: "",
+          stream: true,
+        });
 
-      if (!r.ok) {
-        console.error("Response error", r.status, await r.text());
-        throw new Error("Bad response");
+        let stoppedSpinner = false;
+
+        for await (const chunk of stream) {
+          const content = chunk.choices[0]?.delta?.content;
+          // Content might be empty to keep the connection alive
+          if (content) {
+            // Stop spinner on first content
+            if (!stoppedSpinner) {
+              stoppedSpinner = true;
+              spinner.stop();
+            }
+
+            process.stdout.write(brightMagenta(content));
+          }
+        }
+        process.stdout.write("\n");
+      } else {
+        const completion = await client.chat.completions.create({
+          messages: messages as OpenAI.ChatCompletionMessageParam[],
+          model: "",
+        });
+
+        const res = completion.choices[0]?.message;
+        if (!res) {
+          throw new Error("Received invalid response message");
+        }
+        if (!res.content) {
+          throw new Error("Empty content");
+        }
+
+        messages.push(res as Message);
+
+        spinner.stopAndPersist({
+          text: `${brightMagenta(res.content)}`,
+        });
       }
-
-      const resBody: ChatResponse = await r.json();
-
-      const res = resBody.choices[0]?.message;
-      if (!res) {
-        throw new Error("Received invalid response message");
-        // spinner.fail(brightRed("Received invalid response message"));
-        // continue;
-      }
-
-      messages.push(res);
-
-      spinner.stopAndPersist({
-        text: `${brightMagenta(res.content)}`,
-      });
     } catch (e) {
       spinner.fail(brightRed((e as Error).message));
     }
