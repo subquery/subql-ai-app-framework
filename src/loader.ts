@@ -22,7 +22,8 @@ export const getOSTempDir = () =>
 
 async function loadJson(path: string): Promise<unknown> {
   const decoder = new TextDecoder();
-  const data = await Deno.readFile(path);
+  const normalPath = path.startsWith("file://") ? fromFileUrl(path) : path;
+  const data = await Deno.readFile(normalPath);
   const raw = decoder.decode(data);
 
   return JSON.parse(raw);
@@ -40,7 +41,8 @@ async function loadManfiest(path: string): Promise<ProjectManifest> {
   let manifest: unknown;
   try {
     manifest = await loadJson(path);
-  } catch (_e: unknown) {
+  } catch (e: unknown) {
+    logger.debug(`Manifest is not json, ${(e as Error).message}`);
     manifest = await loadScript(path);
   }
 
