@@ -111,7 +111,7 @@ export async function pullContent(
     // DO nothing
   }
 
-  return [resolve(workingPath ?? "", path), "local"];
+  return ["file://" + resolve(workingPath ?? "", path), "local"];
 }
 
 export class Loader {
@@ -159,7 +159,7 @@ export class Loader {
     );
 
     logger.debug(`getManifest [${source}] ${manifestPath}`);
-    const manifest = await loadManfiest("file://" + manifestPath);
+    const manifest = await loadManfiest(manifestPath);
 
     return [manifestPath, manifest, source];
   }
