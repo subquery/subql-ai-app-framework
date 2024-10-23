@@ -3,6 +3,7 @@ import { getOSTempDir, pullContent } from "./loader.ts";
 import { resolve } from "@std/path/resolve";
 import { IPFSClient } from "./ipfs.ts";
 import { tarDir } from "./subcommands/bundle.ts";
+import { fromFileUrl } from "@std/path/from-file-url";
 
 const ipfs = new IPFSClient(
   Deno.env.get("IPFS_ENDPOINT") ??
@@ -15,7 +16,7 @@ const ipfs = new IPFSClient(
 Deno.test("Load vector storage from dir", async () => {
   const [dbPath, source] = await pullContent("./.db", ipfs, "");
 
-  expect(dbPath).toBe(resolve("./.db"));
+  expect(dbPath).toBe("file://" + resolve("./.db"));
   expect(source).toBe("local");
 });
 
@@ -52,12 +53,13 @@ Deno.test("Load vector storage from IPFS", async () => {
   );
 
   expect(dbPath).toBe(
-    resolve(getOSTempDir(), "QmbSzrfrgexP4Fugys356MYmWf3Wvk7kfEMaMNXrDXB2nd"),
+    "file://" +
+      resolve(getOSTempDir(), "QmbSzrfrgexP4Fugys356MYmWf3Wvk7kfEMaMNXrDXB2nd"),
   );
   expect(source).toBe("ipfs");
 
   // Clean up
-  await Deno.remove(dbPath, { recursive: true });
+  await Deno.remove(fromFileUrl(dbPath), { recursive: true });
 });
 
 Deno.test("Local files work with and are converted to file urls", async () => {

@@ -1,6 +1,7 @@
 import { dirname } from "@std/path/dirname";
 import { resolve } from "@std/path/resolve";
 import { fromFileUrl } from "@std/path/from-file-url";
+import { toFileUrl } from "@std/path/to-file-url";
 import { CIDReg, type IPFSClient } from "./ipfs.ts";
 
 import { UntarStream } from "@std/tar";
@@ -12,6 +13,8 @@ import { Memoize, SpinnerLog } from "./decorators.ts";
 import { getLogger } from "./logger.ts";
 
 const logger = await getLogger("loader");
+
+const toFileUrlString = (input: string) => toFileUrl(input).toString();
 
 export const getOSTempDir = () =>
   Deno.env.get("TMPDIR") || Deno.env.get("TMP") || Deno.env.get("TEMP") ||
@@ -76,7 +79,7 @@ export async function pullContent(
       const readStream = await ipfs.catStream(cid);
 
       if (!force && (await exists(tmp))) {
-        return [tmp, "ipfs"];
+        return [toFileUrlString(tmp), "ipfs"];
       }
 
       for await (
@@ -87,12 +90,12 @@ export async function pullContent(
         await ensureDir(dirname(path));
         await entry.readable?.pipeTo((await Deno.create(path)).writable);
       }
-      return [tmp, "ipfs"];
+      return [toFileUrlString(tmp), "ipfs"];
     } else {
       const filePath = resolve(tmp, fileName);
       // Early exit if the file has already been fetched
       if (!force && (await exists(filePath))) {
-        return [filePath, "ipfs"];
+        return [toFileUrlString(filePath), "ipfs"];
       }
 
       const file = await Deno.open(filePath, { create: true, write: true });
@@ -100,7 +103,7 @@ export async function pullContent(
       const readable = await ipfs.catStream(cid);
       await readable.pipeTo(file.writable);
 
-      return [filePath, "ipfs"];
+      return [toFileUrlString(filePath), "ipfs"];
     }
   }
 
@@ -121,7 +124,7 @@ export async function pullContent(
   workingPath = workingPath?.startsWith("file://")
     ? fromFileUrl(workingPath)
     : workingPath;
-  return ["file://" + resolve(workingPath ?? "", path), "local"];
+  return [toFileUrlString(resolve(workingPath ?? "", path)), "local"];
 }
 
 export class Loader {
