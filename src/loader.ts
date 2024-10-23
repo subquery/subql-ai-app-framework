@@ -31,7 +31,7 @@ async function loadScript(path: string): Promise<unknown> {
 /**
  * Loads a local manifest file (either json, ts or js)
  */
-export async function loadManfiest(path: string): Promise<ProjectManifest> {
+async function loadManfiest(path: string): Promise<ProjectManifest> {
   let manifest: unknown;
   try {
     manifest = await loadJson(path);
@@ -154,6 +154,8 @@ export class Loader {
     const [manifestPath, source] = await this.pullContent(
       this.projectPath,
       "manifest.json",
+      undefined,
+      Deno.cwd(),
     );
 
     const manifest = await loadManfiest(manifestPath);
