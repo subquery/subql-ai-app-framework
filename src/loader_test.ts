@@ -59,3 +59,31 @@ Deno.test("Load vector storage from IPFS", async () => {
   // Clean up
   await Deno.remove(dbPath, { recursive: true });
 });
+
+Deno.test("Local files work with and are converted to file urls", async () => {
+  const [path0] = await pullContent("file:///some/file/path", ipfs, "");
+  expect(path0).toBe("file:///some/file/path");
+
+  const [path1] = await pullContent("/some/file/path", ipfs, "");
+  expect(path1).toBe("file:///some/file/path");
+
+  const [path2] = await pullContent(
+    "./some/file/path",
+    ipfs,
+    "",
+    undefined,
+    undefined,
+    "/root/dir",
+  );
+  expect(path2).toBe("file:///root/dir/some/file/path");
+
+  const [path3] = await pullContent(
+    "./some/file/path",
+    ipfs,
+    "",
+    undefined,
+    undefined,
+    "file:///root/dir",
+  );
+  expect(path3).toBe("file:///root/dir/some/file/path");
+});

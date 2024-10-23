@@ -109,7 +109,7 @@ export async function pullContent(
     const url = new URL(path);
 
     if (url.protocol === "file:") {
-      return [fromFileUrl(path), "local"];
+      return [path, "local"];
     }
 
     return [path, "remote"];
@@ -117,25 +117,23 @@ export async function pullContent(
     // DO nothing
   }
 
-  return [resolve(workingPath ?? "", path), "local"];
+  // File urls are used to avoid imports being from the same package registry as the framework is run from
+  workingPath = workingPath?.startsWith("file://")
+    ? fromFileUrl(workingPath)
+    : workingPath;
+  return ["file://" + resolve(workingPath ?? "", path), "local"];
 }
 
 export class Loader {
   #ipfs: IPFSClient;
   #force: boolean;
 
-  readonly projectPath: string;
-
   constructor(
-    projectPath: string,
+    readonly projectPath: string,
     ipfs: IPFSClient,
     readonly tmpDir?: string,
     force?: boolean,
   ) {
-    this.projectPath = projectPath.startsWith("file://")
-      ? fromFileUrl(projectPath)
-      : projectPath;
-
     this.#ipfs = ipfs;
     this.#force = force ?? false;
   }

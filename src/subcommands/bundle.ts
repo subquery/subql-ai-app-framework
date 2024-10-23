@@ -91,7 +91,7 @@ export async function generateBundle(projectPath: string): Promise<string> {
     });
 
     // Not sure why this is required
-    esbuild.stop();
+    await esbuild.stop();
 
     if (res.outputFiles.length !== 1) {
       throw new Error("Output should be a single file");
