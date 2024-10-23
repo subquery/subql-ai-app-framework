@@ -15,6 +15,7 @@ import {
 } from "./messages.ts";
 import {
   extractConfigHostNames,
+  fromFileUrlSafe,
   loadRawConfigFromEnv,
   type Source,
   timeout,
@@ -34,7 +35,7 @@ export type Permissions = {
 };
 
 const IPFS_PERMISSIONS = (dir?: string): Deno.PermissionOptionsObject => ({
-  read: dir ? [dirname(dir)] : false, // Allow the cache dir
+  read: dir ? [dirname(fromFileUrlSafe(dir))] : false, // Allow the cache dir
   ffi: false,
 });
 

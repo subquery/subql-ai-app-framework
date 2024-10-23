@@ -1,12 +1,9 @@
 import { dirname } from "@std/path/dirname";
 import { resolve } from "@std/path/resolve";
-import { fromFileUrl } from "@std/path/from-file-url";
-import { toFileUrl } from "@std/path/to-file-url";
 import { CIDReg, type IPFSClient } from "./ipfs.ts";
-
 import { UntarStream } from "@std/tar";
 import { ensureDir, exists } from "@std/fs";
-import type { Source } from "./util.ts";
+import { fromFileUrlSafe, type Source, toFileUrlString } from "./util.ts";
 import { ProjectManifest } from "./project/project.ts";
 import { Value } from "@sinclair/typebox/value";
 import { Memoize, SpinnerLog } from "./decorators.ts";
@@ -14,15 +11,13 @@ import { getLogger } from "./logger.ts";
 
 const logger = await getLogger("loader");
 
-const toFileUrlString = (input: string) => toFileUrl(input).toString();
-
 export const getOSTempDir = () =>
   Deno.env.get("TMPDIR") || Deno.env.get("TMP") || Deno.env.get("TEMP") ||
   "/tmp";
 
 async function loadJson(path: string): Promise<unknown> {
   const decoder = new TextDecoder();
-  const normalPath = path.startsWith("file://") ? fromFileUrl(path) : path;
+  const normalPath = fromFileUrlSafe(path);
   const data = await Deno.readFile(normalPath);
   const raw = decoder.decode(data);
 
@@ -74,7 +69,7 @@ export async function pullContent(
 ): Promise<[string, Source]> {
   if (CIDReg.test(path)) {
     const cid = path.replace("ipfs://", "");
-    const tmp = resolve(tmpDir ?? getOSTempDir(), cid);
+    const tmp = resolve(fromFileUrlSafe(tmpDir ?? getOSTempDir()), cid);
     await ensureDir(tmp);
 
     if (fileName.endsWith(".gz")) {
@@ -123,10 +118,10 @@ export async function pullContent(
   }
 
   // File urls are used to avoid imports being from the same package registry as the framework is run from
-  workingPath = workingPath?.startsWith("file://")
-    ? fromFileUrl(workingPath)
-    : workingPath;
-  return [toFileUrlString(resolve(workingPath ?? "", path)), "local"];
+  return [
+    toFileUrlString(resolve(fromFileUrlSafe(workingPath ?? ""), path)),
+    "local",
+  ];
 }
 
 export class Loader {
