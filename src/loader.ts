@@ -208,6 +208,7 @@ export class Loader {
       dirname(manifestPath),
       manifestSource == "local" ? dirname(this.projectPath) : undefined,
     );
+    logger.debug(`getVectorDb [${res[1]}] ${res[0]}`);
     return res;
   }
 }

@@ -296,6 +296,7 @@ yargs(Deno.args)
       }
     },
   )
+  .strict()
   // .fail(() => {}) // Disable logging --help if theres an error with a command // TODO need to fix so it only logs when error is with yargs
   .help()
   .argv;
