@@ -2,6 +2,17 @@ import { AssertError, Value } from "@sinclair/typebox/value";
 import ora, { type Ora } from "ora";
 import { brightBlue } from "@std/fmt/colors";
 import { FromSchema } from "./fromSchema.ts";
+import { fromFileUrl } from "@std/path/from-file-url";
+import { toFileUrl } from "@std/path/to-file-url";
+
+export const toFileUrlString = (input: string): string =>
+  toFileUrl(input).toString();
+export function fromFileUrlSafe(input: string): string;
+export function fromFileUrlSafe(input?: string): string | undefined {
+  return input
+    ? (input.startsWith("file://") ? fromFileUrl(input) : input)
+    : input; // Return undefined or empty string
+}
 
 export function loadRawConfigFromEnv(
   rawSchema?: unknown,

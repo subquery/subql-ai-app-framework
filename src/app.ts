@@ -21,13 +21,15 @@ export async function runApp(config: {
   ipfs: IPFSClient;
   forceReload?: boolean;
   toolTimeout: number;
+  streamKeepAlive: number;
+  cacheDir?: string;
 }): Promise<void> {
   const model = new Ollama({ host: config.host });
 
   const loader = new Loader(
     config.projectPath,
     config.ipfs,
-    undefined,
+    config.cacheDir,
     config.forceReload,
   );
 
@@ -58,7 +60,7 @@ export async function runApp(config: {
       break;
     case "http":
     default:
-      http(runnerHost, config.port);
+      http(runnerHost, config.port, config.streamKeepAlive);
   }
 }
 

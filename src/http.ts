@@ -72,6 +72,7 @@ export type ChatChunkResponse = Static<typeof ChatChunkResponse>;
 export function http(
   runnerHost: RunnerHost,
   port: number,
+  streamKeepAlive: number = 0,
   onReady?: Promise<unknown>,
 ): Deno.HttpServer<Deno.NetAddr> {
   const app = new Hono();
@@ -114,12 +115,23 @@ export function http(
       }
 
       const runner = await runnerHost.getAnonymousRunner();
-      const chatRes = await runner.promptMessages(req.messages);
 
       // Mock streaming, current Ollama doesn't support streaming with tools. See https://github.com/subquery/subql-ai-app-framework/issues/3
       if (req.stream) {
-        const parts = chatRes.message.content.split(" ");
         return streamSSE(c, async (stream) => {
+          // Send empty data to keep the connection alive in browsers, they have a default timeout of 1m
+          const interval = streamKeepAlive && setInterval(async () => {
+            const empty = createChatChunkResponse("", "", new Date());
+            await stream.writeSSE({ data: JSON.stringify(empty) });
+            await stream.sleep(20);
+          }, streamKeepAlive);
+
+          const chatRes = await runner.promptMessages(req.messages);
+
+          // Stop sending empty data and send the actual response
+          interval && clearInterval(interval);
+
+          const parts = chatRes.message.content.split(" ");
           for (const [i, part] of parts.entries()) {
             const last = i == parts.length - 1;
 
@@ -145,6 +157,8 @@ export function http(
           }
         });
       }
+
+      const chatRes = await runner.promptMessages(req.messages);
 
       const response: ChatResponse = {
         id: "0",

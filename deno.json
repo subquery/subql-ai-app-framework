@@ -1,6 +1,6 @@
 {
   "name": "@subql/ai-app-framework",
-  "version": "1.0.0-14",
+  "version": "1.0.0-15",
   "exports": {
     "./cli": "./src/index.ts",
     ".": "./src/mod.ts"
@@ -39,6 +39,7 @@
     "mdast-util-to-string": "npm:mdast-util-to-string@^4.0.0",
     "micromark-extension-mdxjs": "npm:micromark-extension-mdxjs@^3.0.0",
     "ollama": "npm:ollama@^0.5.9",
+    "openai": "npm:openai@^4.68.3",
     "ora": "npm:ora@^8.1.0",
     "pino": "npm:pino@^9.5.0",
     "pino-pretty": "npm:pino-pretty@^11.3.0",

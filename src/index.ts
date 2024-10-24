@@ -41,6 +41,11 @@ const sharedArgs = {
       "A bearer authentication token to be used with the ipfs endpoint",
     type: "string",
   },
+  cacheDir: {
+    description:
+      "The location to cache data from ipfs. Default is a temp directory",
+    type: "string",
+  },
 } satisfies Record<string, Options>;
 
 const debugArgs = {
@@ -106,6 +111,12 @@ yargs(Deno.args)
         type: "number",
         default: 10_000, // 10s
       },
+      streamKeepAlive: {
+        description:
+          "The interval in MS to send empty data in stream responses to keep the connection alive. Only wokrs with http interface. Use 0 to disable.",
+        type: "number",
+        default: 5_000, // 5s
+      },
     },
     async (argv) => {
       try {
@@ -124,6 +135,8 @@ yargs(Deno.args)
           ipfs: ipfsFromArgs(argv),
           forceReload: argv.forceReload,
           toolTimeout: argv.toolTimeout,
+          streamKeepAlive: argv.streamKeepAlive,
+          cacheDir: argv.cacheDir,
         });
       } catch (e) {
         console.log(e);
@@ -212,10 +225,15 @@ yargs(Deno.args)
         type: "string",
         default: `http://localhost:${DEFAULT_PORT}`,
       },
+      stream: {
+        description: "Stream responses",
+        type: "boolean",
+        default: true,
+      },
     },
     async (argv) => {
       const { httpCli } = await import("./subcommands/httpCli.ts");
-      await httpCli(argv.host);
+      await httpCli(argv.host, argv.stream);
     },
   )
   .command(
@@ -284,6 +302,7 @@ yargs(Deno.args)
       }
     },
   )
+  .strict()
   // .fail(() => {}) // Disable logging --help if theres an error with a command // TODO need to fix so it only logs when error is with yargs
   .help()
   .argv;
