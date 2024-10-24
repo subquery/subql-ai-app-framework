@@ -22,13 +22,14 @@ export async function runApp(config: {
   forceReload?: boolean;
   toolTimeout: number;
   streamKeepAlive: number;
+  cacheDir?: string;
 }): Promise<void> {
   const model = new Ollama({ host: config.host });
 
   const loader = new Loader(
     config.projectPath,
     config.ipfs,
-    undefined,
+    config.cacheDir,
     config.forceReload,
   );
 

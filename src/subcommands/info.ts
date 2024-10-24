@@ -32,8 +32,9 @@ export async function projectInfo(
   projectPath: string,
   ipfs: IPFSClient,
   json = false,
+  cacheDir?: string,
 ): Promise<void> {
-  const loader = new Loader(projectPath, ipfs);
+  const loader = new Loader(projectPath, ipfs, cacheDir);
   const [_, manifest] = await loader.getManifest();
   const staticProject = await getProjectJson(manifest, loader);
 

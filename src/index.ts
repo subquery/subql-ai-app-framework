@@ -41,6 +41,11 @@ const sharedArgs = {
       "A bearer authentication token to be used with the ipfs endpoint",
     type: "string",
   },
+  cacheDir: {
+    description:
+      "The location to cache data from ipfs. Default is a temp directory",
+    type: "string",
+  },
 } satisfies Record<string, Options>;
 
 const debugArgs = {
@@ -131,6 +136,7 @@ yargs(Deno.args)
           forceReload: argv.forceReload,
           toolTimeout: argv.toolTimeout,
           streamKeepAlive: argv.streamKeepAlive,
+          cacheDir: argv.cacheDir,
         });
       } catch (e) {
         console.log(e);
