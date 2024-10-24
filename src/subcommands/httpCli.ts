@@ -6,15 +6,26 @@ import OpenAI from "openai";
 import process from "node:process";
 
 export async function httpCli(host: string, stream = true): Promise<void> {
-  const messages: Message[] = [];
+  let messages: Message[] = [];
 
   const client = new OpenAI({
     baseURL: `${host}/v1`,
   });
 
+  console.log(`Special messages:
+    ${brightMagenta("/bye")}: to exit (ctrl + c also works)
+    ${brightMagenta("/clear")}: to remove all previous chat history
+`);
+
   while (true) {
     const response = getPrompt();
     if (!response) {
+      continue;
+    }
+
+    if (response === "/clear") {
+      messages = [];
+      console.log("Cleared chat history");
       continue;
     }
 
