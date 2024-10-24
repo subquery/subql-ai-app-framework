@@ -1,6 +1,6 @@
 {
   "name": "@subql/ai-app-framework",
-  "version": "1.0.0-14",
+  "version": "1.0.0-15",
   "exports": {
     "./cli": "./src/index.ts",
     ".": "./src/mod.ts"
