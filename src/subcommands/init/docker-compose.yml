@@ -1,0 +1,39 @@
+services:
+  subql-ai:
+    image: subquerynetwork/subql-ai-app:latest
+    ports:
+      - 7827:7827
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    command:
+      # set SUB_COMMAND env variable any of the supported sub commands
+      - ${SUB_COMMAND:-}
+      # This is your project manifest file
+      - -p=/app/manifest.ts
+      # The external Ollama RPC, running on the local device
+      - -h=http://host.docker.internal:11434
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://subql-ai:7827/ready"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+  # A simple chat UI
+  ui:
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+      - 8080:8080
+    restart: always
+    depends_on:
+      "subql-ai":
+        condition: service_healthy
+    environment:
+      - "OPENAI_API_BASE_URLS=http://subql-ai:7827/v1"
+      - "OPENAI_API_KEYS=foobar"
+      - "WEBUI_AUTH=false"
+    volumes:
+      - open-webui:/app/backend/data
+
+volumes:
+  open-webui:

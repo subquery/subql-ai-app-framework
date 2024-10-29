@@ -96,7 +96,7 @@ export function http(
       object: "list",
       data: [
         {
-          id: "subql-ai-0",
+          id: "subql-ai",
           object: "model",
           created: new Date().getTime(),
           owner: "SubQuery",
