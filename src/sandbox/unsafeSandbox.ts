@@ -5,7 +5,7 @@ import {
   type ProjectManifest,
 } from "../project/project.ts";
 import type { ISandbox } from "./sandbox.ts";
-import type { IContext } from "../context/context.ts";
+import type { IContext } from "../context/types.ts";
 import type { Loader } from "../loader.ts";
 
 /**

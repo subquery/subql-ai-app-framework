@@ -20,7 +20,7 @@ import {
   type Source,
   timeout,
 } from "../../util.ts";
-import type { IContext } from "../../context/context.ts";
+import type { IContext } from "../../context/types.ts";
 import type { ProjectManifest } from "../../project/project.ts";
 import type { Loader } from "../../loader.ts";
 import { dirname } from "@std/path/dirname";

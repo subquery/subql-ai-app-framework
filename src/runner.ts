@@ -1,7 +1,7 @@
 import type { ChatResponse, Message, Ollama } from "ollama";
 import type { IChatStorage } from "./chatStorage/index.ts";
 import type { ISandbox } from "./sandbox/index.ts";
-import type { IContext } from "./context/context.ts";
+import type { IContext } from "./context/types.ts";
 import { getLogger } from "./logger.ts";
 import { LogPerformance } from "./decorators.ts";
 

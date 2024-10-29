@@ -1,4 +1,4 @@
-import type { IContext } from "../context/context.ts";
+import type { IContext } from "../context/types.ts";
 import type { ISandbox } from "./sandbox.ts";
 import type { Project, ProjectManifest } from "../project/project.ts";
 
