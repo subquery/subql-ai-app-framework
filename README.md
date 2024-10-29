@@ -2,10 +2,9 @@
 
 [![JSR](https://jsr.io/badges/@subql/ai-app-framework)](https://jsr.io/@subql/ai-app-framework)
 
-## Documentation
+## Get Started
 
-Detailed documentation is
-[here](https://academy.subquery.network/ai/welcome.html)
+You can get started with detailed documentation found [here](https://academy.subquery.network/ai/welcome.html).
 
 ## Installing CLI
 
