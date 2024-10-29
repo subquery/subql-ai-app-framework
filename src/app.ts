@@ -36,6 +36,23 @@ export async function runApp(config: {
 
   const sandbox = await getDefaultSandbox(loader, config.toolTimeout);
 
+  // Check that Ollama can be reached and the models exist
+  try {
+    await model.show({ model: sandbox.manifest.model });
+  } catch (e) {
+    if (e instanceof TypeError && e.message.includes("Connection refused")) {
+      throw new Error(
+        "Unable to reach Ollama, please check your `host` option.",
+        { cause: e },
+      );
+    }
+    throw e;
+  }
+
+  if (sandbox.manifest.embeddingsModel) {
+    await model.show({ model: sandbox.manifest.embeddingsModel });
+  }
+
   const ctx = await makeContext(
     sandbox,
     model,

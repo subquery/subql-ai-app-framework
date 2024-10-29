@@ -97,4 +97,23 @@ export async function initProject(opts: Options): Promise<void> {
     manifestTemplate(opts.model),
   );
   await Deno.writeTextFile(resolve(dir, "project.ts"), projectTemplate());
+
+  if (import.meta.dirname) {
+    await Deno.copyFile(
+      resolve(import.meta.dirname, "./init/README.md"),
+      resolve(dir, "README.md"),
+    );
+    await Deno.copyFile(
+      resolve(import.meta.dirname, "./init/template.gitignore"),
+      resolve(dir, ".gitignore"),
+    );
+    await Deno.copyFile(
+      resolve(import.meta.dirname, "./init/docker-compose.yml"),
+      resolve(dir, "docker-compose.yml"),
+    );
+  } else {
+    console.warn(
+      `import.meta.dirname not defined unable to copy template files`,
+    );
+  }
 }
