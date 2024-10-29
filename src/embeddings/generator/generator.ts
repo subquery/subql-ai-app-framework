@@ -2,42 +2,60 @@ import {
   type BaseEmbeddingSource,
   MarkdownEmbeddingSource,
 } from "./mdSource.ts";
-import { walk } from "@std/fs/walk";
 import ollama from "ollama";
+import { glob } from "glob";
 import { LanceWriter } from "../lance/index.ts";
+import { getLogger } from "../../logger.ts";
+import { getSpinner } from "../../util.ts";
 
-const DEFAULT_IGNORED_FILES = ["pages/404.mdx"];
+const DEFAULT_IGNORED_PATHS = [
+  "/**/pages/404.mdx",
+  "/**/node_modules/**",
+  "/**/.yarn/**",
+];
+
+const logger = await getLogger("EmbeddingsGenerator");
 
 export async function generate(
   path: string,
   lanceDbPath: string,
   tableName: string,
-  ignoredFiles = DEFAULT_IGNORED_FILES,
+  ignoredPaths = DEFAULT_IGNORED_PATHS,
+  model = "nomic-embed-text",
+  overwrite = false,
 ) {
-  const embeddingSources: BaseEmbeddingSource[] = [
-    ...(await Array.fromAsync(walk(path)))
-      .filter(({ path }) => /\.mdx?$/.test(path))
-      .filter(({ path }) => !ignoredFiles.includes(path))
-      .map((entry) => new MarkdownEmbeddingSource("guide", entry.path)),
-  ];
+  const embeddingSources: BaseEmbeddingSource[] =
+    (await glob([`${path}/**/*.{md,mdx}`], { ignore: ignoredPaths }))
+      .map((path) => new MarkdownEmbeddingSource("guide", path));
 
-  console.log(`Discovered ${embeddingSources.length} pages`);
+  logger.debug(
+    `Source files: ${embeddingSources.map((s) => s.path).join("\n")}`,
+  );
+
+  logger.info(`Discovered ${embeddingSources.length} pages`);
 
   const lanceWriter = await LanceWriter.createNewTable(
     lanceDbPath,
     tableName,
     ollama,
+    model,
+    overwrite,
   );
 
-  for (const source of embeddingSources) {
+  const spinner = getSpinner().start(
+    `Processing files (0/${embeddingSources.length})`,
+  );
+
+  for (const [idx, source] of embeddingSources.entries()) {
     try {
+      spinner.text = `Processing files (${idx + 1}/${embeddingSources.length})`;
       const { sections } = await source.load();
 
       for (const { content } of sections) {
         // OpenAI recommends replacing newlines with spaces for best results (specific to embeddings)
         const input = content.replace(/\n/g, " ");
 
-        lanceWriter.write(input);
+        await lanceWriter.write(input);
       }
     } catch (e) {
       console.warn(`Failed to process ${source.path}`, e);
@@ -45,11 +63,8 @@ export async function generate(
     }
   }
 
-  lanceWriter.close();
-}
+  await lanceWriter.close();
+  spinner.succeed("Processed all files");
 
-// generate(
-//   path.resolve('/Users/scotttwiname/Projects/subql-docs/docs'),
-//   path.resolve(__dirname, '../../.db'),
-//   'subql-docs'
-// );
+  Deno.exit(0);
+}

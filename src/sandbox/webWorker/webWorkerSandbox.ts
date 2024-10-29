@@ -20,7 +20,7 @@ import {
   type Source,
   timeout,
 } from "../../util.ts";
-import type { IContext } from "../../context/context.ts";
+import type { IContext } from "../../context/types.ts";
 import type { ProjectManifest } from "../../project/project.ts";
 import type { Loader } from "../../loader.ts";
 import { dirname } from "@std/path/dirname";
@@ -42,7 +42,17 @@ const IPFS_PERMISSIONS = (dir?: string): Deno.PermissionOptionsObject => ({
 const LOCAL_PERMISSIONS: Deno.PermissionOptionsObject = {
   read: true,
   ffi: true,
-};
+  // These are the same as the default locations https://docs.deno.com/runtime/fundamentals/security/
+  import: [
+    "deno.land",
+    "jsr.io",
+    "esm.sh",
+    "raw.githubusercontent.com",
+    "gist.githubusercontent.com",
+  ],
+  // Types are missing for import but the feature is there https://github.com/denoland/deno/issues/26074
+  // deno-lint-ignore no-explicit-any
+} as any;
 
 function getPermisionsForSource(
   source: Source,

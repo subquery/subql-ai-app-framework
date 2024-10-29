@@ -1,31 +1,10 @@
-import { type Static, Type } from "@sinclair/typebox";
 import type { Ollama } from "ollama";
 import type { Connection } from "@lancedb/lancedb";
+import { LogPerformance } from "../decorators.ts";
+import { getLogger } from "../logger.ts";
+import type { IContext } from "./types.ts";
 
-export const ContextType = Type.Object({
-  vectorSearch: Type.Function(
-    [
-      Type.String({ description: "The table of the query" }),
-      Type.Array(Type.Number(), {
-        description: "The embedded vector result from `computeQueryEmbedding`",
-      }),
-    ],
-    Type.Promise(Type.Array(Type.Any())),
-    {
-      description: "Perform a vector search on the db",
-    },
-  ),
-
-  computeQueryEmbedding: Type.Function(
-    [
-      Type.String({ description: "The search query" }),
-    ],
-    Type.Promise(Type.Array(Type.Number())),
-    { description: "Generate vector embeddings from an input" },
-  ),
-});
-
-export type IContext = Static<typeof ContextType>;
+const logger = await getLogger("ToolContext");
 
 export class Context implements IContext {
   #model: Ollama;
@@ -41,6 +20,7 @@ export class Context implements IContext {
     this.#vectorStorage = vectorStorage;
   }
 
+  @LogPerformance(logger)
   async vectorSearch(tableName: string, vector: number[]): Promise<unknown[]> {
     if (!this.#vectorStorage) {
       throw new Error(
@@ -54,6 +34,7 @@ export class Context implements IContext {
       .toArray();
   }
 
+  @LogPerformance(logger)
   async computeQueryEmbedding(query: string): Promise<number[]> {
     const { embeddings: [embedding] } = await this.#model.embed({
       model: this.embedModel,

@@ -175,6 +175,7 @@ yargs(Deno.args)
     "embed-mdx",
     "Creates a Lance db table with embeddings from MDX files",
     {
+      ...debugArgs,
       input: {
         alias: "i",
         description: "Path to a directory containing MD or MDX files",
@@ -194,13 +195,29 @@ yargs(Deno.args)
         type: "string",
       },
       ignoredFiles: {
-        description: "Input files to ignore",
+        description:
+          "Input paths to ignore, this can be glob patterns. e.g '/**/node_modules/**' ",
         type: "array",
         string: true,
+      },
+      model: {
+        description:
+          "The embedding LLM model to use, this should be the same as embeddingsModel in your app manifest",
+        default: "nomic-embed-text",
+        type: "string",
+      },
+      overwrite: {
+        description: "If there is an existing table, then overwrite it",
+        type: "boolean",
+        default: false,
       },
     },
     async (argv) => {
       try {
+        await initLogger(
+          argv.logFmt as "json" | "pretty",
+          argv.debug ? "debug" : undefined,
+        );
         const { generate } = await import(
           "./embeddings/generator/generator.ts"
         );
@@ -209,6 +226,8 @@ yargs(Deno.args)
           resolve(argv.output),
           argv.table,
           argv.ignoredFiles?.map((f) => resolve(f)),
+          argv.model,
+          argv.overwrite,
         );
       } catch (e) {
         console.log(e);

@@ -1,6 +1,6 @@
 import { type Static, Type } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
-import { ContextType } from "../context/context.ts";
+import { ContextType } from "../context/types.ts";
 import { loadRawConfigFromEnv } from "../util.ts";
 
 // TODO link this to the types defined in tool

@@ -13,7 +13,7 @@ import {
 } from "./messages.ts";
 
 import type { Project } from "../../project/project.ts";
-import type { IContext } from "../../context/context.ts";
+import type { IContext } from "../../context/types.ts";
 import { PrettyTypeboxError } from "../../util.ts";
 import { loadProject } from "../../project/project.ts";
 

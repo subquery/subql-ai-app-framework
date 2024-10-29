@@ -1,5 +1,5 @@
 import type { Tool } from "ollama";
-import type { IContext } from "../context/context.ts";
+import type { IContext } from "../context/types.ts";
 import type { ProjectManifest } from "../project/project.ts";
 
 /**
