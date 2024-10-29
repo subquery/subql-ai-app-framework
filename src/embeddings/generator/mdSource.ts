@@ -15,6 +15,7 @@ import { u } from "unist-builder";
 import { filter } from "unist-util-filter";
 import { createHash } from "node:crypto";
 import GithubSlugger from "github-slugger";
+import { extname } from "@std/path/extname";
 
 type PlainValue = string | number | bigint | boolean | RegExp | undefined;
 type PlainObj = Record<string, PlainValue>;
@@ -140,13 +141,21 @@ type ProcessedMdx = {
  * It extracts metadata, strips it of all JSX,
  * and splits it into sub-sections based on criteria.
  */
-function processMdxForSearch(content: string): ProcessedMdx {
+function processMdxForSearch(
+  content: string,
+  type: "md" | "mdx",
+): ProcessedMdx {
   const checksum = createHash("sha256").update(content).digest("base64");
 
-  const mdxTree = fromMarkdown(content, {
-    extensions: [mdxjs()],
-    mdastExtensions: [mdxFromMarkdown()],
-  });
+  const mdxTree = fromMarkdown(
+    content,
+    type === "mdx"
+      ? {
+        extensions: [mdxjs()],
+        mdastExtensions: [mdxFromMarkdown()],
+      }
+      : undefined,
+  );
 
   const meta = extractMetaExport(mdxTree);
 
@@ -197,86 +206,6 @@ function processMdxForSearch(content: string): ProcessedMdx {
   };
 }
 
-// type WalkEntry = {
-//   path: string;
-//   parentPath?: string;
-// };
-
-// export async function walk(
-//   dir: string,
-//   parentPath?: string,
-// ): Promise<WalkEntry[]> {
-//   for await (const entry of Deno.readDir(dir)) {
-//     const path = join(dir, entry);
-//     if (entry.isDirectory) {
-//       // Keep track of document hierarchy (if this dir has corresponding doc file)
-//       const docPath = `${basename(path)}.mdx`;
-
-//       return walk(
-//         path,
-//         immediateFiles.includes(docPath)
-//           ? join(dirname(path), docPath)
-//           : parentPath,
-//       );
-//     } else if (entry.isFile) {
-//       return [
-//         {
-//           path: path,
-//           parentPath,
-//         },
-//       ];
-//     } else {
-//       return [];
-//     }
-
-//     // const path = join(dir, file);
-//     // const stats = await stat(path);
-//     // if (stats.isDirectory()) {
-//     // } else if (stats.isFile()) {
-//     //   return [
-//     //     {
-//     //       path: path,
-//     //       parentPath,
-//     //     },
-//     //   ];
-//     // } else {
-//     //   return [];
-//     // }
-//   }
-
-//   // const recursiveFiles = await Promise.all(
-//   //   immediateFiles.map(async (file) => {
-//   //     const path = join(dir, file)
-//   //     const stats = await stat(path)
-//   //     if (stats.isDirectory()) {
-//   //       // Keep track of document hierarchy (if this dir has corresponding doc file)
-//   //       const docPath = `${basename(path)}.mdx`
-
-//   //       return walk(
-//   //         path,
-//   //         immediateFiles.includes(docPath) ? join(dirname(path), docPath) : parentPath
-//   //       )
-//   //     } else if (stats.isFile()) {
-//   //       return [
-//   //         {
-//   //           path: path,
-//   //           parentPath,
-//   //         },
-//   //       ]
-//   //     } else {
-//   //       return []
-//   //     }
-//   //   })
-//   // )
-
-//   const flattenedFiles = recursiveFiles.reduce(
-//     (all, folderContents) => all.concat(folderContents),
-//     [],
-//   );
-
-//   return flattenedFiles.sort((a, b) => a.path.localeCompare(b.path));
-// }
-
 export abstract class BaseEmbeddingSource {
   checksum?: string;
   meta?: Meta;
@@ -315,7 +244,9 @@ export class MarkdownEmbeddingSource extends BaseEmbeddingSource {
   async load() {
     const contents = await Deno.readTextFile(this.filePath);
 
-    const { checksum, meta, sections } = processMdxForSearch(contents);
+    const type = extname(this.filePath) === ".mdx" ? "mdx" : "md";
+
+    const { checksum, meta, sections } = processMdxForSearch(contents, type);
 
     this.checksum = checksum;
     this.meta = meta;

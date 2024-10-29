@@ -31,6 +31,7 @@
     "esbuild": "npm:esbuild@^0.24.0",
     "form-data": "npm:form-data@^4.0.0",
     "github-slugger": "npm:github-slugger@^2.0.0",
+    "glob": "npm:glob@^11.0.0",
     "hono": "npm:hono@^4.6.2",
     "mdast": "npm:mdast@^3.0.0",
     "mdast-util-from-markdown": "npm:mdast-util-from-markdown@^2.0.1",

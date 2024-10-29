@@ -34,10 +34,15 @@ export class LanceWriter implements IEmbeddingWriter {
     tableName: string,
     model: Ollama = ollama,
     embedModel = "nomic-embed-text",
+    overwrite = false,
   ): Promise<LanceWriter> {
     const db = await lancedb.connect(dbPath);
 
-    const table = await db.createEmptyTable(tableName, this.#schema);
+    const table = await db.createEmptyTable(
+      tableName,
+      this.#schema,
+      { mode: overwrite ? "overwrite" : "create" },
+    );
 
     return new LanceWriter(table, model, embedModel);
   }
