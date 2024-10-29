@@ -1,4 +1,4 @@
-import type { IContext } from "../context/context.ts";
+import type { IContext } from "../context/types.ts";
 import { FunctionTool } from "./tool.ts";
 
 export class RagTool extends FunctionTool {
