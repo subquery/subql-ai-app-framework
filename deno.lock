@@ -41,6 +41,8 @@
     "jsr:@std/tar@~0.1.1": "0.1.1",
     "jsr:@subql/ai-app-framework@1.0.0-1": "1.0.0-1",
     "jsr:@subql/ai-app-framework@1.0.0-3": "1.0.0-3",
+    "jsr:@subql/ai-app-framework@^0.0.1": "0.0.1",
+    "jsr:@subql/ai-app-framework@^1.0.0-3": "1.0.0-3",
     "npm:@lancedb/lancedb@0.10": "0.10.0_apache-arrow@17.0.0",
     "npm:@sinclair/typebox@*": "0.33.11",
     "npm:@sinclair/typebox@~0.33.11": "0.33.11",
@@ -244,6 +246,9 @@
       "dependencies": [
         "jsr:@std/streams"
       ]
+    },
+    "@subql/ai-app-framework@0.0.1": {
+      "integrity": "e6f45cfa5f2a71c01988d35468fadcc5d21b80eeb8ebf8612f9f2afeabcb8e99"
     },
     "@subql/ai-app-framework@1.0.0-1": {
       "integrity": "07defaaf201fd4b9f2e39b5865330287a1541e6e1d1605ffca8f0c3897d4ee98",
