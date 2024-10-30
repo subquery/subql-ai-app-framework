@@ -20,7 +20,7 @@ jobs:
 
       - uses: denoland/setup-deno@v1
         with:
-          deno-version: 2.0.0-rc.10
+          deno-version: v2.x
 
       - name: Run tests
         run: deno task test
