@@ -27,3 +27,8 @@ available in your environment.
 ### Tests
 
 Running tests: `deno run test`
+
+## Releases
+
+Releases are made through git tags with semver format prefixed with a `v`. This
+will trigger publishing to JSR and Docker hub.
