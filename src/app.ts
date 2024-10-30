@@ -12,7 +12,7 @@ import type { ISandbox } from "./sandbox/sandbox.ts";
 import * as lancedb from "@lancedb/lancedb";
 import type { IPFSClient } from "./ipfs.ts";
 import { Loader } from "./loader.ts";
-import { getPrompt } from "./util.ts";
+import { fromFileUrlSafe, getPrompt } from "./util.ts";
 
 export async function runApp(config: {
   projectPath: string;
@@ -98,7 +98,7 @@ async function makeContext(
 
   const loadRes = await loader.getVectorDb();
   if (!loadRes) throw new Error("Failed to load vector db");
-  const connection = await lancedb.connect(loadRes[0]);
+  const connection = await lancedb.connect(fromFileUrlSafe(loadRes[0]));
 
   return new Context(model, connection, sandbox.manifest.embeddingsModel);
 }
