@@ -5,7 +5,7 @@ export const CIDReg = new RegExp(
   /^ipfs:\/\/(Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,})([/?#][-a-zA-Z0-9@:%_+.~#?&//=]*)*$/i,
 );
 
-type ContentData = string | Uint8Array | Buffer;
+type ContentData = string | Uint8Array | Buffer | Blob;
 
 type PathedContent = {
   content: ContentData;
@@ -160,6 +160,8 @@ export class IPFSClient {
     for (const content of contents) {
       if (content instanceof Uint8Array) {
         formData.append("data", new Blob([content]));
+      } else if (content instanceof Blob) {
+        formData.append("data", content);
       } else if (typeof content === "string") {
         formData.append("data", content);
       } else if (isPathedContent(content)) {
