@@ -19,6 +19,8 @@ const project: ProjectManifest = {
   // type: "lancedb",
   //   path: "./db",
   // },
+  // Set this to the same model you use to generate your RAG db
+  // embeddingsModel: "nomic-embed-text",
 
   // Your projects runtime configuration options
   config: JSON.parse(JSON.stringify(ConfigType)), // Convert to JSON Schema
@@ -44,7 +46,7 @@ export type Config = Static<typeof ConfigType>;
 
 class GreetingTool extends FunctionTool {
 
-  description = \`This tool responds with a welcome greeting when the user shares their name.\`,
+  description = \`This tool responds with a welcome greeting when the user shares their name.\`;
 
   parameters = {
     type: "object",
@@ -69,8 +71,8 @@ const entrypoint: ProjectEntry = async (config: Config): Promise<Project> => {
     tools: [
       new GreetingTool(),
     ],
-    systemPrompt: \`You are an agent designed to help a user answer their questions.
-    Given an input question, use the available tools to answer the users question quickly and concisely.
+    systemPrompt: \`You are an agent designed to greet a user.
+    Given an input name, use the available greeting tools to provide a personalised greeting back.
     You answer must use the result of the tools available.
     Do not mention that you used a tool or the name of a tool.
     If you need more information to answer the question, ask the user for more details.\`,
