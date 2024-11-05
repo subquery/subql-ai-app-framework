@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.0.4] - 2024-11-06
 ### Fixed
 - RagTool parameters naming missmatch (#25)
 
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Lancedb path being url instead of file path for local files
 
-[Unreleased]: https://github.com/subquery/subql-ai-app-framework"/compare/v0.0.3...HEAD
+[Unreleased]: https://github.com/subquery/subql-ai-app-framework"/compare/v0.0.4...HEAD
+[0.0.4]: https://github.com/subquery/subql-ai-app-framework"/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/subquery/subql-ai-app-framework"/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/subquery/subql-ai-app-framework"/releases/tag/v0.0.2
