@@ -2,14 +2,13 @@ import { resolve } from "@std/path/resolve";
 import { Tar } from "@std/archive/tar";
 import { walk } from "@std/fs/walk";
 import { dirname } from "@std/path/dirname";
-import { Buffer } from "@std/io/buffer";
+import { toBlob } from "@std/streams";
 import type { IPFSClient } from "../ipfs.ts";
 // Supporting WASM would allow dropping `--allow-run` option but its not currently supported https://github.com/evanw/esbuild/pull/2968
 // import * as esbuild from "https://deno.land/x/esbuild@v0.24.0/wasm.js";
 // import * as esbuild from "esbuild";
 import { denoPlugins } from "@luca/esbuild-deno-loader";
 import { toReadableStream } from "@std/io/to-readable-stream";
-import { readerFromStreamReader } from "@std/io/reader-from-stream-reader";
 import { getSpinner } from "../util.ts";
 import { Loader } from "../loader.ts";
 
@@ -44,21 +43,28 @@ export async function publishProject(
   if (vectorDbPath) {
     // Resolve the db path relative to the project
     const dbPath = resolve(dirname(projectPath), vectorDbPath);
+
     // Check that the dir exists, this excludes dbs that are already remote, e.g. s3, ipfs.
     if (await fsExists(dbPath)) {
       const spinner = getSpinner().start("Preparing and publishing vector db");
       try {
-        const dbArchive = await tarDir(dbPath);
+        // Check if already an archive
+        if (dbPath.endsWith(".gz")) {
+          const dbBuf = await Deno.readFile(dbPath);
 
-        // TODO loading the whole archive into memory is not ideal and should be streamed.
-        // Need to find a way to stream uploads to ipfs
-        const dbBuf = new Buffer();
-        await dbBuf.readFrom(readerFromStreamReader(dbArchive.getReader()));
+          const [{ cid }] = await ipfs.addFile([dbBuf]);
 
-        const [{ cid }] = await ipfs.addFile([dbBuf]);
+          // Update manifest
+          manifest.vectorStorage!.path = `ipfs://${cid}`;
+        } else {
+          const dbArchive = await tarDir(dbPath);
 
-        // Update manifest
-        manifest.vectorStorage!.path = `ipfs://${cid}`;
+          const blob = await toBlob(dbArchive);
+          const [{ cid }] = await ipfs.addFile([blob]);
+
+          // Update manifest
+          manifest.vectorStorage!.path = `ipfs://${cid}`;
+        }
 
         spinner.succeed("Published vector db");
       } catch (e) {

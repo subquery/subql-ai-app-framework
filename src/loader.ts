@@ -51,6 +51,33 @@ async function loadManfiest(path: string): Promise<ProjectManifest> {
 }
 
 /**
+ * Extract an archive from a readable stream into a given directory
+ * @param readable A readable stream of the archive content
+ * @param dest The destination directory
+ * @returns The path of the first entry, usually a directory name
+ */
+async function extractArchive(
+  readable: ReadableStream<Uint8Array>,
+  dest: string,
+): Promise<string | undefined> {
+  let first: string | undefined;
+  for await (
+    const entry of readable.pipeThrough(new DecompressionStream("gzip"))
+      .pipeThrough(new UntarStream())
+  ) {
+    const path = resolve(dest, entry.path);
+    if (!first) {
+      first = path;
+    }
+    await ensureDir(dirname(path));
+    // Readable only exists for files, not directories
+    await entry.readable?.pipeTo((await Deno.create(path)).writable);
+  }
+
+  return first;
+}
+
+/**
  * @param path The content path or cid
  * @param ipfs The IPFS client to fetch content if from IPFS
  * @param fileName The name to save the file under, if using .gz exension it will unarchive
@@ -79,14 +106,8 @@ export async function pullContent(
         return [toFileUrlString(tmp), "ipfs"];
       }
 
-      for await (
-        const entry of readStream.pipeThrough(new DecompressionStream("gzip"))
-          .pipeThrough(new UntarStream())
-      ) {
-        const path = resolve(tmp, entry.path);
-        await ensureDir(dirname(path));
-        await entry.readable?.pipeTo((await Deno.create(path)).writable);
-      }
+      await extractArchive(readStream, tmp);
+
       return [toFileUrlString(tmp), "ipfs"];
     } else {
       const filePath = resolve(tmp, fileName);
@@ -104,22 +125,70 @@ export async function pullContent(
     }
   }
 
-  try {
-    // This should throw if the project is not a valid URL. This allows loading lancedb from gcs/s3
-    const url = new URL(path);
+  let url: URL | undefined;
 
+  try {
+    // This should throw if not a valid url
+    url = new URL(path);
+  } catch (_e) {
+    // Do nothing
+  }
+
+  if (url) {
     if (url.protocol === "file:") {
       return [path, "local"];
     }
 
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      const headRes = await fetch(url, { method: "HEAD" });
+      // Github returns application/octetstream so we fallback to inspecting the url for a file ext
+      if (
+        headRes.headers.get("Content-Type") === "application/gzip" ||
+        url.pathname.endsWith(".gz")
+      ) {
+        const res = await fetch(url, { method: "GET" });
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+        if (!res.body) {
+          throw new Error(`Failed to load ${url.toString()}, empty body`);
+        }
+
+        const tmp = resolve(
+          fromFileUrlSafe(tmpDir ?? await Deno.makeTempDir()),
+        );
+        try {
+          const p = await extractArchive(res.body, tmp);
+
+          // Is this correct? The file is technically local now
+          return [p ?? tmp, "remote"];
+        } catch (e) {
+          throw new Error("Failed to fetch archive from http", { cause: e });
+        }
+      }
+    }
+
     return [path, "remote"];
-  } catch (_e) {
-    // DO nothing
+  }
+
+  const localPath = resolve(fromFileUrlSafe(workingPath ?? ""), path);
+  if (localPath.endsWith(".gz")) {
+    const tmp = resolve(fromFileUrlSafe(tmpDir ?? await Deno.makeTempDir()));
+
+    const archive = await Deno.open(localPath);
+
+    try {
+      await extractArchive(archive.readable, tmp);
+    } finally {
+      archive.close();
+    }
+
+    return [toFileUrlString(tmp), "local"];
   }
 
   // File urls are used to avoid imports being from the same package registry as the framework is run from
   return [
-    toFileUrlString(resolve(fromFileUrlSafe(workingPath ?? ""), path)),
+    toFileUrlString(localPath),
     "local",
   ];
 }
