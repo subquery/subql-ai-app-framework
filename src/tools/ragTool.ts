@@ -22,7 +22,7 @@ export class RagTool extends FunctionTool {
     type: "object",
     required: ["query"],
     properties: {
-      account: {
+      query: {
         type: "string",
         description: "A search string, generally the users prompt",
       },
