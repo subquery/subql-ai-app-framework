@@ -3,6 +3,7 @@ import { getDefaultSandbox } from "../sandbox/index.ts";
 import type { ProjectManifest } from "../project/project.ts";
 import type { IPFSClient } from "../ipfs.ts";
 import { Loader } from "../loader.ts";
+import { getVersion } from "../util.ts";
 
 type StaticProject = ProjectManifest & {
   tools?: string[];
@@ -37,6 +38,8 @@ export async function projectInfo(
   const loader = new Loader(projectPath, ipfs, cacheDir);
   const [_, manifest] = await loader.getManifest();
   const staticProject = await getProjectJson(manifest, loader);
+
+  console.log(`Subql AI Framework (${await getVersion()})`);
 
   if (json) {
     console.log(JSON.stringify(

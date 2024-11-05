@@ -18,8 +18,7 @@ import yargs, {
 
 import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
-import { getPrompt, setSpinner } from "./util.ts";
-import denoCfg from "../deno.json" with { type: "json" };
+import { getPrompt, getVersion, setSpinner } from "./util.ts";
 import { initLogger } from "./logger.ts";
 
 const DEFAULT_PORT = 7827;
@@ -73,7 +72,7 @@ function ipfsFromArgs(
 yargs(Deno.args)
   .env("SUBQL_AI")
   .scriptName("subql-ai")
-  .version(denoCfg.version)
+  .version(await getVersion())
   .command(
     "$0",
     "Run a SubQuery AI app",

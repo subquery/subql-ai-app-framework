@@ -96,3 +96,11 @@ export function timeout(ms: number): Promise<void> {
     setTimeout(() => resolve(), ms);
   });
 }
+
+export async function getVersion(): Promise<string> {
+  const { default: denoCfg } = await import("../deno.json", {
+    with: { type: "json" },
+  });
+
+  return denoCfg.version;
+}

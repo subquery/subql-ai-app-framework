@@ -12,7 +12,10 @@ import type { ISandbox } from "./sandbox/sandbox.ts";
 import * as lancedb from "@lancedb/lancedb";
 import type { IPFSClient } from "./ipfs.ts";
 import { Loader } from "./loader.ts";
-import { fromFileUrlSafe, getPrompt } from "./util.ts";
+import { fromFileUrlSafe, getPrompt, getVersion } from "./util.ts";
+import { getLogger } from "./logger.ts";
+
+const logger = await getLogger("app");
 
 export async function runApp(config: {
   projectPath: string;
@@ -25,6 +28,8 @@ export async function runApp(config: {
   streamKeepAlive: number;
   cacheDir?: string;
 }): Promise<void> {
+  logger.info(`Subql AI Framework (${await getVersion()})`);
+
   const model = new Ollama({ host: config.host });
 
   const loader = new Loader(
