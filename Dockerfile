@@ -11,5 +11,3 @@ COPY . .
 RUN deno cache ./src/index.ts
 
 ENTRYPOINT ["./src/index.ts"]
-
-CMD ["-p","/ai-app"]
