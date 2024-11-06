@@ -1,4 +1,4 @@
-services:
+const DOCKER_COMPOSE = `services:
   subql-ai:
     image: subquerynetwork/subql-ai-app:latest
     ports:
@@ -27,3 +27,6 @@ services:
 
 volumes:
   open-webui:
+`;
+
+export default DOCKER_COMPOSE;

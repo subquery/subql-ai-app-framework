@@ -30,7 +30,7 @@ Deno.test("cat a file", async () => {
 
 // Deno.test("upload stream to ipfs", async () => {
 
-//     const readable = await tarDir('./subquery-delegator')
+//     const readable = await tarDir('./subquery-delegator/network-delegation-helper/db')
 
 //     const [res] = await ipfs.addFileStream(readable);
 //     expect(res.cid).toBe("Qmf412jQZiuVUtdgnB36FXFX7xg5V6KEbSJ4dpQuhkLyfD");
