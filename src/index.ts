@@ -248,10 +248,15 @@ yargs(Deno.args)
         type: "boolean",
         default: true,
       },
+      apiKey: {
+        description: "If the host requires an API use this to set it.",
+        type: "string",
+        default: "",
+      },
     },
     async (argv) => {
       const { httpCli } = await import("./subcommands/httpCli.ts");
-      await httpCli(argv.host, argv.stream);
+      await httpCli(argv.host, argv.stream, argv.apiKey);
     },
   )
   .command(

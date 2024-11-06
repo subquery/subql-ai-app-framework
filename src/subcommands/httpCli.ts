@@ -5,10 +5,15 @@ import { getPrompt } from "../util.ts";
 import OpenAI from "openai";
 import process from "node:process";
 
-export async function httpCli(host: string, stream = true): Promise<void> {
+export async function httpCli(
+  host: string,
+  stream = true,
+  apiKey = "",
+): Promise<void> {
   let messages: Message[] = [];
 
   const client = new OpenAI({
+    apiKey, // Defaults to empty because were not using OpenAI to connect to
     baseURL: `${host}/v1`,
   });
 

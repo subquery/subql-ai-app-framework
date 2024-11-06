@@ -1,4 +1,7 @@
 import { resolve } from "@std/path/resolve";
+import README from "./init/readme.ts";
+import GITIGNORE from "./init/gitignore.ts";
+import DOCKER_COMPOSE from "./init/docker-compose.ts";
 
 type Options = {
   name: string;
@@ -99,23 +102,7 @@ export async function initProject(opts: Options): Promise<void> {
     manifestTemplate(opts.model),
   );
   await Deno.writeTextFile(resolve(dir, "project.ts"), projectTemplate());
-
-  if (import.meta.dirname) {
-    await Deno.copyFile(
-      resolve(import.meta.dirname, "./init/README.md"),
-      resolve(dir, "README.md"),
-    );
-    await Deno.copyFile(
-      resolve(import.meta.dirname, "./init/template.gitignore"),
-      resolve(dir, ".gitignore"),
-    );
-    await Deno.copyFile(
-      resolve(import.meta.dirname, "./init/docker-compose.yml"),
-      resolve(dir, "docker-compose.yml"),
-    );
-  } else {
-    console.warn(
-      `import.meta.dirname not defined unable to copy template files`,
-    );
-  }
+  await Deno.writeTextFile(resolve(dir, "README.md"), README);
+  await Deno.writeTextFile(resolve(dir, ".gitignore"), GITIGNORE);
+  await Deno.writeTextFile(resolve(dir, "docker-compose.yml"), DOCKER_COMPOSE);
 }

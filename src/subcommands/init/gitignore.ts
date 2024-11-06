@@ -1,4 +1,4 @@
-# Logs
+const GIT_IGNORE = `# Logs
 logs
 *.log
 npm-debug.log*
@@ -128,3 +128,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+`;
+
+export default GIT_IGNORE;
