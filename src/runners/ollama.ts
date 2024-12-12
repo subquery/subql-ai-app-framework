@@ -1,13 +1,98 @@
-import type { ChatResponse, Message, Ollama } from "ollama";
-import type { IChatStorage } from "./chatStorage/index.ts";
-import type { ISandbox } from "./sandbox/index.ts";
-import type { IContext } from "./context/types.ts";
-import { getLogger } from "./logger.ts";
-import { LogPerformance } from "./decorators.ts";
+import { type ChatResponse, type Message, Ollama } from "ollama";
+import type { IChatStorage } from "../chatStorage/chatStorage.ts";
+import type { ISandbox } from "../sandbox/index.ts";
+import type { IContext } from "../context/types.ts";
+import { getLogger } from "../logger.ts";
+import { LogPerformance } from "../decorators.ts";
+import type { IRunner, IRunnerFactory } from "./runner.ts";
+import { Memoize } from "../decorators.ts";
+import type { Loader } from "../loader.ts";
+import { Context } from "../context/context.ts";
+import { fromFileUrlSafe } from "../util.ts";
+import * as lancedb from "@lancedb/lancedb";
 
 const logger = await getLogger("runner");
 
-export class Runner {
+export class OllamaRunnerFactory implements IRunnerFactory {
+  #ollama: Ollama;
+  #sandbox: ISandbox;
+  #loader: Loader;
+
+  private constructor(
+    ollama: Ollama,
+    sandbox: ISandbox,
+    loader: Loader,
+  ) {
+    this.#ollama = ollama;
+    this.#sandbox = sandbox;
+    this.#loader = loader;
+  }
+
+  public static async create(
+    host: string,
+    sandbox: ISandbox,
+    loader: Loader,
+  ) {
+    const ollama = new Ollama({ host });
+
+    // Check that Ollama can be reached and the models exist
+    try {
+      await ollama.show({ model: sandbox.manifest.model });
+    } catch (e) {
+      if (e instanceof TypeError && e.message.includes("Connection refused")) {
+        throw new Error(
+          "Unable to reach Ollama, please check your `host` option.",
+          { cause: e },
+        );
+      }
+      throw e;
+    }
+
+    if (sandbox.manifest.embeddingsModel) {
+      await ollama.show({ model: sandbox.manifest.embeddingsModel });
+    }
+
+    return new OllamaRunnerFactory(ollama, sandbox, loader);
+  }
+
+  async runEmbedding(input: string | string[]): Promise<number[]> {
+    const { embeddings: [embedding] } = await this.#ollama.embed({
+      model: this.#sandbox.manifest.embeddingsModel ?? "nomic-embed-text",
+      input,
+    });
+
+    return embedding;
+  }
+
+  @Memoize()
+  public async getContext(): Promise<IContext> {
+    if (!this.#sandbox.manifest.vectorStorage) {
+      return new Context(this.runEmbedding);
+    }
+
+    const { type } = this.#sandbox.manifest.vectorStorage;
+    if (type !== "lancedb") {
+      throw new Error("Only lancedb vector storage is supported");
+    }
+
+    const loadRes = await this.#loader.getVectorDb();
+    if (!loadRes) throw new Error("Failed to load vector db");
+    const connection = await lancedb.connect(fromFileUrlSafe(loadRes[0]));
+
+    return new Context(this.runEmbedding, connection);
+  }
+
+  public async getRunner(chatStorage: IChatStorage): Promise<IRunner> {
+    return new OllamaRunner(
+      this.#sandbox,
+      chatStorage,
+      this.#ollama,
+      await this.getContext(),
+    );
+  }
+}
+
+export class OllamaRunner implements IRunner {
   #ollama: Ollama;
   #context: IContext;
 

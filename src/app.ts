@@ -2,18 +2,15 @@ import ora from "ora";
 import { brightMagenta } from "@std/fmt/colors";
 import { Ollama } from "ollama";
 import { MemoryChatStorage } from "./chatStorage/index.ts";
-import { Runner } from "./runner.ts";
 import { RunnerHost } from "./runnerHost.ts";
 import { getDefaultSandbox } from "./sandbox/index.ts";
 import { http } from "./http.ts";
-import { Context } from "./context/context.ts";
-import type { IContext } from "./context/types.ts";
-import type { ISandbox } from "./sandbox/sandbox.ts";
-import * as lancedb from "@lancedb/lancedb";
 import type { IPFSClient } from "./ipfs.ts";
 import { Loader } from "./loader.ts";
-import { fromFileUrlSafe, getPrompt, getVersion } from "./util.ts";
+import { getPrompt, getVersion } from "./util.ts";
 import { getLogger } from "./logger.ts";
+import { OllamaRunnerFactory } from "./runners/ollama.ts";
+import { OpenAIRunnerFactory } from "./runners/openai.ts";
 
 const logger = await getLogger("app");
 
@@ -27,10 +24,9 @@ export async function runApp(config: {
   toolTimeout: number;
   streamKeepAlive: number;
   cacheDir?: string;
+  openAiApiKey?: string;
 }): Promise<void> {
   logger.info(`Subql AI Framework (${await getVersion()})`);
-
-  const model = new Ollama({ host: config.host });
 
   const loader = new Loader(
     config.projectPath,
@@ -40,6 +36,21 @@ export async function runApp(config: {
   );
 
   const sandbox = await getDefaultSandbox(loader, config.toolTimeout);
+
+  const runnerFactory = sandbox.manifest.model.includes("gpt-")
+    ? await OpenAIRunnerFactory.create(
+      config.host,
+      config.openAiApiKey,
+      sandbox,
+      loader,
+    )
+    : await OllamaRunnerFactory.create(
+      config.host,
+      sandbox,
+      loader,
+    );
+
+  const model = new Ollama({ host: config.host });
 
   // Check that Ollama can be reached and the models exist
   try {
@@ -58,23 +69,12 @@ export async function runApp(config: {
     await model.show({ model: sandbox.manifest.embeddingsModel });
   }
 
-  const ctx = await makeContext(
-    sandbox,
-    model,
-    loader,
-  );
-
   const runnerHost = new RunnerHost(() => {
     const chatStorage = new MemoryChatStorage();
 
     chatStorage.append([{ role: "system", content: sandbox.systemPrompt }]);
 
-    return new Runner(
-      sandbox,
-      chatStorage,
-      model,
-      ctx,
-    );
+    return runnerFactory.getRunner(chatStorage);
   });
 
   switch (config.interface) {
@@ -85,27 +85,6 @@ export async function runApp(config: {
     default:
       http(runnerHost, config.port, config.streamKeepAlive);
   }
-}
-
-async function makeContext(
-  sandbox: ISandbox,
-  model: Ollama,
-  loader: Loader,
-): Promise<IContext> {
-  if (!sandbox.manifest.vectorStorage) {
-    return new Context(model);
-  }
-
-  const { type } = sandbox.manifest.vectorStorage;
-  if (type !== "lancedb") {
-    throw new Error("Only lancedb vector storage is supported");
-  }
-
-  const loadRes = await loader.getVectorDb();
-  if (!loadRes) throw new Error("Failed to load vector db");
-  const connection = await lancedb.connect(fromFileUrlSafe(loadRes[0]));
-
-  return new Context(model, connection, sandbox.manifest.embeddingsModel);
 }
 
 async function cli(runnerHost: RunnerHost): Promise<void> {

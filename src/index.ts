@@ -116,6 +116,11 @@ yargs(Deno.args)
         type: "number",
         default: 5_000, // 5s
       },
+      openAiApiKey: {
+        description:
+          "If the project models use OpenAI models, then this api key will be parsed on to the OpenAI client",
+        type: "string",
+      },
     },
     async (argv) => {
       try {
@@ -136,6 +141,7 @@ yargs(Deno.args)
           toolTimeout: argv.toolTimeout,
           streamKeepAlive: argv.streamKeepAlive,
           cacheDir: argv.cacheDir,
+          openAiApiKey: argv.openAiApiKey,
         });
       } catch (e) {
         console.log(e);
