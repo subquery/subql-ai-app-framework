@@ -1,4 +1,3 @@
-import type { Ollama } from "ollama";
 import type { Connection } from "@lancedb/lancedb";
 import { LogPerformance } from "../decorators.ts";
 import { getLogger } from "../logger.ts";
@@ -6,17 +5,18 @@ import type { IContext } from "./types.ts";
 
 const logger = await getLogger("ToolContext");
 
+type GetEmbedding = (input: string | string[]) => Promise<number[]>;
+
 export class Context implements IContext {
-  #model: Ollama;
+  #getEmbedding: GetEmbedding;
   #vectorStorage?: Connection;
 
   constructor(
-    model: Ollama,
+    getEmbedding: GetEmbedding,
     vectorStorage?: Connection,
-    readonly embedModel = "nomic-embed-text",
     readonly topK = 10,
   ) {
-    this.#model = model;
+    this.#getEmbedding = getEmbedding;
     this.#vectorStorage = vectorStorage;
   }
 
@@ -35,12 +35,7 @@ export class Context implements IContext {
   }
 
   @LogPerformance(logger)
-  async computeQueryEmbedding(query: string): Promise<number[]> {
-    const { embeddings: [embedding] } = await this.#model.embed({
-      model: this.embedModel,
-      input: query,
-    });
-
-    return embedding;
+  computeQueryEmbedding(query: string): Promise<number[]> {
+    return this.#getEmbedding(query);
   }
 }
