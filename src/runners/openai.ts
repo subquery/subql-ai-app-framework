@@ -7,10 +7,6 @@ import type { IContext } from "../context/types.ts";
 import { LogPerformance, Memoize } from "../decorators.ts";
 import type { Loader } from "../loader.ts";
 import { Context } from "../context/context.ts";
-import type {
-  ChatCompletionMessageParam,
-  ParsedChatCompletion,
-} from "openai/resources";
 import { getLogger } from "../logger.ts";
 
 const logger = await getLogger("runner:openai");
@@ -118,39 +114,19 @@ export class OpenAIRunner implements IRunner {
     await this.chatStorage.append(messages);
     const tmpMessages = await this.chatStorage.getHistory();
 
-    const completion = await this.runChat(tmpMessages);
-
-    const choice = completion.choices[0];
-    const res = {
-      model: completion.model,
-      created_at: new Date(completion.created * 1000),
-      message: {
-        content: choice.message.content,
-        role: choice.message.role,
-      },
-      done: true,
-      done_reason: choice.finish_reason,
-      total_duration: 0,
-      load_duration: 0,
-      prompt_eval_count: completion.usage.prompt_tokens,
-      prompt_eval_duration: 0,
-      eval_count: completion.usage.eval_count,
-      eval_duration: 0,
-    };
-
-    return res;
+    return this.runChat(tmpMessages);
   }
 
   @LogPerformance(logger)
-  private async runChat(messages: Message[]): Promise<ParsedChatCompletion> {
+  private async runChat(messages: Message[]): Promise<ChatResponse> {
     const tools = await this.sandbox.getTools();
 
     const runner = this.#openai.beta.chat.completions.runTools({
       model: this.sandbox.manifest.model,
       messages: messages.map((m) => ({
-        role: m.role,
+        role: m.role as "user" | "system" | "assistant",
         content: m.content,
-      } satisfies ChatCompletionMessageParam)),
+      })),
       tools: tools.map((t) => {
         if (t.type !== "function") {
           throw new Error("expected function tool type");
@@ -182,6 +158,27 @@ export class OpenAIRunner implements IRunner {
       }),
     });
 
-    return await runner.finalChatCompletion();
+    const completion = await runner.finalChatCompletion();
+
+    // Convert respons to Ollama ChatResponse
+    const choice = completion.choices[0];
+    const res: ChatResponse = {
+      model: completion.model,
+      created_at: new Date(completion.created * 1000),
+      message: {
+        content: choice.message.content ?? "",
+        role: choice.message.role,
+      },
+      done: true,
+      done_reason: choice.finish_reason,
+      total_duration: 0,
+      load_duration: 0,
+      prompt_eval_count: completion.usage?.prompt_tokens ?? 0,
+      prompt_eval_duration: 0,
+      eval_count: completion.usage?.completion_tokens ?? 0,
+      eval_duration: 0,
+    };
+
+    return res;
   }
 }
