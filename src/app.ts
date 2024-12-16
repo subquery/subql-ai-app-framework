@@ -1,6 +1,5 @@
 import ora from "ora";
 import { brightMagenta } from "@std/fmt/colors";
-import { Ollama } from "ollama";
 import { MemoryChatStorage } from "./chatStorage/index.ts";
 import { RunnerHost } from "./runnerHost.ts";
 import { getDefaultSandbox } from "./sandbox/index.ts";
@@ -11,6 +10,7 @@ import { getPrompt, getVersion } from "./util.ts";
 import { getLogger } from "./logger.ts";
 import { OllamaRunnerFactory } from "./runners/ollama.ts";
 import { OpenAIRunnerFactory } from "./runners/openai.ts";
+import { DEFAULT_LLM_HOST } from "./constants.ts";
 
 const logger = await getLogger("app");
 
@@ -39,7 +39,7 @@ export async function runApp(config: {
 
   const runnerFactory = sandbox.manifest.model.includes("gpt-")
     ? await OpenAIRunnerFactory.create(
-      config.host,
+      config.host === DEFAULT_LLM_HOST ? undefined : config.host,
       config.openAiApiKey,
       sandbox,
       loader,
@@ -49,25 +49,6 @@ export async function runApp(config: {
       sandbox,
       loader,
     );
-
-  const model = new Ollama({ host: config.host });
-
-  // Check that Ollama can be reached and the models exist
-  try {
-    await model.show({ model: sandbox.manifest.model });
-  } catch (e) {
-    if (e instanceof TypeError && e.message.includes("Connection refused")) {
-      throw new Error(
-        "Unable to reach Ollama, please check your `host` option.",
-        { cause: e },
-      );
-    }
-    throw e;
-  }
-
-  if (sandbox.manifest.embeddingsModel) {
-    await model.show({ model: sandbox.manifest.embeddingsModel });
-  }
 
   const runnerHost = new RunnerHost(() => {
     const chatStorage = new MemoryChatStorage();

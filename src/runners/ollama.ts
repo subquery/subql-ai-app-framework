@@ -3,15 +3,12 @@ import type { IChatStorage } from "../chatStorage/chatStorage.ts";
 import type { ISandbox } from "../sandbox/index.ts";
 import type { IContext } from "../context/types.ts";
 import { getLogger } from "../logger.ts";
-import { LogPerformance } from "../decorators.ts";
+import { LogPerformance, Memoize } from "../decorators.ts";
 import type { IRunner, IRunnerFactory } from "./runner.ts";
-import { Memoize } from "../decorators.ts";
 import type { Loader } from "../loader.ts";
 import { Context } from "../context/context.ts";
-import { fromFileUrlSafe } from "../util.ts";
-import * as lancedb from "@lancedb/lancedb";
 
-const logger = await getLogger("runner");
+const logger = await getLogger("runner:ollama");
 
 export class OllamaRunnerFactory implements IRunnerFactory {
   #ollama: Ollama;
@@ -65,21 +62,12 @@ export class OllamaRunnerFactory implements IRunnerFactory {
   }
 
   @Memoize()
-  public async getContext(): Promise<IContext> {
-    if (!this.#sandbox.manifest.vectorStorage) {
-      return new Context(this.runEmbedding);
-    }
-
-    const { type } = this.#sandbox.manifest.vectorStorage;
-    if (type !== "lancedb") {
-      throw new Error("Only lancedb vector storage is supported");
-    }
-
-    const loadRes = await this.#loader.getVectorDb();
-    if (!loadRes) throw new Error("Failed to load vector db");
-    const connection = await lancedb.connect(fromFileUrlSafe(loadRes[0]));
-
-    return new Context(this.runEmbedding, connection);
+  private getContext(): Promise<IContext> {
+    return Context.create(
+      this.#sandbox,
+      this.#loader,
+      this.runEmbedding.bind(this),
+    );
   }
 
   public async getRunner(chatStorage: IChatStorage): Promise<IRunner> {

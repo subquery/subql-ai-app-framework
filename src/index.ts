@@ -20,8 +20,7 @@ import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
 import { getPrompt, getVersion, setSpinner } from "./util.ts";
 import { initLogger } from "./logger.ts";
-
-const DEFAULT_PORT = 7827;
+import { DEFAULT_LLM_HOST, DEFAULT_PORT } from "./constants.ts";
 
 const sharedArgs = {
   project: {
@@ -81,8 +80,9 @@ yargs(Deno.args)
       ...debugArgs,
       host: {
         alias: "h",
-        description: "The ollama RPC host",
-        default: "http://localhost:11434",
+        description:
+          "The LLM RPC host. If the project model uses ChatGPT then the default value is not used.",
+        default: DEFAULT_LLM_HOST,
         type: "string",
       },
       interface: {

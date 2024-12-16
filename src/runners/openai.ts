@@ -4,15 +4,16 @@ import OpenAI from "openai";
 import type { IChatStorage } from "../chatStorage/chatStorage.ts";
 import type { ISandbox } from "../sandbox/sandbox.ts";
 import type { IContext } from "../context/types.ts";
-import { Memoize } from "../decorators.ts";
+import { LogPerformance, Memoize } from "../decorators.ts";
 import type { Loader } from "../loader.ts";
-import { fromFileUrlSafe } from "../util.ts";
-import * as lancedb from "@lancedb/lancedb";
 import { Context } from "../context/context.ts";
 import type {
   ChatCompletionMessageParam,
   ParsedChatCompletion,
 } from "openai/resources";
+import { getLogger } from "../logger.ts";
+
+const logger = await getLogger("runner:openai");
 
 export class OpenAIRunnerFactory implements IRunnerFactory {
   #openai: OpenAI;
@@ -27,12 +28,10 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
     this.#openai = openAI;
     this.#sandbox = sandbox;
     this.#loader = loader;
-
-    // TODO check models exists
   }
 
   public static async create(
-    baseUrl: string,
+    baseUrl: string | undefined,
     apiKey: string | undefined,
     sandbox: ISandbox,
     loader: Loader,
@@ -46,7 +45,10 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
     try {
       await openai.models.retrieve(sandbox.manifest.model);
     } catch (e) {
-      // TODO handle specific error for connections, like with ollama
+      // The same 404 error is returned if the baseUrl or the model is not found
+      if (e instanceof OpenAI.NotFoundError) {
+        throw new Error(`Model ${sandbox.manifest.model} not found`);
+      }
       throw e;
     }
 
@@ -64,7 +66,7 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
   async runEmbedding(input: string | string[]): Promise<number[]> {
     const res = await this.#openai.embeddings.create({
       model: this.#sandbox.manifest.embeddingsModel ??
-        "text-similarity-davinci-001",
+        "text-embedding-3-small",
       input,
     });
 
@@ -72,21 +74,12 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
   }
 
   @Memoize()
-  public async getContext(): Promise<IContext> {
-    if (!this.#sandbox.manifest.vectorStorage) {
-      return new Context(this.runEmbedding);
-    }
-
-    const { type } = this.#sandbox.manifest.vectorStorage;
-    if (type !== "lancedb") {
-      throw new Error("Only lancedb vector storage is supported");
-    }
-
-    const loadRes = await this.#loader.getVectorDb();
-    if (!loadRes) throw new Error("Failed to load vector db");
-    const connection = await lancedb.connect(fromFileUrlSafe(loadRes[0]));
-
-    return new Context(this.runEmbedding, connection);
+  private getContext(): Promise<IContext> {
+    return Context.create(
+      this.#sandbox,
+      this.#loader,
+      this.runEmbedding.bind(this),
+    );
   }
 
   public async getRunner(chatStorage: IChatStorage): Promise<OpenAIRunner> {
@@ -127,13 +120,16 @@ export class OpenAIRunner implements IRunner {
 
     const completion = await this.runChat(tmpMessages);
 
-    const choise = completion.choises[0];
-    return {
+    const choice = completion.choices[0];
+    const res = {
       model: completion.model,
       created_at: new Date(completion.created * 1000),
-      message: choise.message.content,
+      message: {
+        content: choice.message.content,
+        role: choice.message.role,
+      },
       done: true,
-      done_reason: choise.finish_reason, // TODO map to correct message
+      done_reason: choice.finish_reason,
       total_duration: 0,
       load_duration: 0,
       prompt_eval_count: completion.usage.prompt_tokens,
@@ -141,12 +137,15 @@ export class OpenAIRunner implements IRunner {
       eval_count: completion.usage.eval_count,
       eval_duration: 0,
     };
+
+    return res;
   }
 
+  @LogPerformance(logger)
   private async runChat(messages: Message[]): Promise<ParsedChatCompletion> {
     const tools = await this.sandbox.getTools();
 
-    const runner = await this.#openai.beta.chat.completions.runTools({
+    const runner = this.#openai.beta.chat.completions.runTools({
       model: this.sandbox.manifest.model,
       messages: messages.map((m) => ({
         role: m.role,
@@ -160,8 +159,24 @@ export class OpenAIRunner implements IRunner {
           type: "function",
           function: {
             ...t.function,
-            function: (args: unknown) =>
-              this.sandbox.runTool(t.function.name, args, this.#context),
+            function: async (args: unknown) => {
+              try {
+                logger.debug(
+                  `Calling tool: "${t.function.name}" args: "${
+                    JSON.stringify(args)
+                  }`,
+                );
+                return await this.sandbox.runTool(
+                  t.function.name,
+                  args,
+                  this.#context,
+                );
+              } catch (e: unknown) {
+                logger.error(`Tool call failed: ${e}`);
+                // Don't throw the error this will exit the application, instead pass the message back to the LLM
+                return (e as Error).message;
+              }
+            },
           },
         };
       }),
