@@ -21,6 +21,7 @@ import ora from "ora";
 import { getPrompt, getVersion, setSpinner } from "./util.ts";
 import { initLogger } from "./logger.ts";
 import { DEFAULT_LLM_HOST, DEFAULT_PORT } from "./constants.ts";
+import { getGenerateFunction } from "./runners/runner.ts";
 
 const sharedArgs = {
   project: {
@@ -42,6 +43,21 @@ const sharedArgs = {
   cacheDir: {
     description:
       "The location to cache data from ipfs. Default is a temp directory",
+    type: "string",
+  },
+} satisfies Record<string, Options>;
+
+const llmHostArgs = {
+  host: {
+    alias: "h",
+    description:
+      "The LLM RPC host. If the project model uses ChatGPT then the default value is not used.",
+    default: DEFAULT_LLM_HOST,
+    type: "string",
+  },
+  openAiApiKey: {
+    description:
+      "If the project models use OpenAI models, then this api key will be parsed on to the OpenAI client",
     type: "string",
   },
 } satisfies Record<string, Options>;
@@ -78,13 +94,7 @@ yargs(Deno.args)
     {
       ...sharedArgs,
       ...debugArgs,
-      host: {
-        alias: "h",
-        description:
-          "The LLM RPC host. If the project model uses ChatGPT then the default value is not used.",
-        default: DEFAULT_LLM_HOST,
-        type: "string",
-      },
+      ...llmHostArgs,
       interface: {
         alias: "i",
         description: "The interface to interact with the app",
@@ -115,11 +125,6 @@ yargs(Deno.args)
           "The interval in MS to send empty data in stream responses to keep the connection alive. Only wokrs with http interface. Use 0 to disable.",
         type: "number",
         default: 5_000, // 5s
-      },
-      openAiApiKey: {
-        description:
-          "If the project models use OpenAI models, then this api key will be parsed on to the OpenAI client",
-        type: "string",
       },
     },
     async (argv) => {
@@ -181,6 +186,7 @@ yargs(Deno.args)
     "Creates a Lance db table with embeddings from MDX files",
     {
       ...debugArgs,
+      ...llmHostArgs,
       input: {
         alias: "i",
         description: "Path to a directory containing MD or MDX files",
@@ -208,7 +214,7 @@ yargs(Deno.args)
       model: {
         description:
           "The embedding LLM model to use, this should be the same as embeddingsModel in your app manifest",
-        default: "nomic-embed-text",
+        required: true,
         type: "string",
       },
       overwrite: {
@@ -226,12 +232,18 @@ yargs(Deno.args)
         const { generate } = await import(
           "./embeddings/generator/generator.ts"
         );
+
+        const generateFunction = await getGenerateFunction(
+          argv.host,
+          argv.model,
+          argv.openAiApiKey,
+        );
         return await generate(
           resolve(argv.input),
           resolve(argv.output),
           argv.table,
+          generateFunction,
           argv.ignoredFiles?.map((f) => resolve(f)),
-          argv.model,
           argv.overwrite,
         );
       } catch (e) {

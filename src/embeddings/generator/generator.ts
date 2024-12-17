@@ -2,9 +2,8 @@ import {
   type BaseEmbeddingSource,
   MarkdownEmbeddingSource,
 } from "./mdSource.ts";
-import ollama from "ollama";
 import { glob } from "glob";
-import { LanceWriter } from "../lance/index.ts";
+import { type GenerateEmbedding, LanceWriter } from "../lance/index.ts";
 import { getLogger } from "../../logger.ts";
 import { getSpinner } from "../../util.ts";
 
@@ -20,8 +19,8 @@ export async function generate(
   path: string,
   lanceDbPath: string,
   tableName: string,
+  generateEmbedding: GenerateEmbedding,
   ignoredPaths = DEFAULT_IGNORED_PATHS,
-  model = "nomic-embed-text",
   overwrite = false,
 ) {
   const embeddingSources: BaseEmbeddingSource[] =
@@ -37,8 +36,7 @@ export async function generate(
   const lanceWriter = await LanceWriter.createNewTable(
     lanceDbPath,
     tableName,
-    ollama,
-    model,
+    generateEmbedding,
     overwrite,
   );
 

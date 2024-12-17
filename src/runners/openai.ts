@@ -52,11 +52,16 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
       await openai.models.retrieve(sandbox.manifest.embeddingsModel);
     }
 
-    return new OpenAIRunnerFactory(
+    const factory = new OpenAIRunnerFactory(
       openai,
       sandbox,
       loader,
     );
+
+    // Makes sure vector storage is loaded
+    await factory.getContext();
+
+    return factory;
   }
 
   async runEmbedding(input: string | string[]): Promise<number[]> {

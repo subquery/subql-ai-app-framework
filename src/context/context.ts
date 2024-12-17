@@ -9,7 +9,7 @@ import * as lancedb from "@lancedb/lancedb";
 
 const logger = await getLogger("ToolContext");
 
-type GetEmbedding = (input: string | string[]) => Promise<number[]>;
+type GetEmbedding = (input: string /*  | string[] */) => Promise<number[]>;
 
 export class Context implements IContext {
   #getEmbedding: GetEmbedding;

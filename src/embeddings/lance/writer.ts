@@ -1,12 +1,14 @@
 import * as lancedb from "@lancedb/lancedb";
 import { Field, FixedSizeList, Float64, Schema, Utf8 } from "apache-arrow";
 import type { IEmbeddingWriter } from "../embeddings.ts";
-import ollama, { type Ollama } from "ollama";
+
+export type GenerateEmbedding = (
+  input: string | string[],
+) => Promise<number[][]>;
 
 export class LanceWriter implements IEmbeddingWriter {
   #table: lancedb.Table;
-  #model: Ollama;
-  #embedModel: string;
+  #generateEmbedding: GenerateEmbedding;
 
   static #dim = 768;
 
@@ -21,19 +23,16 @@ export class LanceWriter implements IEmbeddingWriter {
 
   constructor(
     table: lancedb.Table,
-    model: Ollama,
-    embedModel = "nomic-embed-text",
+    generateEmbedding: GenerateEmbedding,
   ) {
     this.#table = table;
-    this.#model = model;
-    this.#embedModel = embedModel;
+    this.#generateEmbedding = generateEmbedding;
   }
 
   static async createNewTable(
     dbPath: string,
     tableName: string,
-    model: Ollama = ollama,
-    embedModel = "nomic-embed-text",
+    generateEmbedding: GenerateEmbedding,
     overwrite = false,
   ): Promise<LanceWriter> {
     const db = await lancedb.connect(dbPath);
@@ -44,14 +43,11 @@ export class LanceWriter implements IEmbeddingWriter {
       { mode: overwrite ? "overwrite" : "create" },
     );
 
-    return new LanceWriter(table, model, embedModel);
+    return new LanceWriter(table, generateEmbedding);
   }
 
   async write(input: string | string[]): Promise<void> {
-    const { embeddings } = await this.#model.embed({
-      model: this.#embedModel,
-      input,
-    });
+    const embeddings = await this.#generateEmbedding(input);
 
     const inputArr = Array.isArray(input) ? input : [input];
     const data = inputArr.map((input, idx) => {

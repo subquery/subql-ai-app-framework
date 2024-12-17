@@ -49,16 +49,28 @@ export class OllamaRunnerFactory implements IRunnerFactory {
       await ollama.show({ model: sandbox.manifest.embeddingsModel });
     }
 
-    return new OllamaRunnerFactory(ollama, sandbox, loader);
+    const factory = new OllamaRunnerFactory(ollama, sandbox, loader);
+
+    // Makes sure vectorStorage is loaded
+    await factory.getContext();
+
+    return factory;
   }
 
-  async runEmbedding(input: string | string[]): Promise<number[]> {
-    const { embeddings: [embedding] } = await this.#ollama.embed({
+  async runEmbedding(input: string): Promise<number[]> {
+    const { embeddings: [embed] } = await this.#ollama.embed({
       model: this.#sandbox.manifest.embeddingsModel ?? "nomic-embed-text",
       input,
     });
 
-    return embedding;
+    return embed;
+
+    // const { embedding } = await this.#ollama.embeddings({
+    //   model: this.#sandbox.manifest.embeddingsModel ?? "nomic-embed-text",
+    //   prompt: input,
+    // });
+
+    // return embedding;
   }
 
   @Memoize()
