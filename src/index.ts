@@ -51,7 +51,7 @@ const llmHostArgs = {
   host: {
     alias: "h",
     description:
-      "The LLM RPC host. If the project model uses ChatGPT then the default value is not used.",
+      "The LLM RPC host. If the project model uses an OpenAI model then the default value is not used.",
     default: DEFAULT_LLM_HOST,
     type: "string",
   },
@@ -222,6 +222,11 @@ yargs(Deno.args)
         type: "boolean",
         default: false,
       },
+      dimensions: {
+        description:
+          "The number of dimensions for the LLM model to use. NOTE: Ollama models doesn't currently support modifying this so it will throw if the output doesn't match.",
+        type: "number",
+      },
     },
     async (argv) => {
       try {
@@ -238,11 +243,17 @@ yargs(Deno.args)
           argv.model,
           argv.openAiApiKey,
         );
+
+        // Determine the dimensions, if not provided it will use the result dimensions from a test
+        const dimensions = argv.dimensions ??
+          (await generateFunction("this is a test"))[0].length;
+
         return await generate(
           resolve(argv.input),
           resolve(argv.output),
           argv.table,
           generateFunction,
+          dimensions,
           argv.ignoredFiles?.map((f) => resolve(f)),
           argv.overwrite,
         );

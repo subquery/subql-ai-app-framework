@@ -46,10 +46,7 @@
     "jsr:@std/streams@^1.0.8": "1.0.8",
     "jsr:@std/tar@~0.1.1": "0.1.1",
     "jsr:@std/tar@~0.1.3": "0.1.3",
-    "jsr:@subql/ai-app-framework@1.0.0-1": "1.0.0-1",
-    "jsr:@subql/ai-app-framework@1.0.0-3": "1.0.0-3",
-    "jsr:@subql/ai-app-framework@^0.0.1": "0.0.1",
-    "jsr:@subql/ai-app-framework@^1.0.0-3": "1.0.0-3",
+    "jsr:@subql/ai-app-framework@^0.0.5": "0.0.5",
     "npm:@geut/chan@*": "3.2.9",
     "npm:@lancedb/lancedb@0.10": "0.10.0_apache-arrow@17.0.0",
     "npm:@sinclair/typebox@*": "0.33.11",
@@ -303,42 +300,15 @@
         "jsr:@std/streams@^1.0.7"
       ]
     },
-    "@subql/ai-app-framework@0.0.1": {
-      "integrity": "e6f45cfa5f2a71c01988d35468fadcc5d21b80eeb8ebf8612f9f2afeabcb8e99"
-    },
-    "@subql/ai-app-framework@1.0.0-1": {
-      "integrity": "07defaaf201fd4b9f2e39b5865330287a1541e6e1d1605ffca8f0c3897d4ee98",
+    "@subql/ai-app-framework@0.0.5": {
+      "integrity": "03dd780f935e8da37e8eece8f2672f2ddb2a3427fd5f058bb7539bf6b5cb8529",
       "dependencies": [
-        "jsr:@luca/esbuild-deno-loader",
-        "jsr:@std/archive@~0.225.4",
-        "jsr:@std/dotenv",
         "jsr:@std/fmt@^1.0.2",
-        "jsr:@std/fs@^1.0.3",
-        "jsr:@std/io@~0.224.8",
         "jsr:@std/path@^1.0.6",
-        "jsr:@std/tar@~0.1.1",
-        "npm:@lancedb/lancedb",
         "npm:@sinclair/typebox@~0.33.11",
-        "npm:@types/yargs@17.0.33",
-        "npm:apache-arrow",
-        "npm:esbuild",
-        "npm:github-slugger",
-        "npm:hono",
-        "npm:mdast-util-from-markdown",
-        "npm:mdast-util-mdx",
-        "npm:mdast-util-to-markdown",
-        "npm:mdast-util-to-string",
-        "npm:micromark-extension-mdxjs",
         "npm:ollama",
-        "npm:ora",
-        "npm:unist-builder",
-        "npm:unist-util-filter",
-        "npm:vscode-jsonrpc",
-        "npm:yargs"
+        "npm:ora"
       ]
-    },
-    "@subql/ai-app-framework@1.0.0-3": {
-      "integrity": "e3754a07ab39b02a4fd7d875d6af800659a5c773a64d0c77a1ef57d320d9fd81"
     }
   },
   "npm": {

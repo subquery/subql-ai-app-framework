@@ -20,12 +20,15 @@ export async function generate(
   lanceDbPath: string,
   tableName: string,
   generateEmbedding: GenerateEmbedding,
+  dimensions: number,
   ignoredPaths = DEFAULT_IGNORED_PATHS,
   overwrite = false,
 ) {
   const embeddingSources: BaseEmbeddingSource[] =
     (await glob([`${path}/**/*.{md,mdx}`], { ignore: ignoredPaths }))
       .map((path) => new MarkdownEmbeddingSource("guide", path));
+
+  logger.info(`Dimensions: ${dimensions}`);
 
   logger.debug(
     `Source files: ${embeddingSources.map((s) => s.path).join("\n")}`,
@@ -37,6 +40,7 @@ export async function generate(
     lanceDbPath,
     tableName,
     generateEmbedding,
+    dimensions,
     overwrite,
   );
 
@@ -57,7 +61,7 @@ export async function generate(
       }
     } catch (e) {
       console.warn(`Failed to process ${source.path}`, e);
-      // throw e;
+      throw e;
     }
   }
 

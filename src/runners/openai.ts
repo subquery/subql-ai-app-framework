@@ -69,6 +69,7 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
       model: this.#sandbox.manifest.embeddingsModel ??
         "text-embedding-3-small",
       input,
+      dimensions: 768,
     });
 
     return res.data[0].embedding;
@@ -141,6 +142,7 @@ export class OpenAIRunner implements IRunner {
         type: "function",
         function: {
           ...t.function,
+          parse: JSON.parse,
           function: async (args: unknown) => {
             try {
               logger.debug(

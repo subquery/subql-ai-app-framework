@@ -24,8 +24,17 @@ export async function getGenerateFunction(
     // If this throws then try OpenAI
     await ollama.show({ model });
 
-    return async (input: string | string[]) => {
+    return async (input: string | string[], dimensions?: number) => {
       const { embeddings } = await ollama.embed({ model, input });
+      // Ollama doesnt currentl allow specifying dimensions
+      // https://github.com/ollama/ollama/issues/651
+      if (dimensions != undefined && embeddings[0].length != dimensions) {
+        throw new Error(
+          `Dimensions mismatch, expected:"${dimensions}" received:"${
+            embeddings[0].length
+          }"`,
+        );
+      }
       return embeddings;
     };
   } catch (ollamaError) {
@@ -37,10 +46,11 @@ export async function getGenerateFunction(
 
       await openai.models.retrieve(model);
 
-      return async (input: string | string[]) => {
+      return async (input: string | string[], dimensions?: number) => {
         const { data } = await openai.embeddings.create({
           model,
           input,
+          dimensions,
         });
 
         return data.map((d) => d.embedding);
