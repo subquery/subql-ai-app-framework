@@ -1,4 +1,4 @@
-import type { ChatResponse, Message } from "ollama";
+import type { ChatResponse, Message, Tool } from "ollama";
 import type { IRunner, IRunnerFactory } from "./runner.ts";
 import OpenAI from "openai";
 import type { IChatStorage } from "../chatStorage/chatStorage.ts";
@@ -122,45 +122,57 @@ export class OpenAIRunner implements IRunner {
     return this.runChat(tmpMessages);
   }
 
+  // Converts the tools to the format compatible with OpenAI
+  @Memoize()
+  private async getTools(): Promise<
+    {
+      type: "function";
+      function: Tool["function"] & {
+        function: (args: unknown) => Promise<string>;
+      };
+    }[]
+  > {
+    const tools = await this.sandbox.getTools();
+    return tools.map((t) => {
+      if (t.type !== "function") {
+        throw new Error("expected function tool type");
+      }
+      return {
+        type: "function",
+        function: {
+          ...t.function,
+          function: async (args: unknown) => {
+            try {
+              logger.debug(
+                `Calling tool: "${t.function.name}" args: "${
+                  JSON.stringify(args)
+                }`,
+              );
+              return await this.sandbox.runTool(
+                t.function.name,
+                args,
+                this.#context,
+              );
+            } catch (e: unknown) {
+              logger.error(`Tool call failed: ${e}`);
+              // Don't throw the error this will exit the application, instead pass the message back to the LLM
+              return (e as Error).message;
+            }
+          },
+        },
+      };
+    });
+  }
+
   @LogPerformance(logger)
   private async runChat(messages: Message[]): Promise<ChatResponse> {
-    const tools = await this.sandbox.getTools();
-
     const runner = this.#openai.beta.chat.completions.runTools({
       model: this.sandbox.manifest.model,
       messages: messages.map((m) => ({
         role: m.role as "user" | "system" | "assistant",
         content: m.content,
       })),
-      tools: tools.map((t) => {
-        if (t.type !== "function") {
-          throw new Error("expected function tool type");
-        }
-        return {
-          type: "function",
-          function: {
-            ...t.function,
-            function: async (args: unknown) => {
-              try {
-                logger.debug(
-                  `Calling tool: "${t.function.name}" args: "${
-                    JSON.stringify(args)
-                  }`,
-                );
-                return await this.sandbox.runTool(
-                  t.function.name,
-                  args,
-                  this.#context,
-                );
-              } catch (e: unknown) {
-                logger.error(`Tool call failed: ${e}`);
-                // Don't throw the error this will exit the application, instead pass the message back to the LLM
-                return (e as Error).message;
-              }
-            },
-          },
-        };
-      }),
+      tools: await this.getTools(),
     });
 
     const completion = await runner.finalChatCompletion();

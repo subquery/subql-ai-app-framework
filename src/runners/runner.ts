@@ -2,6 +2,7 @@ import { type ChatResponse, type Message, Ollama } from "ollama";
 import type { IChatStorage } from "../chatStorage/index.ts";
 import type { GenerateEmbedding } from "../embeddings/lance/writer.ts";
 import OpenAI from "openai";
+import { DEFAULT_LLM_HOST } from "../constants.ts";
 
 export interface IRunner {
   prompt(message: string): Promise<string>;
@@ -31,7 +32,7 @@ export async function getGenerateFunction(
     try {
       const openai = new OpenAI({
         apiKey,
-        baseURL: endpoint,
+        baseURL: endpoint === DEFAULT_LLM_HOST ? undefined : endpoint,
       });
 
       await openai.models.retrieve(model);
