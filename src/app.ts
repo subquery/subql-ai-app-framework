@@ -8,9 +8,7 @@ import type { IPFSClient } from "./ipfs.ts";
 import { Loader } from "./loader.ts";
 import { getPrompt, getVersion } from "./util.ts";
 import { getLogger } from "./logger.ts";
-import { OllamaRunnerFactory } from "./runners/ollama.ts";
-import { OpenAIRunnerFactory } from "./runners/openai.ts";
-import { DEFAULT_LLM_HOST } from "./constants.ts";
+import { createRunner } from "./runners/runner.ts";
 
 const logger = await getLogger("app");
 
@@ -37,18 +35,12 @@ export async function runApp(config: {
 
   const sandbox = await getDefaultSandbox(loader, config.toolTimeout);
 
-  const runnerFactory = sandbox.manifest.model.includes("gpt-")
-    ? await OpenAIRunnerFactory.create(
-      config.host === DEFAULT_LLM_HOST ? undefined : config.host,
-      config.openAiApiKey,
-      sandbox,
-      loader,
-    )
-    : await OllamaRunnerFactory.create(
-      config.host,
-      sandbox,
-      loader,
-    );
+  const runnerFactory = await createRunner(
+    config.host,
+    sandbox,
+    loader,
+    config.openAiApiKey,
+  );
 
   const runnerHost = new RunnerHost(() => {
     const chatStorage = new MemoryChatStorage();
