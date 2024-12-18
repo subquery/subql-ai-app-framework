@@ -21,7 +21,6 @@ import ora from "ora";
 import { getPrompt, getVersion, setSpinner } from "./util.ts";
 import { initLogger } from "./logger.ts";
 import { DEFAULT_LLM_HOST, DEFAULT_PORT } from "./constants.ts";
-import { getGenerateFunction } from "./runners/runner.ts";
 
 const sharedArgs = {
   project: {
@@ -237,6 +236,8 @@ yargs(Deno.args)
         const { generate } = await import(
           "./embeddings/generator/generator.ts"
         );
+
+        const { getGenerateFunction } = await import("./runners/runner.ts");
 
         const generateFunction = await getGenerateFunction(
           argv.host,
