@@ -15,7 +15,6 @@
     "@lancedb/lancedb": "npm:@lancedb/lancedb@^0.10.0",
     "@luca/esbuild-deno-loader": "jsr:@luca/esbuild-deno-loader@^0.10.3",
     "@sinclair/typebox": "npm:@sinclair/typebox@^0.33.11",
-    "@std/archive": "jsr:@std/archive@^0.225.4",
     "@std/assert": "jsr:@std/assert@1",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.2",
     "@std/expect": "jsr:@std/expect@^1.0.4",

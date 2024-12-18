@@ -6,7 +6,6 @@
     "jsr:@deno/graph@~0.69.7": "0.69.10",
     "jsr:@luca/esbuild-deno-loader@~0.10.3": "0.10.3",
     "jsr:@std/archive@*": "0.225.3",
-    "jsr:@std/archive@~0.225.4": "0.225.4",
     "jsr:@std/assert@0.223": "0.223.0",
     "jsr:@std/assert@1": "1.0.7",
     "jsr:@std/assert@^1.0.5": "1.0.6",
@@ -119,12 +118,6 @@
       "integrity": "ba3d8d46bed2cda2689b0e131e4e40a8850d737396650b3f088f3fbb9e802bfc",
       "dependencies": [
         "jsr:@std/io@~0.224.8"
-      ]
-    },
-    "@std/archive@0.225.4": {
-      "integrity": "59fe5d1834cbb6a2a7913b102d41c11d51475328d5b843bea75b94a40b44a115",
-      "dependencies": [
-        "jsr:@std/io@~0.224.9"
       ]
     },
     "@std/assert@0.213.1": {
@@ -2773,7 +2766,6 @@
   "workspace": {
     "dependencies": [
       "jsr:@luca/esbuild-deno-loader@~0.10.3",
-      "jsr:@std/archive@~0.225.4",
       "jsr:@std/assert@1",
       "jsr:@std/dotenv@~0.225.2",
       "jsr:@std/expect@^1.0.4",
