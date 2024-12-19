@@ -10,13 +10,6 @@ import { Context } from "../context/context.ts";
 import { getLogger } from "../logger.ts";
 
 const logger = await getLogger("runner:openai");
-
-const dimensionsDict: { [key in string]: number } = {
-  "text-embedding-3-large": 3072,
-  "text-embedding-3-small": 1536,
-  "text-embedding-ada-002": 1536,
-};
-
 export class OpenAIRunnerFactory implements IRunnerFactory {
   #openai: OpenAI;
   #sandbox: ISandbox;
@@ -66,10 +59,6 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
     const res = await this.#openai.embeddings.create({
       model: this.#sandbox.manifest.embeddingsModel ?? "text-embedding-3-small",
       input,
-      dimensions:
-        dimensionsDict[
-          this.#sandbox.manifest.embeddingsModel ?? "text-embedding-3-small"
-        ] || 1536,
     });
 
     return res.data[0].embedding;
