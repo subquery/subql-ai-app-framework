@@ -1,19 +1,14 @@
 import ora from "ora";
 import { brightMagenta } from "@std/fmt/colors";
-import { Ollama } from "ollama";
 import { MemoryChatStorage } from "./chatStorage/index.ts";
-import { Runner } from "./runner.ts";
 import { RunnerHost } from "./runnerHost.ts";
 import { getDefaultSandbox } from "./sandbox/index.ts";
 import { http } from "./http.ts";
-import { Context } from "./context/context.ts";
-import type { IContext } from "./context/types.ts";
-import type { ISandbox } from "./sandbox/sandbox.ts";
-import * as lancedb from "@lancedb/lancedb";
 import type { IPFSClient } from "./ipfs.ts";
 import { Loader } from "./loader.ts";
-import { fromFileUrlSafe, getPrompt, getVersion } from "./util.ts";
+import { getPrompt, getVersion } from "./util.ts";
 import { getLogger } from "./logger.ts";
+import { createRunner } from "./runners/runner.ts";
 
 const logger = await getLogger("app");
 
@@ -27,10 +22,9 @@ export async function runApp(config: {
   toolTimeout: number;
   streamKeepAlive: number;
   cacheDir?: string;
+  openAiApiKey?: string;
 }): Promise<void> {
   logger.info(`Subql AI Framework (${await getVersion()})`);
-
-  const model = new Ollama({ host: config.host });
 
   const loader = new Loader(
     config.projectPath,
@@ -41,27 +35,11 @@ export async function runApp(config: {
 
   const sandbox = await getDefaultSandbox(loader, config.toolTimeout);
 
-  // Check that Ollama can be reached and the models exist
-  try {
-    await model.show({ model: sandbox.manifest.model });
-  } catch (e) {
-    if (e instanceof TypeError && e.message.includes("Connection refused")) {
-      throw new Error(
-        "Unable to reach Ollama, please check your `host` option.",
-        { cause: e },
-      );
-    }
-    throw e;
-  }
-
-  if (sandbox.manifest.embeddingsModel) {
-    await model.show({ model: sandbox.manifest.embeddingsModel });
-  }
-
-  const ctx = await makeContext(
+  const runnerFactory = await createRunner(
+    config.host,
     sandbox,
-    model,
     loader,
+    config.openAiApiKey,
   );
 
   const runnerHost = new RunnerHost(() => {
@@ -69,12 +47,7 @@ export async function runApp(config: {
 
     chatStorage.append([{ role: "system", content: sandbox.systemPrompt }]);
 
-    return new Runner(
-      sandbox,
-      chatStorage,
-      model,
-      ctx,
-    );
+    return runnerFactory.getRunner(chatStorage);
   });
 
   switch (config.interface) {
@@ -85,27 +58,6 @@ export async function runApp(config: {
     default:
       http(runnerHost, config.port, config.streamKeepAlive);
   }
-}
-
-async function makeContext(
-  sandbox: ISandbox,
-  model: Ollama,
-  loader: Loader,
-): Promise<IContext> {
-  if (!sandbox.manifest.vectorStorage) {
-    return new Context(model);
-  }
-
-  const { type } = sandbox.manifest.vectorStorage;
-  if (type !== "lancedb") {
-    throw new Error("Only lancedb vector storage is supported");
-  }
-
-  const loadRes = await loader.getVectorDb();
-  if (!loadRes) throw new Error("Failed to load vector db");
-  const connection = await lancedb.connect(fromFileUrlSafe(loadRes[0]));
-
-  return new Context(model, connection, sandbox.manifest.embeddingsModel);
 }
 
 async function cli(runnerHost: RunnerHost): Promise<void> {
