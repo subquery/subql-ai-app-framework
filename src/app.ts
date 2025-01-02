@@ -30,7 +30,7 @@ export async function runApp(config: {
     config.projectPath,
     config.ipfs,
     config.cacheDir,
-    config.forceReload,
+    config.forceReload
   );
 
   const sandbox = await getDefaultSandbox(loader, config.toolTimeout);
@@ -39,7 +39,7 @@ export async function runApp(config: {
     config.host,
     sandbox,
     loader,
-    config.openAiApiKey,
+    config.openAiApiKey
   );
 
   const runnerHost = new RunnerHost(() => {

@@ -12,7 +12,9 @@ import { getLogger } from "./logger.ts";
 const logger = await getLogger("loader");
 
 export const getOSTempDir = () =>
-  Deno.env.get("TMPDIR") || Deno.env.get("TMP") || Deno.env.get("TEMP") ||
+  Deno.env.get("TMPDIR") ||
+  Deno.env.get("TMP") ||
+  Deno.env.get("TEMP") ||
   "/tmp";
 
 async function loadJson(path: string): Promise<unknown> {
@@ -58,13 +60,12 @@ async function loadManfiest(path: string): Promise<ProjectManifest> {
  */
 async function extractArchive(
   readable: ReadableStream<Uint8Array>,
-  dest: string,
+  dest: string
 ): Promise<string | undefined> {
   let first: string | undefined;
-  for await (
-    const entry of readable.pipeThrough(new DecompressionStream("gzip"))
-      .pipeThrough(new UntarStream())
-  ) {
+  for await (const entry of readable
+    .pipeThrough(new DecompressionStream("gzip"))
+    .pipeThrough(new UntarStream())) {
     const path = resolve(dest, entry.path);
     if (!first) {
       first = path;
@@ -92,7 +93,7 @@ export async function pullContent(
   fileName: string,
   tmpDir?: string,
   force?: boolean,
-  workingPath?: string,
+  workingPath?: string
 ): Promise<[string, Source]> {
   if (CIDReg.test(path)) {
     const cid = path.replace("ipfs://", "");
@@ -155,7 +156,7 @@ export async function pullContent(
         }
 
         const tmp = resolve(
-          fromFileUrlSafe(tmpDir ?? await Deno.makeTempDir()),
+          fromFileUrlSafe(tmpDir ?? (await Deno.makeTempDir()))
         );
         try {
           const p = await extractArchive(res.body, tmp);
@@ -173,7 +174,7 @@ export async function pullContent(
 
   const localPath = resolve(fromFileUrlSafe(workingPath ?? ""), path);
   if (localPath.endsWith(".gz")) {
-    const tmp = resolve(fromFileUrlSafe(tmpDir ?? await Deno.makeTempDir()));
+    const tmp = resolve(fromFileUrlSafe(tmpDir ?? (await Deno.makeTempDir())));
 
     const archive = await Deno.open(localPath);
 
@@ -187,10 +188,7 @@ export async function pullContent(
   }
 
   // File urls are used to avoid imports being from the same package registry as the framework is run from
-  return [
-    toFileUrlString(localPath),
-    "local",
-  ];
+  return [toFileUrlString(localPath), "local"];
 }
 
 export class Loader {
@@ -201,7 +199,7 @@ export class Loader {
     readonly projectPath: string,
     ipfs: IPFSClient,
     readonly tmpDir?: string,
-    force?: boolean,
+    force?: boolean
   ) {
     this.#ipfs = ipfs;
     this.#force = force ?? false;
@@ -211,7 +209,7 @@ export class Loader {
     path: string,
     fileName: string,
     tmpDir = this.tmpDir,
-    workingPath?: string,
+    workingPath?: string
   ): Promise<[string, Source]> {
     return await pullContent(
       path,
@@ -219,7 +217,7 @@ export class Loader {
       fileName,
       tmpDir,
       this.#force,
-      workingPath,
+      workingPath
     );
   }
 
@@ -234,7 +232,7 @@ export class Loader {
       this.projectPath,
       "manifest.json",
       undefined,
-      Deno.cwd(),
+      Deno.cwd()
     );
 
     logger.debug(`getManifest [${source}] ${manifestPath}`);
@@ -254,9 +252,10 @@ export class Loader {
       manifest.entry,
       "project.ts",
       dirname(manifestPath),
-      manifestSource == "local" ? dirname(this.projectPath) : undefined,
+      manifestSource == "local" ? dirname(this.projectPath) : undefined
     );
     logger.debug(`getProject [${source}] ${projectPath}`);
+
     return [projectPath, source];
   }
 
@@ -275,7 +274,7 @@ export class Loader {
       manifest.vectorStorage.path,
       "db.gz",
       dirname(manifestPath),
-      manifestSource == "local" ? dirname(this.projectPath) : undefined,
+      manifestSource == "local" ? dirname(this.projectPath) : undefined
     );
     logger.debug(`getVectorDb [${res[1]}] ${res[0]}`);
     return res;

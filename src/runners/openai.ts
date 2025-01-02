@@ -1,4 +1,4 @@
-import type { ChatResponse, Message, Tool } from "ollama";
+import type { ChatResponse, Tool } from "ollama";
 import type { IRunner, IRunnerFactory } from "./runner.ts";
 import OpenAI from "openai";
 import type { IChatStorage } from "../chatStorage/chatStorage.ts";
@@ -8,6 +8,7 @@ import { LogPerformance, Memoize } from "../decorators.ts";
 import type { Loader } from "../loader.ts";
 import { Context } from "../context/context.ts";
 import { getLogger } from "../logger.ts";
+import type { Message } from "./types.ts";
 
 const logger = await getLogger("runner:openai");
 export class OpenAIRunnerFactory implements IRunnerFactory {
@@ -172,13 +173,18 @@ export class OpenAIRunner implements IRunner {
 
     // Convert respons to Ollama ChatResponse
     const choice = completion.choices[0];
+    const newMessage = {
+      content: choice.message.content ?? "",
+      role: choice.message.role,
+      id: crypto.randomUUID(),
+      conversation_id:
+        messages.find((i) => i.conversation_id)?.conversation_id ??
+        crypto.randomUUID(),
+    };
     const res: ChatResponse = {
       model: completion.model,
       created_at: new Date(completion.created * 1000),
-      message: {
-        content: choice.message.content ?? "",
-        role: choice.message.role,
-      },
+      message: newMessage,
       done: true,
       done_reason: choice.finish_reason,
       total_duration: 0,
@@ -188,6 +194,12 @@ export class OpenAIRunner implements IRunner {
       eval_count: completion.usage?.completion_tokens ?? 0,
       eval_duration: 0,
     };
+
+    try {
+      this.sandbox?.onResponse?.([...messages, newMessage]);
+    } catch {
+      // pass, maybe throw better?
+    }
 
     return res;
   }

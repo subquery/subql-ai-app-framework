@@ -1,4 +1,4 @@
-import type { Tool } from "ollama";
+import type { Message, Tool } from "ollama";
 import * as rpc from "vscode-jsonrpc";
 import {
   BrowserMessageReader,
@@ -6,6 +6,7 @@ import {
 } from "vscode-jsonrpc/browser.js";
 import type { ISandbox } from "../sandbox.ts";
 import {
+  CallOnResponse,
   CallTool,
   CtxComputeQueryEmbedding,
   CtxVectorSearch,
@@ -56,7 +57,7 @@ const LOCAL_PERMISSIONS: Deno.PermissionOptionsObject = {
 
 function getPermisionsForSource(
   source: Source,
-  projectDir: string,
+  projectDir: string
 ): Deno.PermissionOptionsObject {
   switch (source) {
     case "local":
@@ -65,7 +66,7 @@ function getPermisionsForSource(
       return IPFS_PERMISSIONS(projectDir);
     default:
       throw new Error(
-        `Unable to set permissions for unknown source: ${source}`,
+        `Unable to set permissions for unknown source: ${source}`
       );
   }
 }
@@ -74,33 +75,24 @@ async function workerFactory(
   manifest: ProjectManifest,
   entryPath: string,
   config: Record<string, string>,
-  permissions: Deno.PermissionOptionsObject,
+  permissions: Deno.PermissionOptionsObject
 ): Promise<[Worker, rpc.MessageConnection, IProjectJson]> {
-  const w = new Worker(
-    import.meta.resolve("./webWorker.ts"),
-    {
-      type: "module",
-      deno: {
-        permissions: permissions,
-      },
+  const w = new Worker(import.meta.resolve("./webWorker.ts"), {
+    type: "module",
+    deno: {
+      permissions: permissions,
     },
-  );
+  });
 
   // Setup a JSON RPC for interaction to the worker
   const conn = rpc.createMessageConnection(
     new BrowserMessageReader(w),
-    new BrowserMessageWriter(w),
+    new BrowserMessageWriter(w)
   );
-
   conn.listen();
 
   await conn.sendRequest(Load, entryPath);
-
-  const pJson = await conn.sendRequest(
-    Init,
-    manifest,
-    config,
-  );
+  const pJson = await conn.sendRequest(Init, manifest, config);
 
   return [w, conn, pJson];
 }
@@ -117,7 +109,7 @@ export class WebWorkerSandbox implements ISandbox {
    */
   public static async create(
     loader: Loader,
-    timeout: number,
+    timeout: number
   ): Promise<WebWorkerSandbox> {
     const [manifestPath, manifest, source] = await loader.getManifest();
     const config = loadRawConfigFromEnv(manifest.config);
@@ -133,20 +125,14 @@ export class WebWorkerSandbox implements ISandbox {
     ];
 
     const [entryPath] = await loader.getProject();
-
     const initProjectWorker = () =>
-      workerFactory(
-        manifest,
-        entryPath,
-        config as Record<string, string>,
-        {
-          ...permissions,
-          env: false,
-          net: hostnames,
-          run: false,
-          write: false,
-        },
-      );
+      workerFactory(manifest, entryPath, config as Record<string, string>, {
+        ...permissions,
+        env: false,
+        net: hostnames,
+        run: false,
+        write: false,
+      });
 
     const [_worker, _conn, { tools, systemPrompt }] = await initProjectWorker();
 
@@ -155,7 +141,7 @@ export class WebWorkerSandbox implements ISandbox {
       systemPrompt,
       tools,
       initProjectWorker,
-      timeout,
+      timeout
     );
   }
 
@@ -164,7 +150,7 @@ export class WebWorkerSandbox implements ISandbox {
     readonly systemPrompt: string,
     tools: Tool[],
     initWorker: () => ReturnType<typeof workerFactory>,
-    readonly timeout: number = 100,
+    readonly timeout: number = 100
   ) {
     this.#tools = tools;
     this.#initWorker = initWorker;
@@ -178,7 +164,7 @@ export class WebWorkerSandbox implements ISandbox {
   async runTool(
     toolName: string,
     args: unknown,
-    ctx: IContext,
+    ctx: IContext
   ): Promise<string> {
     // Create a worker just for the tool call, this is so we can terminate if it exceeds the timeout.
     const [worker, conn] = await this.#initWorker();
@@ -203,6 +189,19 @@ export class WebWorkerSandbox implements ISandbox {
       conn.sendRequest(CallTool, toolName, args),
     ]).finally(() => {
       // Dispose of the worker, a new one will be created for each tool call
+      worker.terminate();
+    });
+  }
+
+  async onResponse(message: Message[]) {
+    const [worker, conn] = await this.#initWorker();
+
+    return Promise.race([
+      timeout(this.timeout).then(() => {
+        throw new Error(`Timeout calling onResponse`);
+      }),
+      conn.sendRequest(CallOnResponse, message),
+    ]).finally(() => {
       worker.terminate();
     });
   }
