@@ -14,6 +14,8 @@ const Message = Type.Object({
     Type.Literal("assistant"),
     Type.Literal("tool"),
   ]),
+  id: Type.Optional(Type.String()),
+  conversation_id: Type.Optional(Type.String()),
 });
 
 const CompletionChoice = Type.Object({
@@ -56,6 +58,7 @@ const ChatResponse = Type.Object({
 
 const ChatChunkResponse = Type.Object({
   id: Type.String(),
+  conversation_id: Type.Optional(Type.String()),
   model: Type.String(),
   choices: Type.Array(CompletionChunkChoice),
   created: Type.Number({ description: "Unix timestamp in seconds" }),
@@ -73,13 +76,13 @@ export function http(
   runnerHost: RunnerHost,
   port: number,
   streamKeepAlive: number = 0,
-  onReady?: Promise<unknown>,
+  onReady?: Promise<unknown>
 ): Deno.HttpServer<Deno.NetAddr> {
   const app = new Hono();
 
   // The ready status should change once the project is fully loaded, including the vector DB
   let ready = false;
-  onReady?.then(() => ready = true);
+  onReady?.then(() => (ready = true));
 
   app.use("*", cors());
 
@@ -120,11 +123,13 @@ export function http(
       if (req.stream) {
         return streamSSE(c, async (stream) => {
           // Send empty data to keep the connection alive in browsers, they have a default timeout of 1m
-          const interval = streamKeepAlive && setInterval(async () => {
-            const empty = createChatChunkResponse("", "", new Date());
-            await stream.writeSSE({ data: JSON.stringify(empty) });
-            await stream.sleep(20);
-          }, streamKeepAlive);
+          const interval =
+            streamKeepAlive &&
+            setInterval(async () => {
+              const empty = createChatChunkResponse("", "", new Date());
+              await stream.writeSSE({ data: JSON.stringify(empty) });
+              await stream.sleep(20);
+            }, streamKeepAlive);
 
           const chatRes = await runner.promptMessages(req.messages);
 
@@ -140,6 +145,8 @@ export function http(
               chatRes.model,
               chatRes.created_at,
               last ? "stop" : null,
+              chatRes.message.id,
+              chatRes.message.conversation_id
             );
             await stream.writeSSE({ data: JSON.stringify(res) });
             await stream.sleep(20);
@@ -149,7 +156,7 @@ export function http(
               const res_space = createChatChunkResponse(
                 " ",
                 chatRes.model,
-                chatRes.created_at,
+                chatRes.created_at
               );
               await stream.writeSSE({ data: JSON.stringify(res_space) });
               await stream.sleep(20);
@@ -161,17 +168,19 @@ export function http(
       const chatRes = await runner.promptMessages(req.messages);
 
       const response: ChatResponse = {
-        id: "0",
+        id: crypto.randomUUID(),
         model: chatRes.model,
-        choices: [{
-          index: 0,
-          message: {
-            content: chatRes.message.content,
-            role: "assistant",
+        choices: [
+          {
+            index: 0,
+            message: {
+              content: chatRes.message.content,
+              role: "assistant",
+            },
+            logprobs: null,
+            finish_reason: chatRes.done_reason,
           },
-          logprobs: null,
-          finish_reason: chatRes.done_reason,
-        }],
+        ],
         created: new Date(chatRes.created_at).getTime() / 1000,
         object: "chat.completion",
         usage: {
@@ -204,18 +213,23 @@ function createChatChunkResponse(
   model: string,
   createdAt: Date,
   finish_reason: string | null = null,
+  id?: string,
+  conversation_id?: string
 ): ChatChunkResponse {
   const res: ChatChunkResponse = {
-    id: "0",
+    id: id ?? "0",
+    conversation_id: conversation_id ?? "0",
     object: "chat.completion.chunk",
     model,
     created: new Date(createdAt).getTime() / 1000,
-    choices: [{
-      index: 0,
-      delta: { role: "assistant", content: message },
-      logprobs: null,
-      finish_reason,
-    }],
+    choices: [
+      {
+        index: 0,
+        delta: { role: "assistant", content: message },
+        logprobs: null,
+        finish_reason,
+      },
+    ],
   };
   Value.Assert(ChatChunkResponse, res);
   return res;

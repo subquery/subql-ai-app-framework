@@ -5,6 +5,7 @@ import {
 } from "vscode-jsonrpc/browser.js";
 import {
   CallTool,
+  CallOnResponse,
   CtxComputeQueryEmbedding,
   CtxVectorSearch,
   Init,
@@ -19,7 +20,7 @@ import { loadProject } from "../../project/project.ts";
 
 const conn = rpc.createMessageConnection(
   new BrowserMessageReader(self),
-  new BrowserMessageWriter(self),
+  new BrowserMessageWriter(self)
 );
 
 let entrypoint: unknown;
@@ -33,10 +34,11 @@ const context = {
 } satisfies IContext;
 
 function toJsonProject(): IProjectJson {
-  const { tools, ...rest } = project;
+  const { tools, systemPrompt } = project;
   return {
-    ...rest,
+    systemPrompt,
     tools: tools.map((t) => t.toTool()),
+    onResponse: { manifest: "" },
   };
 }
 
@@ -51,7 +53,6 @@ conn.onRequest(Init, async (manifest, config) => {
 
   try {
     project ??= await loadProject(manifest, entrypoint, config);
-
     return toJsonProject();
   } catch (e: unknown) {
     if (e instanceof Error) {
@@ -73,6 +74,14 @@ conn.onRequest(CallTool, (toolName, args) => {
   }
 
   return tool.call(args, context);
+});
+
+conn.onRequest(CallOnResponse, (message) => {
+  if (!project) {
+    throw new Error("Project is not initialized");
+  }
+
+  return project.onResponse?.(message);
 });
 
 conn.listen();

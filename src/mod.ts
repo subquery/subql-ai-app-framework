@@ -7,9 +7,11 @@ import type {
   ProjectEntry,
   ProjectManifest,
 } from "./project/project.ts";
+import type { IContext } from "./context/types.ts";
 
 export {
   FunctionTool,
+  type IContext,
   type Project,
   type ProjectEntry,
   type ProjectManifest,

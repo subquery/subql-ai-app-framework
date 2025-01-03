@@ -1,5 +1,5 @@
 import { resolve } from "@std/path/resolve";
-import { Tar } from "@std/archive/tar";
+import { TarStream, type TarStreamInput } from "@std/tar";
 import { walk } from "@std/fs/walk";
 import { dirname } from "@std/path/dirname";
 import { toBlob } from "@std/streams";
@@ -8,7 +8,6 @@ import type { IPFSClient } from "../ipfs.ts";
 // import * as esbuild from "https://deno.land/x/esbuild@v0.24.0/wasm.js";
 // import * as esbuild from "esbuild";
 import { denoPlugins } from "@luca/esbuild-deno-loader";
-import { toReadableStream } from "@std/io/to-readable-stream";
 import { getSpinner } from "../util.ts";
 import { Loader } from "../loader.ts";
 
@@ -120,22 +119,29 @@ export async function generateBundle(projectPath: string): Promise<string> {
 export async function tarDir(
   dirPath: string,
 ): Promise<ReadableStream<Uint8Array>> {
-  const tar = new Tar();
+  const inputs: TarStreamInput[] = [];
 
   for await (const entry of walk(dirPath)) {
-    if (!entry.isFile) {
-      continue;
+    if (entry.isDirectory) {
+      inputs.push({
+        type: "directory",
+        path: entry.path.replace(dirPath, "."),
+      });
     }
-    // Path in the archive should be a relative path so when extracting everything isn't nested
-    // E.g ./.db/some/file should be ./some/file in the archive
-    await tar.append(entry.path.replace(dirPath, "."), {
-      filePath: entry.path,
-    });
+    if (entry.isFile) {
+      inputs.push({
+        type: "file",
+        path: entry.path.replace(dirPath, "."),
+        size: (await Deno.stat(entry.path)).size,
+        readable: (await Deno.open(entry.path)).readable,
+      });
+    }
+    // Symlink not handled
   }
 
-  return toReadableStream(tar.getReader()).pipeThrough(
-    new CompressionStream("gzip"),
-  );
+  return ReadableStream.from(inputs)
+    .pipeThrough(new TarStream())
+    .pipeThrough(new CompressionStream("gzip"));
 }
 
 async function fsExists(path: string): Promise<boolean> {
