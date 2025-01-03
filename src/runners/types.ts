@@ -1,5 +1,5 @@
-import {
-  type Message as OllamaMessage,
+import type {
+  Message as OllamaMessage,
   ChatResponse as OllamaChatResponse,
 } from "ollama";
 
