@@ -17,7 +17,7 @@ export const Init = new rpc.RequestType2<
   string
 >("init");
 export const CallTool = new rpc.RequestType2<string, unknown, string, void>(
-  "call_tool"
+  "call_tool",
 );
 
 export const CallOnResponse = new rpc.RequestType<

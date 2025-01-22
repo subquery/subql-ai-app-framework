@@ -26,7 +26,7 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
     baseUrl: string | undefined,
     apiKey: string | undefined,
     sandbox: ISandbox,
-    loader: Loader
+    loader: Loader,
   ): Promise<OpenAIRunnerFactory> {
     const openai = new OpenAI({
       apiKey,
@@ -70,7 +70,7 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
     return Context.create(
       this.#sandbox,
       this.#loader,
-      this.runEmbedding.bind(this)
+      this.runEmbedding.bind(this),
     );
   }
 
@@ -79,7 +79,7 @@ export class OpenAIRunnerFactory implements IRunnerFactory {
       this.#openai,
       await this.getContext(),
       this.#sandbox,
-      chatStorage
+      chatStorage,
     );
   }
 }
@@ -92,7 +92,7 @@ export class OpenAIRunner implements IRunner {
     openAI: OpenAI,
     context: IContext,
     private sandbox: ISandbox,
-    private chatStorage: IChatStorage
+    private chatStorage: IChatStorage,
   ) {
     this.#openai = openAI;
     this.#context = context;
@@ -138,14 +138,16 @@ export class OpenAIRunner implements IRunner {
           function: async (args: unknown) => {
             try {
               logger.debug(
-                `Calling tool: "${t.function.name}" args: "${JSON.stringify(
-                  args
-                )}`
+                `Calling tool: "${t.function.name}" args: "${
+                  JSON.stringify(
+                    args,
+                  )
+                }`,
               );
               return await this.sandbox.runTool(
                 t.function.name,
                 args,
-                this.#context
+                this.#context,
               );
             } catch (e: unknown) {
               logger.error(`Tool call failed: ${e}`);
@@ -179,7 +181,7 @@ export class OpenAIRunner implements IRunner {
       id: crypto.randomUUID(),
       conversation_id:
         messages.find((i) => i.conversation_id)?.conversation_id ??
-        crypto.randomUUID(),
+          crypto.randomUUID(),
     };
     const res: ChatResponse = {
       model: completion.model,

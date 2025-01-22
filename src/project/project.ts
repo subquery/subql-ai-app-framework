@@ -28,7 +28,7 @@ export const ProjectManifest = Type.Object({
   embeddingsModel: Type.Optional(
     Type.String({
       description: "The Ollama LLM model to be used for vector embeddings",
-    })
+    }),
   ),
   entry: Type.String({
     description: "File path to the project entrypoint",
@@ -40,15 +40,15 @@ export const ProjectManifest = Type.Object({
           "The type of vector storage, currently only lancedb is supported.",
       }),
       path: Type.String({ description: "The path to the db" }),
-    })
+    }),
   ),
   endpoints: Type.Optional(
     Type.Array(
       Type.String({
         description:
           "Allowed endpoints the tools are allowed to make requests to",
-      })
-    )
+      }),
+    ),
   ),
   config: Type.Optional(Type.Any()), // TODO how can this be a JSON Schema type?
 });
@@ -57,13 +57,13 @@ export const Project = Type.Object({
   tools: Type.Array(FunctionToolType),
   systemPrompt: Type.String(),
   onResponse: Type.Optional(
-    Type.Function([Type.Object({})], Type.Promise(Type.Void()))
+    Type.Function([Type.Object({})], Type.Promise(Type.Void())),
   ),
 });
 
 export const ProjectEntry = Type.Function(
   [Type.Any()],
-  Type.Union([Project, Type.Promise(Project)])
+  Type.Union([Project, Type.Promise(Project)]),
 );
 
 export type FunctionToolType = Static<typeof FunctionToolType>;
@@ -74,7 +74,7 @@ export type ProjectEntry = Static<typeof ProjectEntry>;
 export async function loadProject(
   manifest: ProjectManifest,
   entry: unknown,
-  config?: Record<string, string>
+  config?: Record<string, string>,
 ): Promise<Project> {
   try {
     Value.Assert(ProjectEntry, entry);

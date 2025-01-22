@@ -57,7 +57,7 @@ const LOCAL_PERMISSIONS: Deno.PermissionOptionsObject = {
 
 function getPermisionsForSource(
   source: Source,
-  projectDir: string
+  projectDir: string,
 ): Deno.PermissionOptionsObject {
   switch (source) {
     case "local":
@@ -66,7 +66,7 @@ function getPermisionsForSource(
       return IPFS_PERMISSIONS(projectDir);
     default:
       throw new Error(
-        `Unable to set permissions for unknown source: ${source}`
+        `Unable to set permissions for unknown source: ${source}`,
       );
   }
 }
@@ -75,7 +75,7 @@ async function workerFactory(
   manifest: ProjectManifest,
   entryPath: string,
   config: Record<string, string>,
-  permissions: Deno.PermissionOptionsObject
+  permissions: Deno.PermissionOptionsObject,
 ): Promise<[Worker, rpc.MessageConnection, IProjectJson]> {
   const w = new Worker(import.meta.resolve("./webWorker.ts"), {
     type: "module",
@@ -87,7 +87,7 @@ async function workerFactory(
   // Setup a JSON RPC for interaction to the worker
   const conn = rpc.createMessageConnection(
     new BrowserMessageReader(w),
-    new BrowserMessageWriter(w)
+    new BrowserMessageWriter(w),
   );
   conn.listen();
 
@@ -109,7 +109,7 @@ export class WebWorkerSandbox implements ISandbox {
    */
   public static async create(
     loader: Loader,
-    timeout: number
+    timeout: number,
   ): Promise<WebWorkerSandbox> {
     const [manifestPath, manifest, source] = await loader.getManifest();
     const config = loadRawConfigFromEnv(manifest.config);
@@ -141,7 +141,7 @@ export class WebWorkerSandbox implements ISandbox {
       systemPrompt,
       tools,
       initProjectWorker,
-      timeout
+      timeout,
     );
   }
 
@@ -150,7 +150,7 @@ export class WebWorkerSandbox implements ISandbox {
     readonly systemPrompt: string,
     tools: Tool[],
     initWorker: () => ReturnType<typeof workerFactory>,
-    readonly timeout: number = 100
+    readonly timeout: number = 100,
   ) {
     this.#tools = tools;
     this.#initWorker = initWorker;
@@ -164,7 +164,7 @@ export class WebWorkerSandbox implements ISandbox {
   async runTool(
     toolName: string,
     args: unknown,
-    ctx: IContext
+    ctx: IContext,
   ): Promise<string> {
     // Create a worker just for the tool call, this is so we can terminate if it exceeds the timeout.
     const [worker, conn] = await this.#initWorker();

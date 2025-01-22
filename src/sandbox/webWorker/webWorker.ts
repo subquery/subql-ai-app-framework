@@ -4,8 +4,8 @@ import {
   BrowserMessageWriter,
 } from "vscode-jsonrpc/browser.js";
 import {
-  CallTool,
   CallOnResponse,
+  CallTool,
   CtxComputeQueryEmbedding,
   CtxVectorSearch,
   Init,
@@ -20,7 +20,7 @@ import { loadProject } from "../../project/project.ts";
 
 const conn = rpc.createMessageConnection(
   new BrowserMessageReader(self),
-  new BrowserMessageWriter(self)
+  new BrowserMessageWriter(self),
 );
 
 let entrypoint: unknown;

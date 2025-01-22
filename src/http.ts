@@ -76,7 +76,7 @@ export function http(
   runnerHost: RunnerHost,
   port: number,
   streamKeepAlive: number = 0,
-  onReady?: Promise<unknown>
+  onReady?: Promise<unknown>,
 ): Deno.HttpServer<Deno.NetAddr> {
   const app = new Hono();
 
@@ -123,8 +123,7 @@ export function http(
       if (req.stream) {
         return streamSSE(c, async (stream) => {
           // Send empty data to keep the connection alive in browsers, they have a default timeout of 1m
-          const interval =
-            streamKeepAlive &&
+          const interval = streamKeepAlive &&
             setInterval(async () => {
               const empty = createChatChunkResponse("", "", new Date());
               await stream.writeSSE({ data: JSON.stringify(empty) });
@@ -146,7 +145,7 @@ export function http(
               chatRes.created_at,
               last ? "stop" : null,
               chatRes.message.id,
-              chatRes.message.conversation_id
+              chatRes.message.conversation_id,
             );
             await stream.writeSSE({ data: JSON.stringify(res) });
             await stream.sleep(20);
@@ -156,7 +155,7 @@ export function http(
               const res_space = createChatChunkResponse(
                 " ",
                 chatRes.model,
-                chatRes.created_at
+                chatRes.created_at,
               );
               await stream.writeSSE({ data: JSON.stringify(res_space) });
               await stream.sleep(20);
@@ -214,7 +213,7 @@ function createChatChunkResponse(
   createdAt: Date,
   finish_reason: string | null = null,
   id?: string,
-  conversation_id?: string
+  conversation_id?: string,
 ): ChatChunkResponse {
   const res: ChatChunkResponse = {
     id: id ?? "0",

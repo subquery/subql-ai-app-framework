@@ -18,7 +18,7 @@ export class Context implements IContext {
   constructor(
     getEmbedding: GetEmbedding,
     vectorStorage?: Connection,
-    readonly topK = 10
+    readonly topK = 10,
   ) {
     this.#getEmbedding = getEmbedding;
     this.#vectorStorage = vectorStorage;
@@ -27,7 +27,7 @@ export class Context implements IContext {
   public static async create(
     sandbox: ISandbox,
     loader: Loader,
-    runEmbedding: GetEmbedding
+    runEmbedding: GetEmbedding,
   ): Promise<Context> {
     if (!sandbox.manifest.vectorStorage) {
       return new Context(runEmbedding);
@@ -49,7 +49,7 @@ export class Context implements IContext {
   async vectorSearch(tableName: string, vector: number[]): Promise<unknown[]> {
     if (!this.#vectorStorage) {
       throw new Error(
-        "Project did not provide vector storage. Unable to perform search"
+        "Project did not provide vector storage. Unable to perform search",
       );
     }
     const table = await this.#vectorStorage.openTable(tableName);

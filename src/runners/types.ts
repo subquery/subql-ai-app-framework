@@ -1,6 +1,6 @@
 import type {
-  Message as OllamaMessage,
   ChatResponse as OllamaChatResponse,
+  Message as OllamaMessage,
 } from "ollama";
 
 export interface Message extends OllamaMessage {

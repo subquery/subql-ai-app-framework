@@ -7,7 +7,7 @@ import type { ISandbox } from "../sandbox/sandbox.ts";
 import type { Loader } from "../loader.ts";
 import { OpenAIRunnerFactory } from "./openai.ts";
 import { OllamaRunnerFactory } from "./ollama.ts";
-import type { Message, ChatResponse } from "./types.ts";
+import type { ChatResponse, Message } from "./types.ts";
 
 export interface IRunner {
   prompt(message: string): Promise<string>;
@@ -19,7 +19,7 @@ export interface IRunnerFactory {
 }
 
 async function runForModels<T>(
-  runners: Record<string, () => Promise<T>>
+  runners: Record<string, () => Promise<T>>,
 ): Promise<T> {
   const errors: Record<string, unknown> = {};
   for (const [name, fn] of Object.entries(runners)) {
@@ -31,16 +31,18 @@ async function runForModels<T>(
   }
 
   throw new Error(`All options failed to run:
-\t${Object.entries(errors)
-    .map(([name, error]) => `${name} error: ${error}`)
-    .join("\n\t")}`);
+\t${
+    Object.entries(errors)
+      .map(([name, error]) => `${name} error: ${error}`)
+      .join("\n\t")
+  }`);
 }
 
 export function createRunner(
   endpoint: string,
   sandbox: ISandbox,
   loader: Loader,
-  openAiApiKey?: string
+  openAiApiKey?: string,
 ): Promise<IRunnerFactory> {
   return runForModels<IRunnerFactory>({
     Ollama: () => OllamaRunnerFactory.create(endpoint, sandbox, loader),
@@ -49,7 +51,7 @@ export function createRunner(
         endpoint === DEFAULT_LLM_HOST ? undefined : endpoint,
         openAiApiKey,
         sandbox,
-        loader
+        loader,
       ),
   });
 }
@@ -57,7 +59,7 @@ export function createRunner(
 export function getGenerateFunction(
   endpoint: string,
   model: string,
-  apiKey?: string
+  apiKey?: string,
 ): Promise<GenerateEmbedding> {
   return runForModels<GenerateEmbedding>({
     Ollama: async () => {
@@ -72,7 +74,9 @@ export function getGenerateFunction(
         // https://github.com/ollama/ollama/issues/651
         if (dimensions != undefined && embeddings[0].length != dimensions) {
           throw new Error(
-            `Dimensions mismatch, expected:"${dimensions}" received:"${embeddings[0].length}"`
+            `Dimensions mismatch, expected:"${dimensions}" received:"${
+              embeddings[0].length
+            }"`,
           );
         }
         return embeddings;
