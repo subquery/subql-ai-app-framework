@@ -1,33 +1,50 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Add support for OpenAI LLMs (#29)
+
 ## [0.0.5] - 2024-11-06
+
 ### Fixed
+
 - init command failing (#26)
 - repl command requiring OPENAI_API_KEY env var (#26)
 
 ## [0.0.4] - 2024-11-06
+
 ### Fixed
+
 - RagTool parameters naming missmatch (#25)
 
 ### Changed
+
 - Docker: Exclude submodule, remove default project argument (#25)
 
 ## [0.0.3] - 2024-11-05
+
 ### Changed
+
 - Update init docker compose
 - Stream Vector DB publishing to avoid loading into memory (#23)
 
 ### Added
-- Support for loading vector db from local and http archives, this will extract to a temp dir (#23)
+
+- Support for loading vector db from local and http archives, this will extract
+  to a temp dir (#23)
 
 ## [0.0.2] - 2024-10-30
+
 ### Fixed
+
 - Lancedb path being url instead of file path for local files
 
 [Unreleased]: https://github.com/subquery/subql-ai-app-framework"/compare/v0.0.5...HEAD

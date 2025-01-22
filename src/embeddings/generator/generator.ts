@@ -2,9 +2,8 @@ import {
   type BaseEmbeddingSource,
   MarkdownEmbeddingSource,
 } from "./mdSource.ts";
-import ollama from "ollama";
 import { glob } from "glob";
-import { LanceWriter } from "../lance/index.ts";
+import { type GenerateEmbedding, LanceWriter } from "../lance/index.ts";
 import { getLogger } from "../../logger.ts";
 import { getSpinner } from "../../util.ts";
 
@@ -20,13 +19,16 @@ export async function generate(
   path: string,
   lanceDbPath: string,
   tableName: string,
+  generateEmbedding: GenerateEmbedding,
+  dimensions: number,
   ignoredPaths = DEFAULT_IGNORED_PATHS,
-  model = "nomic-embed-text",
   overwrite = false,
 ) {
   const embeddingSources: BaseEmbeddingSource[] =
     (await glob([`${path}/**/*.{md,mdx}`], { ignore: ignoredPaths }))
       .map((path) => new MarkdownEmbeddingSource("guide", path));
+
+  logger.info(`Dimensions: ${dimensions}`);
 
   logger.debug(
     `Source files: ${embeddingSources.map((s) => s.path).join("\n")}`,
@@ -37,8 +39,8 @@ export async function generate(
   const lanceWriter = await LanceWriter.createNewTable(
     lanceDbPath,
     tableName,
-    ollama,
-    model,
+    generateEmbedding,
+    dimensions,
     overwrite,
   );
 
@@ -59,7 +61,7 @@ export async function generate(
       }
     } catch (e) {
       console.warn(`Failed to process ${source.path}`, e);
-      // throw e;
+      throw e;
     }
   }
 

@@ -20,8 +20,7 @@ import { IPFSClient } from "./ipfs.ts";
 import ora from "ora";
 import { getPrompt, getVersion, setSpinner } from "./util.ts";
 import { initLogger } from "./logger.ts";
-
-const DEFAULT_PORT = 7827;
+import { DEFAULT_LLM_HOST, DEFAULT_PORT } from "./constants.ts";
 
 const sharedArgs = {
   project: {
@@ -43,6 +42,21 @@ const sharedArgs = {
   cacheDir: {
     description:
       "The location to cache data from ipfs. Default is a temp directory",
+    type: "string",
+  },
+} satisfies Record<string, Options>;
+
+const llmHostArgs = {
+  host: {
+    alias: "h",
+    description:
+      "The LLM RPC host. If the project model uses an OpenAI model then the default value is not used.",
+    default: DEFAULT_LLM_HOST,
+    type: "string",
+  },
+  openAiApiKey: {
+    description:
+      "If the project models use OpenAI models, then this api key will be parsed on to the OpenAI client",
     type: "string",
   },
 } satisfies Record<string, Options>;
@@ -79,12 +93,7 @@ yargs(Deno.args)
     {
       ...sharedArgs,
       ...debugArgs,
-      host: {
-        alias: "h",
-        description: "The ollama RPC host",
-        default: "http://localhost:11434",
-        type: "string",
-      },
+      ...llmHostArgs,
       interface: {
         alias: "i",
         description: "The interface to interact with the app",
@@ -136,6 +145,7 @@ yargs(Deno.args)
           toolTimeout: argv.toolTimeout,
           streamKeepAlive: argv.streamKeepAlive,
           cacheDir: argv.cacheDir,
+          openAiApiKey: argv.openAiApiKey,
         });
       } catch (e) {
         console.log(e);
@@ -175,6 +185,7 @@ yargs(Deno.args)
     "Creates a Lance db table with embeddings from MDX files",
     {
       ...debugArgs,
+      ...llmHostArgs,
       input: {
         alias: "i",
         description: "Path to a directory containing MD or MDX files",
@@ -202,13 +213,18 @@ yargs(Deno.args)
       model: {
         description:
           "The embedding LLM model to use, this should be the same as embeddingsModel in your app manifest",
-        default: "nomic-embed-text",
+        required: true,
         type: "string",
       },
       overwrite: {
         description: "If there is an existing table, then overwrite it",
         type: "boolean",
         default: false,
+      },
+      dimensions: {
+        description:
+          "The number of dimensions for the LLM model to use. NOTE: Ollama models doesn't currently support modifying this so it will throw if the output doesn't match.",
+        type: "number",
       },
     },
     async (argv) => {
@@ -220,12 +236,26 @@ yargs(Deno.args)
         const { generate } = await import(
           "./embeddings/generator/generator.ts"
         );
+
+        const { getGenerateFunction } = await import("./runners/runner.ts");
+
+        const generateFunction = await getGenerateFunction(
+          argv.host,
+          argv.model,
+          argv.openAiApiKey,
+        );
+
+        // Determine the dimensions, if not provided it will use the result dimensions from a test
+        const dimensions = argv.dimensions ??
+          (await generateFunction("this is a test"))[0].length;
+
         return await generate(
           resolve(argv.input),
           resolve(argv.output),
           argv.table,
+          generateFunction,
+          dimensions,
           argv.ignoredFiles?.map((f) => resolve(f)),
-          argv.model,
           argv.overwrite,
         );
       } catch (e) {

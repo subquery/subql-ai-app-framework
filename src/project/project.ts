@@ -25,28 +25,40 @@ export const VectorConfig = Type.Object({
 export const ProjectManifest = Type.Object({
   specVersion: Type.Literal("0.0.1"),
   model: Type.String({ description: "The Ollama LLM model to be used" }),
-  embeddingsModel: Type.Optional(Type.String({
-    description: "The Ollama LLM model to be used for vector embeddings",
-  })),
+  embeddingsModel: Type.Optional(
+    Type.String({
+      description: "The Ollama LLM model to be used for vector embeddings",
+    }),
+  ),
   entry: Type.String({
     description: "File path to the project entrypoint",
   }),
-  vectorStorage: Type.Optional(Type.Object({
-    type: Type.String({
-      description:
-        "The type of vector storage, currently only lancedb is supported.",
+  vectorStorage: Type.Optional(
+    Type.Object({
+      type: Type.String({
+        description:
+          "The type of vector storage, currently only lancedb is supported.",
+      }),
+      path: Type.String({ description: "The path to the db" }),
     }),
-    path: Type.String({ description: "The path to the db" }),
-  })),
-  endpoints: Type.Optional(Type.Array(Type.String({
-    description: "Allowed endpoints the tools are allowed to make requests to",
-  }))),
+  ),
+  endpoints: Type.Optional(
+    Type.Array(
+      Type.String({
+        description:
+          "Allowed endpoints the tools are allowed to make requests to",
+      }),
+    ),
+  ),
   config: Type.Optional(Type.Any()), // TODO how can this be a JSON Schema type?
 });
 
 export const Project = Type.Object({
   tools: Type.Array(FunctionToolType),
   systemPrompt: Type.String(),
+  onResponse: Type.Optional(
+    Type.Function([Type.Object({})], Type.Promise(Type.Void())),
+  ),
 });
 
 export const ProjectEntry = Type.Function(

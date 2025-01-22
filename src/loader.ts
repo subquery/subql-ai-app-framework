@@ -12,7 +12,9 @@ import { getLogger } from "./logger.ts";
 const logger = await getLogger("loader");
 
 export const getOSTempDir = () =>
-  Deno.env.get("TMPDIR") || Deno.env.get("TMP") || Deno.env.get("TEMP") ||
+  Deno.env.get("TMPDIR") ||
+  Deno.env.get("TMP") ||
+  Deno.env.get("TEMP") ||
   "/tmp";
 
 async function loadJson(path: string): Promise<unknown> {
@@ -62,7 +64,8 @@ async function extractArchive(
 ): Promise<string | undefined> {
   let first: string | undefined;
   for await (
-    const entry of readable.pipeThrough(new DecompressionStream("gzip"))
+    const entry of readable
+      .pipeThrough(new DecompressionStream("gzip"))
       .pipeThrough(new UntarStream())
   ) {
     const path = resolve(dest, entry.path);
@@ -155,7 +158,7 @@ export async function pullContent(
         }
 
         const tmp = resolve(
-          fromFileUrlSafe(tmpDir ?? await Deno.makeTempDir()),
+          fromFileUrlSafe(tmpDir ?? (await Deno.makeTempDir())),
         );
         try {
           const p = await extractArchive(res.body, tmp);
@@ -173,7 +176,7 @@ export async function pullContent(
 
   const localPath = resolve(fromFileUrlSafe(workingPath ?? ""), path);
   if (localPath.endsWith(".gz")) {
-    const tmp = resolve(fromFileUrlSafe(tmpDir ?? await Deno.makeTempDir()));
+    const tmp = resolve(fromFileUrlSafe(tmpDir ?? (await Deno.makeTempDir())));
 
     const archive = await Deno.open(localPath);
 
@@ -187,10 +190,7 @@ export async function pullContent(
   }
 
   // File urls are used to avoid imports being from the same package registry as the framework is run from
-  return [
-    toFileUrlString(localPath),
-    "local",
-  ];
+  return [toFileUrlString(localPath), "local"];
 }
 
 export class Loader {
@@ -257,6 +257,7 @@ export class Loader {
       manifestSource == "local" ? dirname(this.projectPath) : undefined,
     );
     logger.debug(`getProject [${source}] ${projectPath}`);
+
     return [projectPath, source];
   }
 
