@@ -64,13 +64,6 @@ export class OllamaRunnerFactory implements IRunnerFactory {
     });
 
     return embed;
-
-    // const { embedding } = await this.#ollama.embeddings({
-    //   model: this.#sandbox.manifest.embeddingsModel ?? "nomic-embed-text",
-    //   prompt: input,
-    // });
-
-    // return embedding;
   }
 
   @Memoize()
