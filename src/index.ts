@@ -21,6 +21,7 @@ import ora from "ora";
 import { getPrompt, getVersion, setSpinner } from "./util.ts";
 import { initLogger } from "./logger.ts";
 import { DEFAULT_LLM_HOST, DEFAULT_PORT } from "./constants.ts";
+import type { Scope } from "./embeddings/generator/webSource.ts";
 
 const sharedArgs = {
   project: {
@@ -72,6 +73,37 @@ const debugArgs = {
     type: "string",
     choices: ["json", "pretty"],
     default: "pretty",
+  },
+} satisfies Record<string, Options>;
+
+const embedArgs = {
+  output: {
+    alias: "o",
+    description: "The db output directory",
+    required: true,
+    type: "string",
+  },
+  table: {
+    alias: "t",
+    description: "The table name",
+    required: true,
+    type: "string",
+  },
+  model: {
+    description:
+      "The embedding LLM model to use, this should be the same as embeddingsModel in your app manifest",
+    required: true,
+    type: "string",
+  },
+  overwrite: {
+    description: "If there is an existing table, then overwrite it",
+    type: "boolean",
+    default: false,
+  },
+  dimensions: {
+    description:
+      "The number of dimensions for the LLM model to use. NOTE: Ollama models doesn't currently support modifying this so it will throw if the output doesn't match.",
+    type: "number",
   },
 } satisfies Record<string, Options>;
 
@@ -181,50 +213,22 @@ yargs(Deno.args)
     },
   )
   .command(
-    "embed-mdx",
-    "Creates a Lance db table with embeddings from MDX files",
+    "embed-web",
+    "Creates a Lance db table with emdeddings from a Web source",
     {
       ...debugArgs,
       ...llmHostArgs,
+      ...embedArgs,
       input: {
         alias: "i",
-        description: "Path to a directory containing MD or MDX files",
+        description: "The url of the website to pull data from",
         required: true,
         type: "string",
       },
-      output: {
-        alias: "o",
-        description: "The db output directory",
-        required: true,
-        type: "string",
-      },
-      table: {
-        alias: "t",
-        description: "The table name",
-        required: true,
-        type: "string",
-      },
-      ignoredFiles: {
-        description:
-          "Input paths to ignore, this can be glob patterns. e.g '/**/node_modules/**' ",
-        type: "array",
-        string: true,
-      },
-      model: {
-        description:
-          "The embedding LLM model to use, this should be the same as embeddingsModel in your app manifest",
-        required: true,
-        type: "string",
-      },
-      overwrite: {
-        description: "If there is an existing table, then overwrite it",
-        type: "boolean",
-        default: false,
-      },
-      dimensions: {
-        description:
-          "The number of dimensions for the LLM model to use. NOTE: Ollama models doesn't currently support modifying this so it will throw if the output doesn't match.",
-        type: "number",
+      scope: {
+        description: "",
+        choises: ["none", "domain", "subdomains"] satisfies Scope[],
+        default: "domain",
       },
     },
     async (argv) => {
@@ -234,7 +238,7 @@ yargs(Deno.args)
           argv.debug ? "debug" : undefined,
         );
         const { generate } = await import(
-          "./embeddings/generator/generator.ts"
+          "./embeddings/generator/webGenerator.ts"
         );
 
         const { getGenerateFunction } = await import("./runners/runner.ts");
@@ -249,7 +253,65 @@ yargs(Deno.args)
         const dimensions = argv.dimensions ??
           (await generateFunction("this is a test"))[0].length;
 
-        return await generate(
+        await generate(
+          argv.input,
+          resolve(argv.output),
+          argv.table,
+          generateFunction,
+          dimensions,
+          argv.scope as Scope,
+          argv.overwrite,
+        );
+        Deno.exit(0);
+      } catch (e) {
+        console.log(e);
+        Deno.exit(1);
+      }
+    },
+  )
+  .command(
+    "embed-mdx",
+    "Creates a Lance db table with embeddings from MDX files",
+    {
+      ...debugArgs,
+      ...llmHostArgs,
+      ...embedArgs,
+      input: {
+        alias: "i",
+        description: "Path to a directory containing MD or MDX files",
+        required: true,
+        type: "string",
+      },
+      ignoredFiles: {
+        description:
+          "Input paths to ignore, this can be glob patterns. e.g '/**/node_modules/**' ",
+        type: "array",
+        string: true,
+      },
+    },
+    async (argv) => {
+      try {
+        await initLogger(
+          argv.logFmt as "json" | "pretty",
+          argv.debug ? "debug" : undefined,
+        );
+        const { generate } = await import(
+          "./embeddings/generator/mdGenerator.ts"
+        );
+
+        const { getGenerateFunction } = await import("./runners/runner.ts");
+
+        const generateFunction = await getGenerateFunction(
+          argv.host,
+          argv.model,
+          argv.openAiApiKey,
+        );
+
+        // Determine the dimensions, if not provided it will use the result dimensions from a test
+        const dimensions = argv.dimensions ??
+          (await generateFunction("this is a test"))[0].length;
+
+        await generate(
           resolve(argv.input),
           resolve(argv.output),
           argv.table,
@@ -258,6 +320,7 @@ yargs(Deno.args)
           argv.ignoredFiles?.map((f) => resolve(f)),
           argv.overwrite,
         );
+        Deno.exit(0);
       } catch (e) {
         console.log(e);
         Deno.exit(1);

@@ -13,7 +13,7 @@ const DEFAULT_IGNORED_PATHS = [
   "/**/.yarn/**",
 ];
 
-const logger = await getLogger("EmbeddingsGenerator");
+const logger = await getLogger("MDEmbeddingsGenerator");
 
 export async function generate(
   path: string,
@@ -67,6 +67,4 @@ export async function generate(
 
   await lanceWriter.close();
   spinner.succeed("Processed all files");
-
-  Deno.exit(0);
 }
