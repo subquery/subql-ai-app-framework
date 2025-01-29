@@ -8,6 +8,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- `embed-web` function to generate embeddings from a website (#32)
+
+## [0.0.6] - 2025-01-29
+
 ### Changed
 
 - Add support for OpenAI LLMs (#29)
@@ -47,7 +53,8 @@ and this project adheres to
 
 - Lancedb path being url instead of file path for local files
 
-[Unreleased]: https://github.com/subquery/subql-ai-app-framework"/compare/v0.0.5...HEAD
+[Unreleased]: https://github.com/subquery/subql-ai-app-framework/compare/v0.0.6...HEAD
+[0.0.6]: https://github.com/subquery/subql-ai-app-framework/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/subquery/subql-ai-app-framework"/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/subquery/subql-ai-app-framework"/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/subquery/subql-ai-app-framework"/compare/v0.0.2...v0.0.3

@@ -20,7 +20,6 @@ export async function* crawlWebSource(
   searchScope: Scope = "domain",
 ): AsyncIterable<{ url: string; data: PageData }> {
   const browser = await launch({
-    // ...opts,
     headless: true,
   });
 
@@ -109,6 +108,3 @@ async function visibleText(page: Page): Promise<string[]> {
 
   return [...new Set([...raw])];
 }
-
-// const res = await crawlWebSource('https://subquery.network', 'none')
-// console.log(res.get('https://subquery.network')?.text)
