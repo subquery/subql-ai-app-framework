@@ -2,8 +2,13 @@
 
 import { launch, type Page } from "jsr:@astral/astral";
 
+type LinkData = {
+  href: string;
+  text?: string;
+};
+
 type PageData = {
-  links: { href: string; text?: string }[];
+  links: LinkData[];
   text: string[];
 };
 
@@ -80,28 +85,33 @@ export async function* crawlWebSource(
 
 async function extractLinks(
   page: Page,
-): Promise<{ href: string; text?: string }[]> {
+): Promise<LinkData[]> {
   const elements = await page.$$("a");
 
-  return (await Promise.all(elements.map(async (element) => ({
+  const links = await Promise.all(elements.map(async (element) => ({
     href: await element.getAttribute("href"),
     text: await element.innerText(),
-  })))).filter((r) => !!r.href);
+  })));
+
+  return links.filter((r) => r.href !== null) as LinkData[];
 }
 
 async function visibleText(page: Page): Promise<string[]> {
   const raw = await page.evaluate(() => {
-    // This runs in the browser env
+    // @ts-ignore this runs in the browser env
     return Array.from(document.querySelectorAll("*"))
       .filter((element) => {
+        // @ts-ignore this runs in the browser env
         const style = globalThis.getComputedStyle(element);
         return style.visibility !== "hidden" &&
           style.display !== "none" &&
           style.opacity != 0 &&
           !["SCRIPT", "STYLE", "NOSCRIPT", "META", "LINK", "HTML"].includes(
+            // @ts-ignore this runs in the browser env
             element.tagName,
           );
       })
+      // @ts-ignore this runs in the browser env
       .map((element) => element.textContent?.trim())
       .filter((text) => text);
   });
