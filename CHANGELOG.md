@@ -6,6 +6,8 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Don't throw error with single MD file, instead will now succeed and log any file errors (#33)
 
 ## [0.0.7] - 2025-01-29
 ### Added
