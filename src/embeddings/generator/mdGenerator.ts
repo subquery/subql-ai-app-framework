@@ -62,7 +62,6 @@ export async function generate(
         await lanceWriter.write(input);
       }
     } catch (e) {
-      console.warn(`Failed to process ${source.path}`, e);
       errors.push({ error: e as Error, source });
     }
   }
