@@ -48,6 +48,8 @@ export async function generate(
     `Processing files (0/${embeddingSources.length})`,
   );
 
+  const errors: { error: Error; source: BaseEmbeddingSource }[] = [];
+
   for (const [idx, source] of embeddingSources.entries()) {
     try {
       spinner.text = `Processing files (${idx + 1}/${embeddingSources.length})`;
@@ -61,10 +63,18 @@ export async function generate(
       }
     } catch (e) {
       console.warn(`Failed to process ${source.path}`, e);
-      throw e;
+      errors.push({ error: e as Error, source });
     }
   }
 
   await lanceWriter.close();
-  spinner.succeed("Processed all files");
+  if (errors.length) {
+    spinner.warn(`Processed all files with errors:
+${
+      errors.map(({ source, error }) => `\t${source.path}: ${error.message}`)
+        .join("\n")
+    }`);
+  } else {
+    spinner.succeed("Successfully processed all files");
+  }
 }
