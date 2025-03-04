@@ -43,6 +43,7 @@
     "ollama": "npm:ollama@^0.5.9",
     "openai": "npm:openai@^4.68.3",
     "ora": "npm:ora@^8.1.0",
+    "p-limit": "npm:p-limit@^6.2.0",
     "pino": "npm:pino@^9.5.0",
     "pino-pretty": "npm:pino-pretty@^11.3.0",
     "unist-builder": "npm:unist-builder@^4.0.0",
