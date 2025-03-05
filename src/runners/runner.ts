@@ -1,6 +1,6 @@
 import { Ollama } from "ollama";
 import type { IChatStorage } from "../chatStorage/index.ts";
-import type { GenerateEmbedding } from "../embeddings/lance/writer.ts";
+import type { GenerateEmbedding } from "../embeddings/storage/lance/writer.ts";
 import OpenAI from "openai";
 import { DEFAULT_LLM_HOST } from "../constants.ts";
 import type { ISandbox } from "../sandbox/sandbox.ts";

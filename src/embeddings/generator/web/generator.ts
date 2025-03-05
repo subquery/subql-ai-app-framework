@@ -1,7 +1,11 @@
-import { getLogger } from "../../logger.ts";
-import { getSpinner } from "../../util.ts";
-import { type GenerateEmbedding, LanceWriter } from "../lance/index.ts";
-import { crawlWebSource, type Scope } from "./webSource.ts";
+import { getLogger } from "../../../logger.ts";
+import { getSpinner } from "../../../util.ts";
+import { EmbeddingsWriter } from "../../storage/embeddingsWriter.ts";
+import {
+  type GenerateEmbedding,
+  LanceWriter,
+} from "../../storage/lance/index.ts";
+import { crawlWebSource, type Scope } from "./source.ts";
 
 const logger = await getLogger("WebEmbeddingsGenerator");
 
@@ -25,10 +29,12 @@ export async function generate(
   const lanceWriter = await LanceWriter.createNewTable(
     lanceDbPath,
     tableName,
-    generateEmbedding,
+    // generateEmbedding,
     dimensions,
     overwrite,
   );
+
+  const writer = new EmbeddingsWriter(lanceWriter, generateEmbedding);
 
   const spinner = getSpinner().start(
     `Crawling ${url}`,
@@ -40,7 +46,11 @@ export async function generate(
     for (const text of result.data.text) {
       // OpenAI recommends replacing newlines with spaces for best results (specific to embeddings)
       const input = text.replace(/\n/g, " ");
-      await lanceWriter.write(input);
+      await writer.write({
+        content: input,
+        uri: result.url, // TODO needs to include the URL Fragment
+        contentHash: result.data.contentHash,
+      });
     }
   }
 

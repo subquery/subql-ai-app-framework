@@ -1,6 +1,7 @@
 // import { chromium, firefox, type LaunchOptions, type Page } from 'playwright';
 
 import { launch, type Page } from "jsr:@astral/astral";
+import { createHash } from "node:crypto";
 
 type LinkData = {
   href: string;
@@ -10,6 +11,7 @@ type LinkData = {
 type PageData = {
   links: LinkData[];
   text: string[];
+  contentHash: string;
 };
 
 /**
@@ -32,9 +34,13 @@ export async function* crawlWebSource(
 
   const scrapePage = async (url: string): Promise<PageData> => {
     const page = await browser.newPage(url);
-    const [links, text] = await Promise.all([
+
+    const [links, text, contentHash] = await Promise.all([
       extractLinks(page),
       visibleText(page),
+      page.content().then((content) => {
+        return createHash("sha256").update(content).digest("base64");
+      }),
     ]);
 
     await page.close();
@@ -42,6 +48,7 @@ export async function* crawlWebSource(
     return {
       links,
       text,
+      contentHash,
     };
   };
 

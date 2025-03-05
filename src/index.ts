@@ -21,7 +21,7 @@ import ora from "ora";
 import { getPrompt, getVersion, setSpinner } from "./util.ts";
 import { initLogger } from "./logger.ts";
 import { DEFAULT_LLM_HOST, DEFAULT_PORT } from "./constants.ts";
-import type { Scope } from "./embeddings/generator/webSource.ts";
+import type { Scope } from "./embeddings/generator/web/source.ts";
 
 const sharedArgs = {
   project: {
@@ -238,7 +238,7 @@ yargs(Deno.args)
           argv.debug ? "debug" : undefined,
         );
         const { generate } = await import(
-          "./embeddings/generator/webGenerator.ts"
+          "./embeddings/generator/web/generator.ts"
         );
 
         const { getGenerateFunction } = await import("./runners/runner.ts");
@@ -295,8 +295,8 @@ yargs(Deno.args)
           argv.logFmt as "json" | "pretty",
           argv.debug ? "debug" : undefined,
         );
-        const { generate } = await import(
-          "./embeddings/generator/mdGenerator.ts"
+        const { generateToTable } = await import(
+          "./embeddings/generator/md/generator.ts"
         );
 
         const { getGenerateFunction } = await import("./runners/runner.ts");
@@ -311,7 +311,7 @@ yargs(Deno.args)
         const dimensions = argv.dimensions ??
           (await generateFunction("this is a test"))[0].length;
 
-        await generate(
+        await generateToTable(
           resolve(argv.input),
           resolve(argv.output),
           argv.table,
