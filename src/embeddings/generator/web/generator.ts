@@ -43,15 +43,13 @@ export async function generate(
   for await (const result of crawlWebSource(url, scope)) {
     spinner.text = `Fetched ${result.url}, processing`;
 
-    for (const text of result.data.text) {
-      // OpenAI recommends replacing newlines with spaces for best results (specific to embeddings)
-      const input = text.replace(/\n/g, " ");
-      await writer.write({
-        content: input,
-        uri: result.url, // TODO needs to include the URL Fragment
-        contentHash: result.data.contentHash,
-      });
-    }
+    const pageData = result.data.text.map((text) => ({
+      content: text.replace(/\n/g, " "),
+      uri: result.url,
+      contentHash: result.data.contentHash,
+    }));
+
+    await writer.writeDocument(pageData);
   }
 
   await lanceWriter.close();
