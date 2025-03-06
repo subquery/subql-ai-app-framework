@@ -230,6 +230,12 @@ yargs(Deno.args)
         choises: ["none", "domain", "subdomains"] satisfies Scope[],
         default: "domain",
       },
+      collectionName: {
+        description:
+          "The name of the set of web pages to generate embeddings for. This is used to keep track of all the web pages in the collection. Defaults to the input url.",
+        type: "string",
+        required: false,
+      },
     },
     async (argv) => {
       try {
@@ -261,6 +267,7 @@ yargs(Deno.args)
           dimensions,
           argv.scope as Scope,
           argv.overwrite,
+          argv.collectionName,
         );
         Deno.exit(0);
       } catch (e) {
@@ -287,6 +294,12 @@ yargs(Deno.args)
           "Input paths to ignore, this can be glob patterns. e.g '/**/node_modules/**' ",
         type: "array",
         string: true,
+      },
+      collectionName: {
+        description:
+          "The name of the set of files to generate embeddings for. This is used to keep track of all the files in the collection. Defaults to the input path.",
+        type: "string",
+        required: false,
       },
     },
     async (argv) => {
@@ -319,6 +332,7 @@ yargs(Deno.args)
           dimensions,
           argv.ignoredFiles?.map((f) => resolve(f)),
           argv.overwrite,
+          argv.collectionName,
         );
         Deno.exit(0);
       } catch (e) {
