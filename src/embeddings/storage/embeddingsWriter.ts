@@ -1,8 +1,11 @@
 import { getLogger } from "../../logger.ts";
 import type { EmbeddingSchema, IEmbeddingStorage } from "../embeddings.ts";
 import type { GenerateEmbedding } from "./lance/writer.ts";
+import plimit from "p-limit";
 
 const logger = await getLogger("EmbeddingsWriter");
+
+const generateLimit = plimit(10);
 
 export type Document = {
   contentHash: string;
@@ -80,9 +83,18 @@ export class EmbeddingsWriter {
 
     // Map of documents to content hashes
     const outdatedDocs = new Map<string, Set<string>>();
-    for (const chunk of input) {
+
+    await Promise.all(input.map(async (chunk) => {
       // There is existing content with a different source/contentHash, we can reuse the vector without having to generate it again
-      const existing = await this.writer.getItem(chunk.content);
+      const existing = await this.writer.getItem(chunk.content)
+        .catch((e) => {
+          // TODO unable to escape the content with LanceDB so it can fail
+          logger.warn(
+            "Unable to check if content exists, will generate new vector",
+            e,
+          );
+          return undefined;
+        });
 
       if (existing) {
         logger.debug(
@@ -102,9 +114,11 @@ export class EmbeddingsWriter {
 
       const vector = existing
         ? existing.vector
-        : (await this.#generateEmbedding(chunk.content))[0];
-      this.writer.write([{ ...chunk, contentHash, vector }]);
-    }
+        : (await generateLimit(() => this.#generateEmbedding(chunk.content)))[
+          0
+        ];
+      await this.writer.write([{ ...chunk, contentHash, vector }]);
+    }));
 
     if (outdatedDocs.size > 0) {
       for (const [uri, contentHashes] of outdatedDocs) {
