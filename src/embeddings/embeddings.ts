@@ -9,6 +9,8 @@ export type EmbeddingSchema = {
   uri: string;
   /* A hash of the source content document used to identify changes in content where the URI is the same. This is a base64 encoded sha256 hash */
   contentHash: string;
+  /* A collection is the group of documents this is used to determine removed documents */
+  collection?: string;
 };
 
 export interface IEmbeddingReader {
@@ -27,6 +29,12 @@ export interface IEmbeddingStorage extends IEmbeddingReader, IEmbeddingWriter {
 
   // Removes all the content of a document with matching contentHash
   removeContent(contentHash: string): Promise<void>;
+
+  // Removes all content from a collection where the contentHash is not in the remainingContentHashes
+  pruneCollection(
+    collection: string,
+    remainingContentHashes: string[],
+  ): Promise<void>;
 
   // Gets an item by its content, this is used as a cache for the vector data
   getItem(content: string): Promise<EmbeddingSchema | undefined>;

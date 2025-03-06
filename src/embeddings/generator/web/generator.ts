@@ -1,6 +1,9 @@
 import { getLogger } from "../../../logger.ts";
 import { getSpinner } from "../../../util.ts";
-import { EmbeddingsWriter } from "../../storage/embeddingsWriter.ts";
+import {
+  type Document,
+  EmbeddingsWriter,
+} from "../../storage/embeddingsWriter.ts";
 import {
   type GenerateEmbedding,
   LanceWriter,
@@ -17,6 +20,7 @@ export async function generate(
   dimensions: number,
   scope: Scope = "domain",
   overwrite = false,
+  collectionName?: string,
 ) {
   logger.info(`Dimensions: ${dimensions}`);
 
@@ -29,7 +33,6 @@ export async function generate(
   const lanceWriter = await LanceWriter.createNewTable(
     lanceDbPath,
     tableName,
-    // generateEmbedding,
     dimensions,
     overwrite,
   );
@@ -40,17 +43,21 @@ export async function generate(
     `Crawling ${url}`,
   );
 
-  for await (const result of crawlWebSource(url, scope)) {
-    spinner.text = `Fetched ${result.url}, processing`;
+  const contentGenerator = async function* processWebSources(): AsyncGenerator<
+    Document
+  > {
+    for await (const result of crawlWebSource(url, scope)) {
+      yield {
+        contentHash: result.data.contentHash,
+        chunks: result.data.text.map((text) => ({
+          content: text.replace(/\n/g, " "),
+          uri: result.url,
+        })),
+      };
+    }
+  };
 
-    const pageData = result.data.text.map((text) => ({
-      content: text.replace(/\n/g, " "),
-      uri: result.url,
-      contentHash: result.data.contentHash,
-    }));
-
-    await writer.writeDocument(pageData);
-  }
+  await writer.writeCollection(collectionName ?? url, contentGenerator);
 
   await lanceWriter.close();
   spinner.succeed(`Crawled ${url}`);

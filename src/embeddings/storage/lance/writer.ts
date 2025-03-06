@@ -30,14 +30,15 @@ export class LanceWriter implements IEmbeddingStorage {
     // TODO store metadata with the llm embedding model
     const schema = new Schema([
       // new Field("id", new Int64()), // Lance DB has no concept of IDs or primary keys
-      new Field("content", new Utf8()),
+      new Field("content", new Utf8(), false),
       new Field(
         "vector",
         new FixedSizeList(dimensions, new Field("item", new Float64(), false)),
         false,
       ),
-      new Field("uri", new Utf8()),
-      new Field("content_hash", new Utf8()),
+      new Field("uri", new Utf8(), false),
+      new Field("content_hash", new Utf8(), false),
+      new Field("collection", new Utf8()),
     ]);
 
     // Updating table
@@ -48,7 +49,7 @@ export class LanceWriter implements IEmbeddingStorage {
 
       if (!schemasEqual(schema, existingSchema)) {
         throw new Error(
-          `Table ${tableName} already exists with a different schema`,
+          `Table "${tableName}" already exists with a different schema`,
         );
       }
 
@@ -75,6 +76,7 @@ export class LanceWriter implements IEmbeddingStorage {
   }
 
   async write(input: EmbeddingSchema[]): Promise<void> {
+    // console.log("XXXX", input.map((i) => this.toSchema(i)));
     await this.#table.add(input.map((i) => this.toSchema(i)));
   }
 
@@ -88,8 +90,19 @@ export class LanceWriter implements IEmbeddingStorage {
 
   // Removes all the content of a document with matching contentHash
   async removeContent(contentHash: string): Promise<void> {
-    console.log("REMOVE CONTENT", contentHash);
     await this.#table.delete(`content_hash = "${contentHash}"`);
+  }
+
+  async pruneCollection(
+    collection: string,
+    remainingContentHashes: string[],
+  ): Promise<void> {
+    const contentHashes = remainingContentHashes.map((h) => `"${h}"`).join(
+      ", ",
+    );
+    await this.#table.delete(
+      `collection = "${collection}" AND content_hash NOT IN (${contentHashes})`,
+    );
   }
 
   // Gets an item by its content, this is used as a cache for the vector data
@@ -102,8 +115,9 @@ export class LanceWriter implements IEmbeddingStorage {
     return res[0] && this.fromSchema(res[0]);
   }
 
-  // deno-lint-ignore require-await
   async close(): Promise<void> {
+    await this.#table.optimize();
+
     return this.#table.close();
   }
 
@@ -113,22 +127,20 @@ export class LanceWriter implements IEmbeddingStorage {
 
   // Converts fields to snake_case to work with LanceDB
   private toSchema(input: EmbeddingSchema): Record<string, unknown> {
+    const { contentHash, ...rest } = input;
     return {
-      content: input.content,
-      vector: input.vector,
-      uri: input.uri,
-      content_hash: input.contentHash,
+      ...rest,
+      content_hash: contentHash,
     };
   }
 
   // Converts fields to camelCase to work with LanceDB
   private fromSchema(input: Record<string, unknown>): EmbeddingSchema {
+    const { content_hash, ...rest } = input;
     return {
-      content: input.content as string,
-      vector: input.vector as number[],
-      uri: input.uri as string,
-      contentHash: input.content_hash as string,
-    };
+      ...rest,
+      contentHash: content_hash as string,
+    } as EmbeddingSchema;
   }
 }
 

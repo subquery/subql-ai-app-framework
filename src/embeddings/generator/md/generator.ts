@@ -6,7 +6,10 @@ import {
 } from "../../storage/lance/index.ts";
 import { getLogger } from "../../../logger.ts";
 import { getSpinner } from "../../../util.ts";
-import { EmbeddingsWriter } from "../../storage/embeddingsWriter.ts";
+import {
+  type Document,
+  EmbeddingsWriter,
+} from "../../storage/embeddingsWriter.ts";
 
 const DEFAULT_IGNORED_PATHS = [
   "/**/pages/404.mdx",
@@ -24,6 +27,7 @@ export async function generateToTable(
   dimensions: number,
   ignoredPaths = DEFAULT_IGNORED_PATHS,
   overwrite = false,
+  collectionName?: string,
 ) {
   const lanceWriter = await LanceWriter.createNewTable(
     lanceDbPath,
@@ -40,7 +44,7 @@ export async function generateToTable(
 
     logger.info(`Dimensions: ${dimensions}`);
 
-    return await generate(path, embeddingsWriter, ignoredPaths);
+    return await generate(path, embeddingsWriter, ignoredPaths, collectionName);
   } finally {
     lanceWriter.close();
   }
@@ -50,6 +54,7 @@ export async function generate(
   path: string,
   writer: EmbeddingsWriter,
   ignoredPaths = DEFAULT_IGNORED_PATHS,
+  collectionName?: string,
 ) {
   const embeddingSources: BaseEmbeddingSource[] =
     (await glob([`${path}/**/*.{md,mdx}`], { ignore: ignoredPaths }))
@@ -65,29 +70,42 @@ export async function generate(
     `Processing files (0/${embeddingSources.length})`,
   );
 
-  const errors: { error: Error; source: BaseEmbeddingSource }[] = [];
-
-  for (const [idx, source] of embeddingSources.entries()) {
-    try {
-      spinner.text = `Processing files (${idx + 1}/${embeddingSources.length})`;
-      const { sections, checksum } = await source.load();
-
-      const input = sections.map(({ content, slug }) => ({
-        content: content.replace(/\n/g, " "), // OpenAI recommends replacing newlines with spaces for best results (specific to embeddings)
-        uri: buildFileUri(source.path, slug), // Join the slug to help identify the section
-        contentHash: checksum,
-      }));
-
-      await writer.writeDocument(input);
-    } catch (e) {
-      errors.push({ error: e as Error, source });
+  const parsingErrors: { error: unknown; source: BaseEmbeddingSource }[] = [];
+  const contentGenerator = async function* processSources(): AsyncGenerator<
+    Document
+  > {
+    for (const [idx, source] of embeddingSources.entries()) {
+      try {
+        spinner.text = `Processing files (${
+          idx + 1
+        }/${embeddingSources.length})`;
+        const { sections, checksum } = await source.load();
+        const chunks = sections.map(({ content, slug }) => ({
+          content: content.replace(/\n/g, " "),
+          uri: buildFileUri(source.path, slug),
+        }));
+        yield { contentHash: checksum, chunks };
+      } catch (e) {
+        parsingErrors.push({ error: e, source });
+      }
     }
-  }
+  };
 
-  if (errors.length) {
+  const errors = await writer.writeCollection(
+    collectionName ?? path,
+    contentGenerator,
+  );
+
+  if (errors.length || parsingErrors.length) {
     spinner.warn(`Processed all files with errors:
 ${
-      errors.map(({ source, error }) => `\t${source.path}: ${error}`)
+      parsingErrors.map(({ source, error }) => `\t${source.path}: ${error}`)
+        .join("\n")
+    }
+${
+      errors.map(({ document, error }) =>
+        `\t${document?.chunks[0].uri ?? "Unknown Document"}: ${error}`
+      )
         .join("\n")
     }`);
   } else {

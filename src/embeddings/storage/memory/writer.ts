@@ -35,6 +35,17 @@ export class MemoryWriter implements IEmbeddingStorage {
     this.#data.push(...input);
   }
 
+  // deno-lint-ignore require-await
+  async pruneCollection(
+    collection: string,
+    remainingContentHashes: string[],
+  ): Promise<void> {
+    this.#data = this.#data.filter((d) =>
+      d.collection !== collection ||
+      remainingContentHashes.includes(d.contentHash)
+    );
+  }
+
   close(): Promise<void> {
     throw new Error("Method not implemented.");
   }

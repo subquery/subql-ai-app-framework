@@ -4,6 +4,19 @@ import type { GenerateEmbedding } from "./lance/writer.ts";
 
 const logger = await getLogger("EmbeddingsWriter");
 
+export type Document = {
+  contentHash: string;
+  chunks: {
+    content: string;
+    uri: string;
+  }[];
+};
+
+export type ItemError = {
+  error: unknown;
+  document?: Document;
+};
+
 export class EmbeddingsWriter {
   #generateEmbedding: GenerateEmbedding;
 
@@ -14,15 +27,48 @@ export class EmbeddingsWriter {
     this.#generateEmbedding = generateEmbedding;
   }
 
+  async writeCollection(
+    collectionName: string,
+    documents: () => AsyncGenerator<Document>,
+    pruneRemoved = true,
+  ): Promise<ItemError[]> {
+    const contentHashes: string[] = [];
+    const errors: ItemError[] = [];
+
+    for await (const document of documents()) {
+      try {
+        const { contentHash, chunks } = document;
+
+        await this.writeDocument(
+          contentHash,
+          chunks.map((chunk) => ({ ...chunk, collection: collectionName })),
+        );
+        contentHashes.push(contentHash);
+      } catch (e) {
+        errors.push({ error: e, document });
+      }
+    }
+
+    // Remove older documents that are no longer present
+    if (pruneRemoved) {
+      logger.debug(
+        `Pruning removed documents from collection "${collectionName}"`,
+      );
+      await this.writer.pruneCollection(collectionName, contentHashes);
+    }
+
+    return errors;
+  }
+
   // Write all the chunks of a document, this should include all the content chunks for a document with the same content hash
-  async writeDocument(input: Omit<EmbeddingSchema, "vector">[]): Promise<void> {
+  async writeDocument(
+    contentHash: string,
+    input: Omit<EmbeddingSchema, "vector" | "contentHash">[],
+  ): Promise<void> {
     if (input.length === 0) {
       return;
     }
-    if (!input.every((v) => v.contentHash === input[0].contentHash)) {
-      throw new Error("All chunks must have the same content hash");
-    }
-    if (await this.writer.hasContent(input[0].contentHash)) {
+    if (await this.writer.hasContent(contentHash)) {
       // The content is already indexed
       logger.debug(
         `Content already indexed without changes. source="${
@@ -57,7 +103,7 @@ export class EmbeddingsWriter {
       const vector = existing
         ? existing.vector
         : (await this.#generateEmbedding(chunk.content))[0];
-      this.writer.write([{ ...chunk, vector }]);
+      this.writer.write([{ ...chunk, contentHash, vector }]);
     }
 
     if (outdatedDocs.size > 0) {
