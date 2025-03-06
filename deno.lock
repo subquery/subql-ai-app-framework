@@ -87,6 +87,7 @@
     "npm:ollama@~0.5.9": "0.5.9",
     "npm:openai@^4.68.3": "4.68.3",
     "npm:ora@^8.1.0": "8.1.0",
+    "npm:p-limit@^6.2.0": "6.2.0",
     "npm:pino-pretty@^11.3.0": "11.3.0",
     "npm:pino@^9.5.0": "9.5.0",
     "npm:unist-builder@4": "4.0.0",
@@ -2072,7 +2073,13 @@
     "p-limit@3.1.0": {
       "integrity": "sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==",
       "dependencies": [
-        "yocto-queue"
+        "yocto-queue@0.1.0"
+      ]
+    },
+    "p-limit@6.2.0": {
+      "integrity": "sha512-kuUqqHNUqoIWp/c467RI4X6mmyuojY5jGutNU0wVTmEOOfcuwLqyMVoAi9MKi2Ak+5i9+nhmrK4ufZE8069kHA==",
+      "dependencies": [
+        "yocto-queue@1.1.1"
       ]
     },
     "p-locate@2.0.0": {
@@ -2785,6 +2792,9 @@
     "yocto-queue@0.1.0": {
       "integrity": "sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q=="
     },
+    "yocto-queue@1.1.1": {
+      "integrity": "sha512-b4JR1PFR10y1mKjhHY9LaGo6tmrgjit7hxVIeAmyMw3jegXR4dhYqLaQF5zMXZxY7tLpMyJeLjr1C4rLmkVe8g=="
+    },
     "zwitch@1.0.5": {
       "integrity": "sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw=="
     },
@@ -2896,6 +2906,7 @@
       "npm:ollama@~0.5.9",
       "npm:openai@^4.68.3",
       "npm:ora@^8.1.0",
+      "npm:p-limit@^6.2.0",
       "npm:pino-pretty@^11.3.0",
       "npm:pino@^9.5.0",
       "npm:unist-builder@4",

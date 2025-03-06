@@ -1,5 +1,5 @@
 import * as lancedb from "@lancedb/lancedb";
-import type { IEmbeddingReader } from "../embeddings.ts";
+import type { EmbeddingSchema, IEmbeddingReader } from "../../embeddings.ts";
 import ollama, { type Ollama } from "ollama";
 
 export class LanceReader implements IEmbeddingReader {
@@ -42,7 +42,7 @@ export class LanceReader implements IEmbeddingReader {
     return this.openTable(db, tableName, model, embedModel, topK);
   }
 
-  async search(query: string): Promise<string[]> {
+  async search(query: string): Promise<EmbeddingSchema[]> {
     const { embeddings: [embedding] } = await this.#model.embed({
       model: this.#embedModel,
       input: query,

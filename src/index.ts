@@ -21,7 +21,7 @@ import ora from "ora";
 import { getPrompt, getVersion, setSpinner } from "./util.ts";
 import { initLogger } from "./logger.ts";
 import { DEFAULT_LLM_HOST, DEFAULT_PORT } from "./constants.ts";
-import type { Scope } from "./embeddings/generator/webSource.ts";
+import type { Scope } from "./embeddings/generator/web/source.ts";
 
 const sharedArgs = {
   project: {
@@ -230,6 +230,12 @@ yargs(Deno.args)
         choises: ["none", "domain", "subdomains"] satisfies Scope[],
         default: "domain",
       },
+      collectionName: {
+        description:
+          "The name of the set of web pages to generate embeddings for. This is used to keep track of all the web pages in the collection. Defaults to the input url.",
+        type: "string",
+        required: false,
+      },
     },
     async (argv) => {
       try {
@@ -238,7 +244,7 @@ yargs(Deno.args)
           argv.debug ? "debug" : undefined,
         );
         const { generate } = await import(
-          "./embeddings/generator/webGenerator.ts"
+          "./embeddings/generator/web/generator.ts"
         );
 
         const { getGenerateFunction } = await import("./runners/runner.ts");
@@ -261,6 +267,7 @@ yargs(Deno.args)
           dimensions,
           argv.scope as Scope,
           argv.overwrite,
+          argv.collectionName,
         );
         Deno.exit(0);
       } catch (e) {
@@ -288,6 +295,12 @@ yargs(Deno.args)
         type: "array",
         string: true,
       },
+      collectionName: {
+        description:
+          "The name of the set of files to generate embeddings for. This is used to keep track of all the files in the collection. Defaults to the input path.",
+        type: "string",
+        required: false,
+      },
     },
     async (argv) => {
       try {
@@ -295,8 +308,8 @@ yargs(Deno.args)
           argv.logFmt as "json" | "pretty",
           argv.debug ? "debug" : undefined,
         );
-        const { generate } = await import(
-          "./embeddings/generator/mdGenerator.ts"
+        const { generateToTable } = await import(
+          "./embeddings/generator/md/generator.ts"
         );
 
         const { getGenerateFunction } = await import("./runners/runner.ts");
@@ -311,7 +324,7 @@ yargs(Deno.args)
         const dimensions = argv.dimensions ??
           (await generateFunction("this is a test"))[0].length;
 
-        await generate(
+        await generateToTable(
           resolve(argv.input),
           resolve(argv.output),
           argv.table,
@@ -319,6 +332,7 @@ yargs(Deno.args)
           dimensions,
           argv.ignoredFiles?.map((f) => resolve(f)),
           argv.overwrite,
+          argv.collectionName,
         );
         Deno.exit(0);
       } catch (e) {
