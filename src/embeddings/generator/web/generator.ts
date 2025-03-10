@@ -12,6 +12,10 @@ import { crawlWebSource, type Scope } from "./source.ts";
 
 const logger = await getLogger("WebEmbeddingsGenerator");
 
+const DEFAULT_IGNORED_PATHS = [
+  "/404",
+];
+
 export async function generate(
   url: string,
   lanceDbPath: string,
@@ -19,6 +23,7 @@ export async function generate(
   generateEmbedding: GenerateEmbedding,
   dimensions: number,
   scope: Scope = "domain",
+  ignoredPaths = DEFAULT_IGNORED_PATHS,
   overwrite = false,
   collectionName?: string,
 ) {
@@ -47,6 +52,11 @@ export async function generate(
     Document
   > {
     for await (const result of crawlWebSource(url, scope)) {
+      const url = new URL(result.url);
+      if (ignoredPaths.includes(url.pathname)) {
+        logger.debug(`Ignoring ${url}`);
+        continue;
+      }
       yield {
         contentHash: result.data.contentHash,
         chunks: result.data.text.map((text) => ({

@@ -1,11 +1,8 @@
 import { getLogger } from "../../logger.ts";
 import type { EmbeddingSchema, IEmbeddingStorage } from "../embeddings.ts";
 import type { GenerateEmbedding } from "./lance/writer.ts";
-import plimit from "p-limit";
 
 const logger = await getLogger("EmbeddingsWriter");
-
-const generateLimit = plimit(10);
 
 export type Document = {
   contentHash: string;
@@ -114,9 +111,7 @@ export class EmbeddingsWriter {
 
       const vector = existing
         ? existing.vector
-        : (await generateLimit(() => this.#generateEmbedding(chunk.content)))[
-          0
-        ];
+        : (await this.#generateEmbedding(chunk.content))[0];
       await this.writer.write([{ ...chunk, contentHash, vector }]);
     }));
 
