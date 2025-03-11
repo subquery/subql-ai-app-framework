@@ -59,9 +59,9 @@ export async function generate(
       }
       yield {
         contentHash: result.data.contentHash,
-        chunks: result.data.text.map((text) => ({
-          content: text.replace(/\n/g, " "),
-          uri: result.url,
+        chunks: result.data.text.map((chunk) => ({
+          content: chunk.text,
+          uri: buildAnchorUrl(result.url, chunk.nearestAnchor),
         })),
       };
     }
@@ -71,4 +71,12 @@ export async function generate(
 
   await lanceWriter.close();
   spinner.succeed(`Crawled ${url}`);
+}
+
+function buildAnchorUrl(base: string, anchor?: string): string {
+  const url = new URL(base);
+  if (anchor) {
+    url.hash = anchor;
+  }
+  return url.toString();
 }
