@@ -107,12 +107,17 @@ export class LanceWriter implements IEmbeddingStorage {
   // Gets an item by its content, this is used as a cache for the vector data
   async getItem(content: string): Promise<EmbeddingSchema | undefined> {
     // TODO LanceDB offers no way to escape content. https://github.com/lancedb/lancedb/issues/1368
-    const res = await this.#table.query()
-      .where(`content = "${content}"`)
-      .limit(1)
-      .toArray();
+    try {
+      const res = await this.#table.query()
+        .where(`content = "${content}"`)
+        .limit(1)
+        .toArray();
 
-    return res[0] && this.fromSchema(res[0]);
+      return res[0] && this.fromSchema(res[0]);
+    } catch (e) {
+      logger.error("Failed to get item", e);
+      return undefined;
+    }
   }
 
   async close(): Promise<void> {

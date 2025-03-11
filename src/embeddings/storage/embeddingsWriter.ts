@@ -85,7 +85,6 @@ export class EmbeddingsWriter {
       // There is existing content with a different source/contentHash, we can reuse the vector without having to generate it again
       const existing = await this.writer.getItem(chunk.content)
         .catch((e) => {
-          // TODO unable to escape the content with LanceDB so it can fail
           logger.warn(
             "Unable to check if content exists, will generate new vector",
             e,

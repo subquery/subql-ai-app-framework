@@ -19,9 +19,10 @@ Deno.test("It gets the correct schema data from a markdown file", async () => {
   expect(writer.data.length).toBeGreaterThan(0);
 
   expect(writer.data[0]).toEqual({
+    collection: "./",
     content:
       "## Subquery AI App Framework  [![JSR](https://jsr.io/badges/@subql/ai-app-framework)](https://jsr.io/@subql/ai-app-framework) ",
-    uri: "README#subquery-ai-app-framework",
+    uri: "file://readme/#subquery-ai-app-framework",
     contentHash: "qGDVi9DYIHmrrQDGyFYB3HDNhuLoeQ7zI5BhQsCGyVA=",
     vector: undefined,
   });
