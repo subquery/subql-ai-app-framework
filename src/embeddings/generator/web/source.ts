@@ -1,6 +1,6 @@
 // import { chromium, firefox, type LaunchOptions, type Page } from 'playwright';
 
-import { launch, type Page } from "jsr:@astral/astral";
+import { launch, type Page } from "@astral/astral";
 import { createHash } from "node:crypto";
 
 type LinkData = {
