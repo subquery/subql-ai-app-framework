@@ -4,7 +4,7 @@
 // import { ObjectExpression } from 'estree';
 // import type { ObjectExpression } from "https://esm.sh/@types/estree@1.0.5";
 
-// @ts-types="npm:@types/mdast@^4.04"
+// @#ts-types="npm:@types/mdast@^4.04"
 import type { Content, Root } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { mdxFromMarkdown, type MdxjsEsm } from "mdast-util-mdx";

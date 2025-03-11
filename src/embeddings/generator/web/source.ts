@@ -1,15 +1,22 @@
 // import { chromium, firefox, type LaunchOptions, type Page } from 'playwright';
 
 import { launch, type Page } from "jsr:@astral/astral";
+import { createHash } from "node:crypto";
 
 type LinkData = {
   href: string;
   text?: string;
 };
 
+type Chunk = {
+  text: string;
+  nearestAnchor?: string;
+};
+
 type PageData = {
   links: LinkData[];
-  text: string[];
+  text: Chunk[];
+  contentHash: string;
 };
 
 /**
@@ -32,9 +39,13 @@ export async function* crawlWebSource(
 
   const scrapePage = async (url: string): Promise<PageData> => {
     const page = await browser.newPage(url);
-    const [links, text] = await Promise.all([
+
+    const [links, text, contentHash] = await Promise.all([
       extractLinks(page),
       visibleText(page),
+      page.content().then((content) => {
+        return createHash("sha256").update(content).digest("base64");
+      }),
     ]);
 
     await page.close();
@@ -42,6 +53,7 @@ export async function* crawlWebSource(
     return {
       links,
       text,
+      contentHash,
     };
   };
 
@@ -60,6 +72,8 @@ export async function* crawlWebSource(
     // Save the results
     results.set(url, result);
 
+    yield { url, data: result };
+
     if (searchScope === "none") {
       break;
     }
@@ -76,8 +90,6 @@ export async function* crawlWebSource(
       .map((l) => l.toString());
 
     toScrape.push(...newToScrape);
-
-    yield { url, data: result };
   }
 
   await browser.close();
@@ -96,25 +108,33 @@ async function extractLinks(
   return links.filter((r) => r.href !== null) as LinkData[];
 }
 
-async function visibleText(page: Page): Promise<string[]> {
-  const raw = await page.evaluate(() => {
+async function visibleText(page: Page): Promise<Chunk[]> {
+  const content = await page.evaluate(() => {
     // @ts-ignore this runs in the browser env
-    return Array.from(document.querySelectorAll("*"))
-      .filter((element) => {
-        // @ts-ignore this runs in the browser env
-        const style = globalThis.getComputedStyle(element);
-        return style.visibility !== "hidden" &&
-          style.display !== "none" &&
-          style.opacity != 0 &&
-          !["SCRIPT", "STYLE", "NOSCRIPT", "META", "LINK", "HTML"].includes(
-            // @ts-ignore this runs in the browser env
-            element.tagName,
-          );
-      })
-      // @ts-ignore this runs in the browser env
-      .map((element) => element.textContent?.trim())
-      .filter((text) => text);
+    function getClosestAnchor(el: Element): string | undefined {
+      let parent = el;
+      while (parent) {
+        const anchor = parent.closest("a");
+        if (anchor && anchor.href) return anchor.href;
+        parent = parent.parentElement!;
+      }
+      return undefined; // Return empty if no anchor is found
+    }
+
+    const data: Chunk[] = [];
+
+    // @ts-ignore this runs in the browser env
+    document.querySelectorAll("h1, h2, h3, p").forEach((el) => {
+      const text = el.textContent?.trim();
+      if (!text) return;
+      data.push({
+        text,
+        nearestAnchor: getClosestAnchor(el),
+      });
+    });
+
+    return data;
   });
 
-  return [...new Set([...raw])];
+  return content;
 }

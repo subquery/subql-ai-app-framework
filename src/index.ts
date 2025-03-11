@@ -21,7 +21,8 @@ import ora from "ora";
 import { getPrompt, getVersion, setSpinner } from "./util.ts";
 import { initLogger } from "./logger.ts";
 import { DEFAULT_LLM_HOST, DEFAULT_PORT } from "./constants.ts";
-import type { Scope } from "./embeddings/generator/webSource.ts";
+import type { Scope } from "./embeddings/generator/web/source.ts";
+import plimit from "p-limit";
 
 const sharedArgs = {
   project: {
@@ -73,37 +74,6 @@ const debugArgs = {
     type: "string",
     choices: ["json", "pretty"],
     default: "pretty",
-  },
-} satisfies Record<string, Options>;
-
-const embedArgs = {
-  output: {
-    alias: "o",
-    description: "The db output directory",
-    required: true,
-    type: "string",
-  },
-  table: {
-    alias: "t",
-    description: "The table name",
-    required: true,
-    type: "string",
-  },
-  model: {
-    description:
-      "The embedding LLM model to use, this should be the same as embeddingsModel in your app manifest",
-    required: true,
-    type: "string",
-  },
-  overwrite: {
-    description: "If there is an existing table, then overwrite it",
-    type: "boolean",
-    default: false,
-  },
-  dimensions: {
-    description:
-      "The number of dimensions for the LLM model to use. NOTE: Ollama models doesn't currently support modifying this so it will throw if the output doesn't match.",
-    type: "number",
   },
 } satisfies Record<string, Options>;
 
@@ -213,12 +183,39 @@ yargs(Deno.args)
     },
   )
   .command(
-    "embed-web",
-    "Creates a Lance db table with emdeddings from a Web source",
+    ["embed", "embed-web", "embed-mdx"], // embed-web and embed-mdx are for backwards compatibility
+    "Creates a Lance db table with embeddings from a web or markdown source",
     {
       ...debugArgs,
       ...llmHostArgs,
-      ...embedArgs,
+      output: {
+        alias: "o",
+        description: "The db output directory",
+        required: true,
+        type: "string",
+      },
+      table: {
+        alias: "t",
+        description: "The table name",
+        required: true,
+        type: "string",
+      },
+      model: {
+        description:
+          "The embedding LLM model to use, this should be the same as embeddingsModel in your app manifest",
+        required: true,
+        type: "string",
+      },
+      overwrite: {
+        description: "If there is an existing table, then overwrite it",
+        type: "boolean",
+        default: false,
+      },
+      dimensions: {
+        description:
+          "The number of dimensions for the LLM model to use. NOTE: Ollama models doesn't currently support modifying this so it will throw if the output doesn't match.",
+        type: "number",
+      },
       input: {
         alias: "i",
         description: "The url of the website to pull data from",
@@ -230,64 +227,24 @@ yargs(Deno.args)
         choises: ["none", "domain", "subdomains"] satisfies Scope[],
         default: "domain",
       },
-    },
-    async (argv) => {
-      try {
-        await initLogger(
-          argv.logFmt as "json" | "pretty",
-          argv.debug ? "debug" : undefined,
-        );
-        const { generate } = await import(
-          "./embeddings/generator/webGenerator.ts"
-        );
-
-        const { getGenerateFunction } = await import("./runners/runner.ts");
-
-        const generateFunction = await getGenerateFunction(
-          argv.host,
-          argv.model,
-          argv.openAiApiKey,
-        );
-
-        // Determine the dimensions, if not provided it will use the result dimensions from a test
-        const dimensions = argv.dimensions ??
-          (await generateFunction("this is a test"))[0].length;
-
-        await generate(
-          argv.input,
-          resolve(argv.output),
-          argv.table,
-          generateFunction,
-          dimensions,
-          argv.scope as Scope,
-          argv.overwrite,
-        );
-        Deno.exit(0);
-      } catch (e) {
-        console.log(e);
-        Deno.exit(1);
-      }
-    },
-  )
-  .command(
-    "embed-mdx",
-    "Creates a Lance db table with embeddings from MDX files",
-    {
-      ...debugArgs,
-      ...llmHostArgs,
-      ...embedArgs,
-      input: {
-        alias: "i",
-        description: "Path to a directory containing MD or MDX files",
-        required: true,
-        type: "string",
-      },
-      ignoredFiles: {
+      collectionName: {
         description:
-          "Input paths to ignore, this can be glob patterns. e.g '/**/node_modules/**' ",
+          "The name of the set of web pages to generate embeddings for. This is used to keep track of all the web pages in the collection. Defaults to the input url.",
+        type: "string",
+        required: false,
+      },
+      ignore: {
+        description:
+          "Input paths to ignore, this can be glob patterns. e.g '/**/node_modules/**' or 'https://subquery.network/404 ",
         type: "array",
         string: true,
       },
+      llmConcurrency: {
+        description:
+          "The number of concurrent requests to the LLM model. This is used to limit the number of requests to the model at once. 0 to disable",
+        type: "number",
+        default: 1000,
+      },
     },
     async (argv) => {
       try {
@@ -295,31 +252,57 @@ yargs(Deno.args)
           argv.logFmt as "json" | "pretty",
           argv.debug ? "debug" : undefined,
         );
-        const { generate } = await import(
-          "./embeddings/generator/mdGenerator.ts"
-        );
 
         const { getGenerateFunction } = await import("./runners/runner.ts");
-
-        const generateFunction = await getGenerateFunction(
+        let generateFunction = await getGenerateFunction(
           argv.host,
           argv.model,
           argv.openAiApiKey,
         );
 
+        // Apply concurrency limit to generating embeddings vectors
+        if (argv.llmConcurrency > 0) {
+          const limit = plimit(argv.llmConcurrency);
+          generateFunction = (text: string | string[], dimensions?: number) =>
+            limit(() => generateFunction(text, dimensions));
+        }
+
         // Determine the dimensions, if not provided it will use the result dimensions from a test
         const dimensions = argv.dimensions ??
           (await generateFunction("this is a test"))[0].length;
 
-        await generate(
-          resolve(argv.input),
-          resolve(argv.output),
-          argv.table,
-          generateFunction,
-          dimensions,
-          argv.ignoredFiles?.map((f) => resolve(f)),
-          argv.overwrite,
-        );
+        if (argv.input.startsWith("http")) {
+          const { generate } = await import(
+            "./embeddings/generator/web/generator.ts"
+          );
+
+          await generate(
+            argv.input,
+            resolve(argv.output),
+            argv.table,
+            generateFunction,
+            dimensions,
+            argv.scope as Scope,
+            argv.ignore,
+            argv.overwrite,
+            argv.collectionName,
+          );
+        } else { // MD(X)
+          const { generateToTable } = await import(
+            "./embeddings/generator/md/generator.ts"
+          );
+
+          await generateToTable(
+            resolve(argv.input),
+            resolve(argv.output),
+            argv.table,
+            generateFunction,
+            dimensions,
+            argv.ignore?.map((f) => resolve(f)),
+            argv.overwrite,
+            argv.collectionName,
+          );
+        }
         Deno.exit(0);
       } catch (e) {
         console.log(e);
