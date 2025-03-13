@@ -254,18 +254,18 @@ yargs(Deno.args)
         );
 
         const { getGenerateFunction } = await import("./runners/runner.ts");
-        let generateFunction = await getGenerateFunction(
+        const limit = plimit(argv.llmConcurrency > 0 ? argv.llmConcurrency : 1);
+
+        const originalGenerateFunction = await getGenerateFunction(
           argv.host,
           argv.model,
           argv.openAiApiKey,
         );
 
-        // Apply concurrency limit to generating embeddings vectors
-        if (argv.llmConcurrency > 0) {
-          const limit = plimit(argv.llmConcurrency);
-          generateFunction = (text: string | string[], dimensions?: number) =>
-            limit(() => generateFunction(text, dimensions));
-        }
+        const generateFunction = (
+          text: string | string[],
+          dimensions?: number,
+        ) => limit(() => originalGenerateFunction(text, dimensions));
 
         // Determine the dimensions, if not provided it will use the result dimensions from a test
         const dimensions = argv.dimensions ??
