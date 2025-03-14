@@ -254,7 +254,6 @@ yargs(Deno.args)
         );
 
         const { getGenerateFunction } = await import("./runners/runner.ts");
-        const limit = plimit(argv.llmConcurrency > 0 ? argv.llmConcurrency : 1);
 
         const originalGenerateFunction = await getGenerateFunction(
           argv.host,
@@ -262,10 +261,17 @@ yargs(Deno.args)
           argv.openAiApiKey,
         );
 
-        const generateFunction = (
-          text: string | string[],
-          dimensions?: number,
-        ) => limit(() => originalGenerateFunction(text, dimensions));
+        let generateFunction = originalGenerateFunction;
+
+        if (argv.llmConcurrency > 0) {
+          const limit = plimit(
+            argv.llmConcurrency,
+          );
+          generateFunction = (
+            text: string | string[],
+            dimensions?: number,
+          ) => limit(() => originalGenerateFunction(text, dimensions));
+        }
 
         // Determine the dimensions, if not provided it will use the result dimensions from a test
         const dimensions = argv.dimensions ??
